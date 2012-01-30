@@ -5,7 +5,7 @@ import cmd
 import socket
 import threading
 
-from cc1111nic import *
+from rfcat import *
 
 DATA_START_IDX = 4      # without the app/cmd/len bytes, the data starts at byte 4
 
