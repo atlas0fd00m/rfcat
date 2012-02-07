@@ -13,8 +13,8 @@
 :tabnew ./firmware/include/cc1110-ext.h
 :tabnew ./firmware/include/cc1111_vcom.h
 :tabnew ./clients/cc1111client.py
-:tabnew ./clients/cc1111nic.py
-:tabnew ./clients/cc1111nic_server.py
+:tabnew ./clients/rfcat.py
+:tabnew ./clients/rfcat_server.py
 :tabnew ./clients/cc111Xhparser.py
 :tabnew ./clients/chipcondefs.py
 :tabnext
