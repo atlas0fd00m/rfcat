@@ -252,17 +252,17 @@ class USBDongle:
         self._usbmaxi, self._usbmaxo = (EP5IN_MAX_PACKET_SIZE, EP5OUT_MAX_PACKET_SIZE)
 
         if USBVER == 0.1:
+            self._usbcfg = self._d.configurations[0]
+            self._usbintf = self._usbcfg.interfaces[0][0]
+            self._usbeps = self._usbintf.endpoints
+            for ep in self._usbeps:
+                if ep.address & 0x80:
+                    self._usbmaxi = ep.maxPacketSize
+                else:
+                    self._usbmaxo = ep.maxPacketSize
+
             try:
                 do.claimInterface(0)
-                self._usbcfg = self._d.configurations[0]
-                self._usbintf = self._usbcfg.interfaces[0][0]
-                self._usbeps = self._usbintf.endpoints
-                for ep in self._usbeps:
-                    if ep.address & 0x80:
-                        self._usbmaxi = ep.maxPacketSize
-                    else:
-                        self._usbmaxo = ep.maxPacketSize
-
             except Exception,e:
                 if console or self._debug: print >>sys.stderr,("Error claiming usb interface:" + repr(e))
         elif USBVER == 1.0:
@@ -343,14 +343,18 @@ class USBDongle:
             if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
             if USBVER == 0.1:
                 self._do.bulkWrite(5, "\x00\x00\x00\x00" + drain, timeout)
-            else:
+            elif USBVER == 1.0:
                 self._do.write(5, "\x00\x00\x00\x00" + drain, timeout=timeout)
+            else:
+                raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
 
     def _recvEP5(self, timeout=100):
         if USBVER == 0.1:
-            retary = ["%c"%x for x in self._do.bulkRead(0x85, EP5IN_MAX_PACKET_SIZE, timeout)]
+            retary = ["%c"%x for x in self._do.bulkRead(0x85, self._usbmaxi, timeout)]
+        elif USBVER == 1.0:
+            retary = ["%c"%x for x in self._do.read(0x85, self._usbmaxi, timeout=timeout)]
         else:
-            retary = ["%c"%x for x in self._do.read(0x85, EP5IN_MAX_PACKET_SIZE, timeout=timeout)]
+            raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
 
         if self._debug: print >>sys.stderr,"RECV:"+repr(retary)
         if len(retary):
