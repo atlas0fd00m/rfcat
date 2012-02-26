@@ -207,6 +207,17 @@ installtestxmitfw: testxmitapplication.hex
 	goodfet.cc flash bins/testxmit.hex
 	goodfet.cc info
 
+testgoodfet:
+	goodfet.cc info
+
+backupdongle:
+	goodfet.cc info
+	goodfet.cc dumpcode bins/original-dongle-hex.backup
+
+restoredongle:
+	goodfet.cc erase
+	goodfet.cc flash bins/original-dongle-hex.backup
+	goodfet.cc info
 
 testall: chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donstestrecvusb.hex chronostestxmitusb.hex donstestxmitusb.hex testrecvapplication.hex testxmitapplication.hex chronosNIC.hex donsNIC.hex chronosSniff.hex donsSniff.hex immeSniff.hex
 ##immedongleapplication.hex 

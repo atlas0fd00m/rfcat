@@ -29,10 +29,52 @@ supported dongles:
 = INSTALLATION =
 your build environment:
 * intended development model is using a GoodFET (http://goodfet.sf.net) although one of our developers uses the chipcon debugger from ti.
+
+  * wiring:
+
+            --------------------------------
+            |                         1  2 |
+            |                         3  4 |
+       ------                         5  6 |  
+       | USB                          7  8 |
+       ------                         9 10 |
+            |                        11 12 |
+            | GoodFET41              13 14 |
+            --------------------------------
+
+
+            --------------------------------
+            |                              |
+            |             RST 1  2 TP      ------
+            |             GND 3  4 VCC      USB |
+            |            P2.2 5  6 P2.1    ------
+            | Chronos                      |
+            --------------------------------
+
+  * GoodFET41 ---> Chronos        
+
+               GoodFET            Chronos
+                 PIN                PIN
+
+                  1 <----- DD -----> 6
+                  2 <----- VCC ----> 4
+                  5 <----- RST ----> 1
+                  7 <----- DC -----> 5
+                  9 <----- GND ----> 3
+
 * install sdcc
 * install make
 * make sure both are in the path
 * cd into the "rfcat/firmware/" directory
+* "make testgoodfet" will read info from your dongle using the GoodFET. you should see something like:
+
+    SmartRF not found for this chip.
+    Ident   CC1111/r1103/ps0x0400
+    Freq         0.000 MHz
+    RSSI    00
+
+* "make backupdongle" will read the current firmware from your dongle to the file .../bins/original-dongle-hex.backup.
+  ("make restoredongle") to revert to the original firmware. 
 * "make clean installchronosfhssnicfw" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a Chronos dongle.
 * "make clean installdonsfhssnicfw" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a cc1111emk.
 
