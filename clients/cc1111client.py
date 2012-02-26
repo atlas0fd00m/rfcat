@@ -4,10 +4,10 @@ import usb
 
 try:
     import usb.core
-    USBVER=1.0
+    PYUSBVER=1.0
 except:
-    print "Using legacy pybusb 0.1"
-    USBVER=0.1
+    print "Using legacy pybusb 0.4"
+    PYUSBVER=0.4
 
 
 import bits
@@ -221,7 +221,7 @@ class USBDongle:
         self.ep5timeout = EP_TIMEOUT_ACTIVE
 
        
-        if USBVER == 0.1:
+        if PYUSBVER == 0.4:
             for bus in usb.busses():
                 for dev in bus.devices:
                     if dev.idProduct == 0x4715:
@@ -229,7 +229,7 @@ class USBDongle:
                         do = dev.open()
                         devnum = dev.devnum
                         dongles.append((devnum, dev, do))
-        elif USBVER == 1.0:
+        elif PYUSBVER == 1.0:
             devs = usb.core.find(find_all=True, idProduct=0x4715)
             for dev in devs:
                 if console: print >>sys.stderr,(dev)
@@ -251,7 +251,7 @@ class USBDongle:
         self.devnum, self._d, self._do = dongles[self.idx]
         self._usbmaxi, self._usbmaxo = (EP5IN_MAX_PACKET_SIZE, EP5OUT_MAX_PACKET_SIZE)
 
-        if USBVER == 0.1:
+        if PYUSBVER == 0.4:
             self._usbcfg = self._d.configurations[0]
             self._usbintf = self._usbcfg.interfaces[0][0]
             self._usbeps = self._usbintf.endpoints
@@ -265,7 +265,7 @@ class USBDongle:
                 do.claimInterface(0)
             except Exception,e:
                 if console or self._debug: print >>sys.stderr,("Error claiming usb interface:" + repr(e))
-        elif USBVER == 1.0:
+        elif PYUSBVER == 1.0:
             try:
                 pass
                 do.set_configuration(1)
@@ -312,21 +312,21 @@ class USBDongle:
         if buf == None:
             buf = 'HELLO THERE'
         #return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, "\x00\x00\x00\x00\x00\x00\x00\x00"+buf, value, index, timeout), buf
-        if USBVER == 0.1:
+        if PYUSBVER == 0.4:
             return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, buf, value, index, timeout), buf
-        elif USBVER == 1.0:
+        elif PYUSBVER == 1.0:
             return self._do.ctrl_transfer(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, value, index, buf, timeout), buf
         else:
-            raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
+            raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
 
 
     def _recvEP0(self, request=0, length=64, value=0, index=0, timeout=100):
-        if USBVER == 0.1:
+        if PYUSBVER == 0.4:
             retary = ["%c"%x for x in self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_IN, request, length, value, index, timeout)]
-        elif USBVER == 1.0:
+        elif PYUSBVER == 1.0:
             retary = ["%c"%x for x in self._do.ctrl_transfer(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_IN, request, value, index, length, timeout)]
         else:
-            raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
+            raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
         if len(retary):
             return ''.join(retary)
         return ""
@@ -341,20 +341,20 @@ class USBDongle:
             else:
                 drain = buf[:]
             if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            if USBVER == 0.1:
+            if PYUSBVER == 0.4:
                 self._do.bulkWrite(5, "\x00\x00\x00\x00" + drain, timeout)
-            elif USBVER == 1.0:
+            elif PYUSBVER == 1.0:
                 self._do.write(5, "\x00\x00\x00\x00" + drain, timeout=timeout)
             else:
-                raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
+                raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
 
     def _recvEP5(self, timeout=100):
-        if USBVER == 0.1:
+        if PYUSBVER == 0.4:
             retary = ["%c"%x for x in self._do.bulkRead(0x85, self._usbmaxi, timeout)]
-        elif USBVER == 1.0:
+        elif PYUSBVER == 1.0:
             retary = ["%c"%x for x in self._do.read(0x85, self._usbmaxi, timeout=timeout)]
         else:
-            raise(Exception("USBVER not as expected or undefined (should be 0.1 or 1.0)"))
+            raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
 
         if self._debug: print >>sys.stderr,"RECV:"+repr(retary)
         if len(retary):
@@ -1828,7 +1828,7 @@ def unittest(self, mhz=24):
     self.ep0Ping()
     
     print "\nTesting USB enumeration"
-    if USBVER == 0.1:
+    if PYUSBVER == 0.4:
         print "getString(0,100): %s" % repr(self._do.getString(0,100))
     else:
         print "getString(0,100): %s" % repr(usb.util.get_string(self._do, 0, 100))
