@@ -208,12 +208,16 @@ typedef struct DMA_DESC_S {
 #define USB_SET_INTERFACE               0x11
 #define USB_SYNCH_FRAME                 0x12
 
+// Features
+#define USB_FEATURE_ENDPOINT_HALT       0x00
+
 // Descriptor Types
 #define USB_DESC_DEVICE                 0x01
 #define USB_DESC_CONFIG                 0x02
 #define USB_DESC_STRING                 0x03
 #define USB_DESC_INTERFACE              0x04
 #define USB_DESC_ENDPOINT               0x05
+#define USB_DESC_DEVICE_QUALIFIER       0x06
 
 // USB activities
 #define USB_ENABLE_PIN              P1_0

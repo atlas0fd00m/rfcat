@@ -346,15 +346,17 @@ class USBDongle:
             elif PYUSBVER == 1.0:
                 self._do.write(5, "\x00\x00\x00\x00" + drain, timeout=timeout)
             else:
-                raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
+                raise(Exception("PYUSBVER not as expected or undefined (should be 0.4 or 1.0)"))
 
     def _recvEP5(self, timeout=100):
         if PYUSBVER == 0.4:
-            retary = ["%c"%x for x in self._do.bulkRead(0x85, self._usbmaxi, timeout)]
+            retary = ["%c"%x for x in self._do.bulkRead(0x85, 500, timeout)]
+            #retary = ["%c"%x for x in self._do.bulkRead(0x85, self._usbmaxi, timeout)]
         elif PYUSBVER == 1.0:
-            retary = ["%c"%x for x in self._do.read(0x85, self._usbmaxi, timeout=timeout)]
+            retary = ["%c"%x for x in self._do.read(0x85, 500, timeout=timeout)]
+            #retary = ["%c"%x for x in self._do.read(0x85, self._usbmaxi, timeout=timeout)]
         else:
-            raise(Exception("PYUSBVER not as expected or undefined (should be 0.1 or 1.0)"))
+            raise(Exception("PYUSBVER not as expected or undefined (should be 0.4 or 1.0)"))
 
         if self._debug: print >>sys.stderr,"RECV:"+repr(retary)
         if len(retary):
@@ -370,7 +372,7 @@ class USBDongle:
         if clear_recv_mbox:
             for key in self.recv_mbox.keys():
                 self.trash.extend(self.recvAll(key))
-        self.trash.append(self.recv_queue)
+        self.trash.append((time.time(),self.recv_queue))
         self.recv_queue = ''
         # self.xmit_queue = []          # do we want to keep this?
         self._threadGo = threadGo
@@ -548,7 +550,7 @@ class USBDongle:
                                         #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],1
                                
                             else:            
-                                if self._debug:     sys.stderr.write('=')
+                                if self._debug>1:     sys.stderr.write('=')
 
                             msg = self.recv_queue
                             msglen = len(msg)
@@ -1763,7 +1765,7 @@ class USBDongle:
         if (level == 3):
             self.setMdmSyncMode(SYNCM_CARRIER_16_of_16)
         elif (level == 2):
-            self.setMdmSyncMode(SYNCM_16_of_16)
+            self.setMdmSyncMode(SYNCM_15_of_16)
         elif (level == 1):
             self.setMdmSyncMode(SYNCM_CARRIER)
         else:
@@ -1789,6 +1791,8 @@ class USBDongle:
             try:
                 y, t = self.RFrecv()
                 print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                if lowball:
+                    y = '\xaa\xaa' + y
                 poss = bits.findDword(y)
                 if len(poss):
                     print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])

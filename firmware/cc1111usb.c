@@ -162,7 +162,6 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
         }
 
 
-        len -= loop;
 
         DMAARM |= 0x80 + DMAARM1;
         usbdma.srcAddrH = ((u16)dataptr)>>8;
@@ -181,6 +180,10 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
         
         USBCSIL |= USBCSIL_INPKT_RDY;
         ep5iobuf.flags |= EP_INBUF_WRITTEN;                         // set the 'written' flag
+
+        len -= loop;
+        dataptr += loop;
+
     }
     //EA=1;
 }
@@ -1175,18 +1178,30 @@ __code u8 USBDESCBEGIN [] = {
 // Device descriptor
                18,                      // bLength 
                USB_DESC_DEVICE,         // bDescriptorType
-               0x00, 0x02,              // bcdUSB
-               0x02,                    // bDeviceClass i
+               LE_WORD(0x0200),              // bcdUSB
+               0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
                EP0_MAX_PACKET_SIZE,     //   EP0_PACKET_SIZE
-               0x51, 0x04,              // idVendor Texas Instruments
-               0x15, 0x47,              // idProduct CC1111
-               0x01, 0x00,              // bcdDevice             (change to hardware version)
+               LE_WORD(0x0451),         // idVendor Texas Instruments
+               LE_WORD(0x4715),         // idProduct CC1111
+               LE_WORD(0x0100),         // bcdDevice             (change to hardware version)
                0x01,                    // iManufacturer
                0x02,                    // iProduct
                0x03,                    // iSerialNumber
                0x01,                    // bNumConfigurations
+
+// Device Qualifier
+               10,                      // bLength 
+               USB_DESC_DEVICE_QUALIFIER,  // bDescriptorType
+               LE_WORD(0x0200),              // bcdUSB
+               0x00,                    // bDeviceClass - defined at interface
+               0x00,                    // bDeviceSubClass
+               0x00,                    // bDeviceProtocol
+               EP0_MAX_PACKET_SIZE,     //   EP0_PACKET_SIZE
+               0x01,                    // bNumConfigurations
+               0x00,                    // reserved
+
 // Configuration descriptor
                9,                       // bLength
                USB_DESC_CONFIG,         // bDescriptorType
@@ -1196,6 +1211,7 @@ __code u8 USBDESCBEGIN [] = {
                0x00,                    // iConfiguration
                0x80,                    // bmAttributes
                0xfa,                    // MaxPower
+
 // Interface descriptor
                9,                       // bLength
                USB_DESC_INTERFACE,      // bDescriptorType
@@ -1206,6 +1222,7 @@ __code u8 USBDESCBEGIN [] = {
                0xff,                    // bInterfaceSubClass
                0x01,                    // bInterfaceProcotol
                0x00,                    // iInterface
+
 // Endpoint descriptor (EP5 IN)
                7,                       // bLength
                USB_DESC_ENDPOINT,       // bDescriptorType
@@ -1271,8 +1288,8 @@ __code u8 USBDESCBEGIN [] = {
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
               '0', 0,
-              '0', 0,
-              '5', 0,
+              '1', 0,
+              '3', 0,
                                 
 // END OF STRINGS (len 0, type ff)
                0, 0xff
