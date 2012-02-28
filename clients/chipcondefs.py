@@ -31,7 +31,7 @@ class RadioConfig(vstruct.VStruct):
         self.agcctrl1   = v_uint8()       #df18
         self.agcctrl0   = v_uint8()       #df19
         self.frend1     = v_uint8()       #df1a
-        self.fredn0     = v_uint8()       #df1b
+        self.frend0     = v_uint8()       #df1b
         self.fscal3     = v_uint8()       #df1c
         self.fscal2     = v_uint8()       #df1d
         self.fscal1     = v_uint8()       #df1e
