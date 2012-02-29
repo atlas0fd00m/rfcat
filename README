@@ -51,6 +51,34 @@ your build environment:
             | Chronos                      |
             --------------------------------
 
+
+            --------------
+            |            |
+            | CC1111EMK  |
+            |            |
+            | Debug      |
+            | 10 9       |
+            |  8 7       |
+            |  6 5       |
+            |  4 3       |
+            |  2 1       |
+            |            |
+            | Test       |
+            | 10 9       |
+            |  8 7       |
+            |  6 5       |
+            |  4 3       |
+            |  2 1       |
+            ------       |
+                 |   U   |
+                 |   S   |
+                 |   B   |
+                 ---------
+
+
+
+            
+
   * GoodFET41 ---> Chronos        
 
                GoodFET            Chronos
@@ -61,6 +89,17 @@ your build environment:
                   5 <----- RST ----> 1
                   7 <----- DC -----> 5
                   9 <----- GND ----> 3
+
+  * GoodFET41 ---> CC1111EMK Debug
+
+               GoodFET        CC1111EMK Debug
+                 PIN                PIN
+
+                  1 <----- DD -----> 4
+                  2 <----- VCC ----> 2
+                  5 <----- RST ----> 7
+                  7 <----- DC -----> 3
+                  9 <----- GND ----> 1
 
 * install sdcc
 * install make
