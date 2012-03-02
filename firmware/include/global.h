@@ -5,14 +5,11 @@
 
 #ifdef CC1111
   #include "cc1111.h"
-  #include "chipcon_usbdebug.h"
 #elif defined CC2531
   #include "cc2531.h"
-  #include "chipcon_usbdebug.h"
 #elif defined IMME
   #include <cc1110.h>
   #include "cc1110-ext.h"
-
 #endif
 
 #include "bits.h"

@@ -80,7 +80,7 @@ void txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
 //#define USB_DESC_STRING           3
 //#define USB_DESC_INTERFACE        4
 //#define USB_DESC_ENDPOINT         5
-#define USB_DESC_DEVICE_QUALIFIER 6
+//#define USB_DESC_DEVICE_QUALIFIER 6
 #define USB_DESC_OTHER_SPEED      7
 #define USB_DESC_INTERFACE_POWER  8
 

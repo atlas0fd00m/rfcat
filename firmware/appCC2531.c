@@ -1,5 +1,4 @@
 #include "global.h"
-#include "cc1111usb.h"
 
 //SFR(WDCTL, 0xc9);
 
