@@ -1,5 +1,6 @@
 #include "cc1111rf.h"
 #include "global.h"
+#include "nic.h"
 
 #ifdef VIRTUAL_COM
     #include "cc1111.h"
