@@ -18,7 +18,6 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
-#include "cc1111.h"
 #include "cc1111_vcom.h"
 
 static __xdata u16 usb_in_bytes;
@@ -26,6 +25,9 @@ static __xdata u16 usb_in_bytes_last;
 static __xdata u16 usb_out_bytes;
 volatile static __xdata u8  usb_iif;
 static __xdata u8  usb_running;
+
+__xdata __at (0xde20) volatile u8 USBFIFO[12];
+
 
 static void vcom_set_interrupts()
 {
@@ -80,7 +82,7 @@ static void vcom_ep0_flush()
   USBCS0 = cs0;
 }
 
-xdata static struct usb_line_coding usb_line_codings = {115200, 0, 0, 8};
+__xdata static struct usb_line_coding usb_line_codings = {115200, 0, 0, 8};
 
 // Walk through the list of descriptors and find a match
 static void vcom_get_descriptor(u16 value)
@@ -289,7 +291,7 @@ static void vcom_ep0()
 
 // This interrupt is shared with port 2,
 // so when we hook that up, fix this
-void vcom_isr() __interrupt 6
+void usbIntHandler(void) __interrupt P2INT_VECTOR
 {
   USBIF = 0;
   usb_iif |= USBIIF;
@@ -297,6 +299,15 @@ void vcom_isr() __interrupt 6
 
   if (USBCIF & USBCIF_RSTIF)
 	  vcom_set_interrupts();
+}
+
+void p0IntHandler(void) interrupt P0INT_VECTOR
+{
+    while (!IS_XOSC_STABLE());
+
+    SLEEP &= ~0x3;                                  // clear the PM mode bits
+    USB_RESUME_INT_CLEAR();
+    
 }
 
 // Wait for a free IN buffer

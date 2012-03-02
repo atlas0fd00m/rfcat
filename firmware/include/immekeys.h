@@ -1,6 +1,6 @@
 /*
- * Copyright 2010 Travis Goodspeed, Michael Ossmann
  * Copyright 2011 atlas
+ * adapted from code by Travis Goodspeed, Michael Ossmann
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,10 @@
  * the Free Software Foundation, Inc., 51 Franklin Street,
  * Boston, MA 02110-1301, USA.
  */
+#include "types.h"
 
-
-u8 keyscan();
-u8 getkey();
+u8 keyscan(void);
+u8 getkey(void);
 
 //Special keys.
 //#define KPWR 0x01

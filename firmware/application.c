@@ -2,10 +2,32 @@
 #include "global.h"
 
 #ifdef VIRTUAL_COM
-    #include "cc1111.h"
     #include "cc1111_vcom.h"
+
+    // FIXME: this belongs elsewhere...
+    #define STATUS_TAG 0
+    #define STATUS_LEN 1
+    #define STATUS_VAL 2
+    
+    #define TAG_MODE    0x01 /* Value is mode, IDLE,RX,TX */
+    #define TAG_SEND    0x02 /* Value is what to send */
+    #define TAG_STATUS  0x03 /* Value is the status value want to know, for example RSSI */
+    #define TAG_REG     0x04 /* Register values, value as register=value */
+
+    #define TLV_MAX_DATA 50    
+
+    typedef struct
+    {
+        u8 uiTag;
+        u8 uiLength;
+        u8 uiData[TLV_MAX_DATA];
+    } tlv_t;
+
+    static __xdata tlv_t tlv_recv,tlv_send;
+    static __xdata uiDataPtr = 0;
+    static __xdata u8 uiStatus = STATUS_TAG;
 #else
-    #include "cc1111usb.h"
+    #include "chipcon_usb.h"
 #endif
 
 /*************************************************************************************************
@@ -32,8 +54,8 @@
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 
-xdata u32 loopCnt;
-xdata u8 xmitCnt;
+__xdata u32 loopCnt;
+__xdata u8 xmitCnt;
 
 int appHandleEP5(void);
 
@@ -54,7 +76,7 @@ void appMainInit(void)
 void appMainLoop(void)
 {
     //  this is part of the NIC code to handle received RF packets and may be replaced/modified //
-    xdata u8 processbuffer;
+    __xdata u8 processbuffer;
 
     if (rfif)
     {
@@ -66,7 +88,10 @@ void appMainLoop(void)
             processbuffer = !rfRxCurrentBuffer;
             if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
             {
-                txdata(0xfe, 0xf0, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer]);
+                if (PKTCTRL0&1)     // variable length packets have a leading "length" byte, let's skip it
+                    txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer][1]);
+                else
+                    txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
 
                 // Set receive buffer to processed so it can be used again //
                 rfRxProcessed[processbuffer] = RX_PROCESSED;
@@ -95,7 +120,7 @@ int appHandleEP5()
 #ifndef VIRTUAL_COM
     u8 app, cmd;
     u16 len;
-    xdata u8 *buf;
+    __xdata u8 *buf;
 
     app = ep5iobuf.OUTbuf[4];
     cmd = ep5iobuf.OUTbuf[5];
@@ -217,8 +242,6 @@ static void appInitRf(void)
 
 }
 
-/* initialize the IO subsystems for the appropriate dongles */
-
 /*************************************************************************************************
  * main startup code                                                                             *
  *************************************************************************************************/
@@ -236,7 +259,6 @@ void main (void)
     initUSB();
     init_RF();
     appMainInit();
-
 
     /* Enable interrupts */
     EA = 1;

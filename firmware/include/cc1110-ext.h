@@ -1285,11 +1285,4 @@
 #define PKTSTATUS_CS					0x40
 #define PKTSTATUS_CRCOK					0x80
 
-#define u8 unsigned char
-#define u16 unsigned int
-#define uint8 unsigned char
-#define uint16 unsigned int
-#define u32 unsigned long
-
-/***********************************************************************/
 #endif
