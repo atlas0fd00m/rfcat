@@ -4,7 +4,7 @@
 #include "types.h"
 
 #ifdef CC1111
-#include "cc1111.h"
+  #include "cc1111.h"
   #include "chipcon_usbdebug.h"
 #elif defined CC2531
   #include "cc2531.h"
@@ -59,7 +59,7 @@ extern __xdata u32 clock;
     // CC1110 IMME pink dongle - 26mhz
     #define LED_RED   P2_3
     #define LED_GREEN P2_4
-    #define SLEEPTIMER  1100
+    #define SLEEPTIMER  1200
     #define PLATFORM_CLOCK_FREQ 26
     
  #include "immedisplay.h"
@@ -68,21 +68,21 @@ extern __xdata u32 clock;
  //#include "pm.h"
 
 #else
-    #define SLEEPTIMER  1200
+    #define SLEEPTIMER  1100
     #define PLATFORM_CLOCK_FREQ 24
 void usbIntHandler(void) interrupt P2INT_VECTOR;
 void p0IntHandler(void) interrupt P0INT_VECTOR;
 
     #if defined DONSDONGLES
-    // CC1111 USB Dongle with breakout debugging pins (EMK?) - 24mhz
-    #define LED_RED   P1_1
-    #define LED_GREEN P1_1
-    #define CC1111EM_BUTTON P1_2
+        // CC1111 USB Dongle with breakout debugging pins (EMK?) - 24mhz
+        #define LED_RED   P1_1
+        #define LED_GREEN P1_1
+        #define CC1111EM_BUTTON P1_2
 
-#elif defined CHRONOSDONGLE
-    // CC1111 USB Chronos watch dongle - 24mhz
-    #define LED_RED   P1_0
-    #define LED_GREEN P1_0
+    #elif defined CHRONOSDONGLE
+        // CC1111 USB Chronos watch dongle - 24mhz
+        #define LED_RED   P1_0
+        #define LED_GREEN P1_0
 
     #elif defined CC2531
         // CC2531 USB 802.15.4 emk - 24mhz

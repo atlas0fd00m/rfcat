@@ -18,6 +18,9 @@ void sleepMillis(int ms)
 
 void sleepMicros(int us) 
 {
+    // this while loop for an int takes 11 instructions, which takes 4.5833uS and 4.2308uS
+    // at 24MHz and 26MHz
+    us *= PLATFORM_CLOCK_FREQ/11;
     while (--us > 0) ;
 }
 
