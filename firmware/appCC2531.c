@@ -1,12 +1,7 @@
-#include "cc1111rf.h"
 #include "global.h"
+#include "cc1111usb.h"
 
-#ifdef VIRTUAL_COM
-    #include "cc1111.h"
-    #include "cc1111_vcom.h"
-#else
-    #include "cc1111usb.h"
-#endif
+//SFR(WDCTL, 0xc9);
 
 /*************************************************************************************************
  * welcome to the cc1111usb application.
@@ -17,20 +12,16 @@
  * next, put code as follows:
  * * any initialization code that should happen at power up goes in appMainInit()
  * * the main application loop code should go in appMainLoop()
- * * usb interface code should go into appHandleEP5.  this includes a switch statement for any 
- *      verbs you want to create between the client on this firmware.
+ * * usb interface code: register a callback using register_Cb_ep5() as demonstrated in appMainInit()
  *
  * if you should need to change anything about the USB descriptors, do your homework!  particularly
  * keep in mind, if you change the IN or OUT max packetsize, you *must* change it in the 
- * EPx_MAX_PACKET_SIZE define, the desciptor definition (be sure to get the right one!) and should 
- * correspond to the setting of MAXI and MAXO.
+ * EPx_MAX_PACKET_SIZE define, and should correspond to the setting of MAXI and MAXO.
  * 
  * */
 
 
-#define APP_NIC 0x42
-#define NIC_RECV 0x1
-#define NIC_XMIT 0x2
+
 
 /*************************************************************************************************
  * Application Code - these first few functions are what should get overwritten for your app     *
@@ -39,46 +30,53 @@
 xdata u32 loopCnt;
 xdata u8 xmitCnt;
 
+int appHandleEP5(void);
+
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
 {
+    //registerCb_ep0Vendor( appHandleEP0Vendor );
+    registerCb_ep5( appHandleEP5 );
+
     loopCnt = 0;
     xmitCnt = 1;
 
-    RxMode();
-    //startRX();
+    //RxMode();
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
+    /*
+    //  this is part of the NIC code to handle received RF packets and may be replaced/modified //
     xdata u8 processbuffer;
 
     if (rfif)
     {
-        lastCode[0] = 0xd;
+        lastCode[0] = LC_MAIN_RFIF;
         IEN2 &= ~IEN2_RFIE;
 
         if(rfif & RFIF_IRQ_DONE)
         {
             processbuffer = !rfRxCurrentBuffer;
             if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
-            {   
+            {
                 // we've received a packet.  deliver it.
                 if (PKTCTRL0&1)     // variable length packets have a leading "length" byte, let's skip it
                     txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer][1]);
                 else
                     txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
 
-                /* Set receive buffer to processed so it can be used again */
+                // Set receive buffer to processed so it can be used again //
                 rfRxProcessed[processbuffer] = RX_PROCESSED;
             }
         }
 
         rfif = 0;
         IEN2 |= IEN2_RFIE;
-    }
+    }*/
+    //////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
@@ -95,42 +93,46 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd, len;
+    u8 app, cmd;
+    u16 len;
     xdata u8 *buf;
 
     app = ep5iobuf.OUTbuf[4];
     cmd = ep5iobuf.OUTbuf[5];
     buf = &ep5iobuf.OUTbuf[6];
-    //len = (u16)*buf;    - original firmware
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
+    len = (u16)*buf;
+    buf += 2;                                               // point at the address in memory
     // ep5iobuf.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
     // check the application
     //  then check the cmd
     //   then process the data
-    switch (app)
+    switch (cmd)
     {
-        case APP_NIC:
+        /*
+        case CMD_RFMODE:
+            switch (*ptr++)
+            {
+                case RF_STATE_RX:
 
-        switch (cmd)
-        {
-            case NIC_XMIT:
-                transmit(buf, len);
-                { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                txdata(app, cmd, 1, (xdata u8*)"0");
-                break;
-            default:
-                break;
-        }
-        break;
+                    RxMode();
+                    break;
+                case RF_STATE_IDLE:
+                    IdleMode();
+                    break;
+                case RF_STATE_TX:
+                    transmit(ptr, len);
+                    break;
+            }
+            txdata(app,cmd,len,ptr);
+            break;
+            */
+        default:
+            break;
     }
     ep5iobuf.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
 #endif
     return 0;
 }
-
-
 
 /*************************************************************************************************
  *  here begins the initialization stuff... this shouldn't change much between firmwares or      *
@@ -139,6 +141,7 @@ int appHandleEP5()
 
 static void appInitRf(void)
 {
+#if 0
     IOCFG2      = 0x00;
     IOCFG1      = 0x00;
     IOCFG0      = 0x00;
@@ -174,8 +177,8 @@ static void appInitRf(void)
     FSCAL2      = 0x2a;
     FSCAL1      = 0x00;
     FSCAL0      = 0x1f;
-    TEST2       = 0x88; // low data rates, increased sensitivity provided by 0x81- was 0x88
-    TEST1       = 0x31; // always 0x31 in tx-mode, for low data rates 0x35 provides increased sensitivity - was 0x31
+    TEST2       = 0x88; // low data rates, increased sensitivity - was 0x88
+    TEST1       = 0x31; // always 0x31 in tx-mode, for low data rates, increased sensitivity - was 0x31
     TEST0       = 0x09;
     PA_TABLE0   = 0x50;
 
@@ -212,15 +215,17 @@ static void appInitRf(void)
     //TEST0       = 0x09;
     //PA_TABLE0   = 0x83;
 #endif
-
+#endif
 }
 
+/* initialize the IO subsystems for the appropriate dongles */
 
 /*************************************************************************************************
  * main startup code                                                                             *
  *************************************************************************************************/
 void initBoard(void)
 {
+    // in global.c
     clock_init();
     io_init();
 }
@@ -230,15 +235,17 @@ void main (void)
 {
     initBoard();
     initUSB();
-    blink(300,300);
-
-    init_RF();
+    //init_RF();
     appMainInit();
 
-    usb_up();
 
     /* Enable interrupts */
     EA = 1;
+    usb_up();
+
+
+    // wait until the host identifies the usb device (the host timeouts are awfully fast)
+    waitForUSBsetup();
 
     while (1)
     {  

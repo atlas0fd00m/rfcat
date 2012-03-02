@@ -37,32 +37,41 @@
 #define RX_UNPROCESSED 0
 #define RX_PROCESSED 1
 
+/* Type for registers:
+	NORMAL: registers are configured by client
+	RECV: registers are set for receive
+	XMIT: registers are set for transmit
+*/
+typedef enum{NORMAL,RECV,XMIT} register_e;
+
 /* Rx buffers */
-extern volatile xdata u8 rfRxCurrentBuffer;
-extern volatile xdata u8 rfrxbuf[BUFFER_AMOUNT][BUFFER_SIZE];
-extern volatile xdata u8 rfRxCounter[BUFFER_AMOUNT];
-extern volatile xdata u8 rfRxProcessed[BUFFER_AMOUNT];
+extern volatile __xdata u8 rfRxCurrentBuffer;
+extern volatile __xdata u8 rfrxbuf[BUFFER_AMOUNT][BUFFER_SIZE];
+extern volatile __xdata u8 rfRxCounter[BUFFER_AMOUNT];
+extern volatile __xdata u8 rfRxProcessed[BUFFER_AMOUNT];
 /* Tx buffers */
-extern volatile xdata u8 rftxbuf[BUFFER_SIZE];
-extern volatile xdata u8 rfTxCounter;
+extern volatile __xdata u8 rftxbuf[BUFFER_SIZE];
+extern volatile __xdata u8 rfTxCounter;
 
 extern volatile xdata u16 rf_MAC_timer;
 extern volatile xdata u16 rf_tLastRecv;
 
 extern u8 rfif;
 
-void rfTxRxIntHandler(void) interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
-void rfIntHandler(void) interrupt RF_VECTOR; // interrupt handler should trigger on rf events
+void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
+void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
 
 void setRFIdle(void);
+void setRFRx(void);
+void setRFTx(void);
 int waitRSSI(void);
 void RxMode(void);
 void IdleMode(void);
-u8 transmit(xdata u8* buf, u16 len);
-void stopRX(void);
-void startRX(void);
-void resetRf(void);
-void init_RF(void);
+
+u8 transmit(__xdata u8*, u16 len);
 void appInitRf(void);   // in application.c
+void startRX(void);
+void stopRX(void);
+void init_RF(void);
 
 #endif

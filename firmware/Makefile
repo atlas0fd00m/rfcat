@@ -3,21 +3,25 @@ CFLAGS=-Iinclude
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
 
-apps = cc1111rf.rel global.rel
-appsc = cc1111rf.relc global.relc
-appsd = cc1111rf.reld global.reld
-appsi = cc1111rf.reli global.reli
+apps2531 = global.rel
+apps2531d3 = global.reld3
+
+apps1111 = cc1111rf.rel global.rel
+apps1111c = cc1111rf.relc global.relc
+apps1111d = cc1111rf.reld global.reld
+apps1111i = cc1111rf.reli global.reli
 appsid = cc1111rf.relid global.relid
 
-libsvcom = $(apps) cc1111_vcom.rel cc1111_vcomdesc.rel cc1111usbdebug.rel #cc1111usb.rel
-libsvcomc = $(appsc) cc1111_vcom.relc cc1111_vcomdesc.relc cc1111usbdebug.relc #cc1111usb.rel
-libsvcomd = $(appsd) cc1111_vcom.reld cc1111_vcomdesc.reld cc1111usbdebug.reld #cc1111usb.rel
-libsvcomi = $(appsi) cc1111_vcom.reli cc1111_vcomdesc.reli cc1111usbdebug.reli #cc1111usb.rel
+libsvcom = cc1111_vcom.rel cc1111_vcomdesc.rel chipcon_usbdebug.rel #chipcon_usb.rel
+libsvcomc = cc1111_vcom.relc cc1111_vcomdesc.relc chipcon_usbdebug.relc #chipcon_usb.rel
+libsvcomd = cc1111_vcom.reld cc1111_vcomdesc.reld chipcon_usbdebug.reld #chipcon_usb.rel
+libsvcomi = cc1111_vcom.reli cc1111_vcomdesc.reli chipcon_usbdebug.reli #chipcon_usb.rel
 
-libsusb  = $(apps) cc1111usb.rel cc1111usbdebug.rel
-libsusbc  = $(appsc) cc1111usb.rc cc1111usbdebug.relc
-libsusbd  = $(appsd) cc1111usb.rd cc1111usbdebug.reld
-libsusbi  = $(appsi) immeusb.reli immeusbdebug.reli
+libsusb  = chipcon_usb.rel chipcon_usbdebug.rel
+libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc
+libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3
+libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld
+libsusbi  = immeusb.reli immeusbdebug.reli
 
 libsimme  = $(appsi) immeio.reli immekeys.reli immefont.reli   #  immedisplay.rel immeterm.rel
 libsimmed  = $(appsid) immeio.relid immekeys.relid immefont.relid   #  immedisplay.rel immeterm.rel
@@ -32,19 +36,26 @@ testrecv: testrecvapplication.hex
 testxmit: testxmitapplication.hex
 
 
-cc1111usb.rc : cc1111usb.c
+chipcon_usb.rc : chipcon_usb.c
 	./new_serial.py
-	$(CC) $(CFLAGS) -DCHRONOSDONGLE -c cc1111usb.c
+	$(CC) $(CFLAGS) -DCHRONOSDONGLE -DCC1111 -c chipcon_usb.c
 
-cc1111usb.rd : cc1111usb.c
+chipcon_usb.rd3 : chipcon_usb.c
 	./new_serial.py
-	$(CC) $(CFLAGS) -DDONSDONGLES -c cc1111usb.c
+	$(CC) $(CFLAGS) -DCC2531 -c chipcon_usb.c
+
+chipcon_usb.rd : chipcon_usb.c
+	./new_serial.py
+	$(CC) $(CFLAGS) -DDONSDONGLES -DCC1111 -c chipcon_usb.c
 
 %.relc : %.c
-	$(CC) $(CFLAGS) -DCHRONOSDONGLE -c $<
+	$(CC) $(CFLAGS) -DCHRONOSDONGLE -DCC1111 -c $<
+
+%.reld3 : %.c
+	$(CC) $(CFLAGS) -DCC2531 -c $<
 
 %.reld : %.c
-	$(CC) $(CFLAGS) -DDONSDONGLES -c $<
+	$(CC) $(CFLAGS) -DDONSDONGLES -DCC1111 -c $<
 
 %.reli : %.c
 	$(CC) $(CFLAGS) -DIMME -c $<
@@ -52,20 +63,24 @@ cc1111usb.rd : cc1111usb.c
 %.relid : %.c
 	$(CC) $(CFLAGS) -DIMME -DIMMEDONGLE -c $<
 
-chronosapplication.hex: application.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) -DCHRONOSDONGLE
+chronosapplication.hex: application.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DCC1111
 	packihx <application.ihx >bins/application.hex
 
-donsapplication.hex: application.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) -DDONSDONGLES
+cc2531.hex: appCC2531.c $(libsusbd3) $(apps2531d3)
+	sdcc $(CFLAGS) $(LFLAGS) appCC2531.c $(libsusb) $(apps2531) -DCC2531
+	packihx <appCC2531.ihx >bins/appCC2531.hex
+
+donsapplication.hex: application.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DDONSDONGLES
 	packihx <application.ihx >bins/application.hex
 
-chronostestusbonly.hex: usbonly.c cc1111usb.rc global.relc
-	sdcc $(CFLAGS) $(LFLAGS) usbonly.c cc1111usb.rel global.rel -DCHRONOSDONGLE
+chronostestusbonly.hex: usbonly.c chipcon_usb.rc global.relc
+	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DCHRONOSDONGLE
 	packihx <usbonly.ihx >bins/usbonly.hex
 
-donstestusbonly.hex: usbonly.c cc1111usb.rc global.reld
-	sdcc $(CFLAGS) $(LFLAGS) usbonly.c cc1111usb.rel global.rel -DDONSDONGLES
+donstestusbonly.hex: usbonly.c chipcon_usb.rc global.reld
+	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DDONSDONGLES
 	packihx <usbonly.ihx >bins/usbonly.hex
 
 #	may be helpful when we actually have one...
@@ -73,56 +88,56 @@ donstestusbonly.hex: usbonly.c cc1111usb.rc global.reld
 #	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) -DIMMEDONGLE -DIMME
 #	packihx <application.ihx >bins/application.hex
 #
-chronosNIC.hex: appNIC.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) -DCHRONOSDONGLE
+chronosNIC.hex: appNIC.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appNIC.ihx >bins/chronosNIC.hex
 
-chronosFHSS.hex: appFHSSNIC.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) -DCHRONOSDONGLE
+chronosFHSS.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/chronosFHSS.hex
 
-donsNIC.hex: appNIC.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) -DDONSDONGLES
+donsNIC.hex: appNIC.c $(libsusbd) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
 	packihx <appNIC.ihx >bins/donsNIC.hex
 
-donsFHSS.hex: appFHSSNIC.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) -DDONSDONGLES
+donsFHSS.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
 	packihx <appFHSSNIC.ihx >bins/donsFHSS.hex
 
-chronosSniff.hex: appSniff.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) -DCHRONOSDONGLE
+chronosSniff.hex: appSniff.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appSniff.ihx >bins/chronosSniff.hex
 
-donsSniff.hex: appSniff.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) -DCHRONOSDONGLE
+donsSniff.hex: appSniff.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appSniff.ihx >bins/donsSniff.hex
 
-immeSniff.hex: appSniff.c $(libsimme) 
-	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) -DIMME
+immeSniff.hex: appSniff.c $(libsimme) $(appsid)
+	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) $(apps1111) -DIMME
 	packihx <appSniff.ihx >bins/immeSniff.hex
 
-chronostestxmitusb.hex: appNetworkTest.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) -DCHRONOSDONGLE -DTRANSMIT_TEST 
+chronostestxmitusb.hex: appNetworkTest.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DTRANSMIT_TEST 
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
 
-donstestxmitusb.hex: appNetworkTest.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) -DDONSDONGLES -DTRANSMIT_TEST 
+donstestxmitusb.hex: appNetworkTest.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DDONSDONGLES -DTRANSMIT_TEST 
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
 
-chronostestrecvusb.hex: appNetworkTest.c $(libsusbc)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) -DCHRONOSDONGLE -DRECEIVE_TEST
+chronostestrecvusb.hex: appNetworkTest.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DRECEIVE_TEST
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
-donstestrecvusb.hex: appNetworkTest.c $(libsusbd)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) -DDONSDONGLES -DRECEIVE_TEST
+donstestrecvusb.hex: appNetworkTest.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DDONSDONGLES -DRECEIVE_TEST
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
-testxmitapplication.hex: appNetworkTest.c $(libsvcomc)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsvcom) -DCHRONOSDONGLE -DVIRTUAL_COM -DTRANSMIT_TEST 
+testxmitapplication.hex: appNetworkTest.c $(libsvcomc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsvcom) $(apps1111) -DCHRONOSDONGLE -DVIRTUAL_COM -DTRANSMIT_TEST 
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
 
-testrecvapplication.hex: appNetworkTest.c $(libsvcomc)
-	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsvcom) -DCHRONOSDONGLE -DVIRTUAL_COM -DRECEIVE_TEST
+testrecvapplication.hex: appNetworkTest.c $(libsvcomc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsvcom) $(apps1111) -DCHRONOSDONGLE -DVIRTUAL_COM -DRECEIVE_TEST
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
 
@@ -135,6 +150,11 @@ installchronosfw: chronosapplication.hex
 installdonfw: donsapplication.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/application.hex
+	goodfet.cc info
+
+installcc2531: cc2531.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/appCC2531.hex
 	goodfet.cc info
 
 #installimmefw: immedongleapplication.hex
@@ -219,7 +239,7 @@ restoredongle:
 	goodfet.cc flash bins/original-dongle-hex.backup
 	goodfet.cc info
 
-testall: chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donstestrecvusb.hex chronostestxmitusb.hex donstestxmitusb.hex testrecvapplication.hex testxmitapplication.hex chronosNIC.hex donsNIC.hex chronosSniff.hex donsSniff.hex immeSniff.hex
+testall: chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donstestrecvusb.hex chronostestxmitusb.hex donstestxmitusb.hex testrecvapplication.hex testxmitapplication.hex chronosNIC.hex donsNIC.hex chronosFHSS.hex donsFHSS.hex chronosSniff.hex donsSniff.hex immeSniff.hex cc2531.hex
 ##immedongleapplication.hex 
 
 # testing should see that each enumerates correctly in linux

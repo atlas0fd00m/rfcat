@@ -1,4 +1,4 @@
-
+#include "types.h"
 
 void immeLCDUpdateState(void);
 void immeLCDShowRFConfig(void);

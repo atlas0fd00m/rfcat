@@ -87,7 +87,7 @@ class FHSSNIC(USBDongle):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
 
     def RFxmit(self, data):
-        self.send(APP_NIC, NIC_XMIT, "%c%s" % (len(data)+1, data))
+        self.send(APP_NIC, NIC_XMIT, "%c%s" % (len(data), data))
 
     def RFrecv(self, timeout=100):
         return self.recv(APP_NIC, NIC_RECV, timeout)

@@ -45,7 +45,7 @@ def findDword(byts):
                 bits1 <<= 8
                 bits1 |= (ord(sbyts[2]) )
                 bits1 >>= bitoff            # now we should be aligned correctly
-                print "bits: %x" % (bits1)
+                #print "bits: %x" % (bits1)
 
                 bit = (5 * 8) - 2  # bytes times bits/byte
                 while (bits1 & (3<<bit) == (2<<bit)):

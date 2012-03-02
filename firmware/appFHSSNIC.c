@@ -425,8 +425,8 @@ void appMainLoop(void)
                     if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
                     {   
                         // we've received a packet.  deliver it.
-                        if (PKTCTRL0&1)
-                            txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer]);
+                        if (PKTCTRL0&1)     // variable length packets have a leading "length" byte, let's skip it
+                            txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer][1]);
                         else
                             txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
 
@@ -462,8 +462,8 @@ void appMainLoop(void)
                     if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
                     {   
                         // we've received a packet.  deliver it.
-                        if (PKTCTRL0&1)
-                            txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer]);
+                        if (PKTCTRL0&1)     // variable length packets have a leading "length" byte, let's skip it
+                            txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer][1]);
                         else
                             txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
 
@@ -501,12 +501,12 @@ void appMainLoop(void)
                     if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
                     {   
                         // we've received a packet.  deliver it.
-                        //if (PKTCTRL0&1)
-                        //    txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer]);
-                        //else
-                        //    txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
+                        if (PKTCTRL0&1)     // variable length packets have a leading "length" byte, let's skip it
+                            txdata(APP_NIC, NIC_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer][1]);
+                        else
+                            txdata(APP_NIC, NIC_RECV, PKTLEN, (u8*)&rfrxbuf[processbuffer]);
    
-                        txdata(APP_NIC, NIC_RECV, rfRxCounter[processbuffer], (u8*)&rfrxbuf[processbuffer]);
+                        //txdata(APP_NIC, NIC_RECV, rfRxCounter[processbuffer], (u8*)&rfrxbuf[processbuffer]);
 
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
@@ -541,8 +541,8 @@ int appHandleEP5()
     cmd = ep5iobuf.OUTbuf[5];
     buf = &ep5iobuf.OUTbuf[6];
     //len = (u16)*buf;    - original firmware
-    len = (u8)*buf;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    buf += 2;                                               // point at the address in memory
+    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
+    len += (u16)((*buf++) << 8);                                               // point at the address in memory
     // ep5iobuf.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
     // check the application
     //  then check the cmd
@@ -564,15 +564,16 @@ int appHandleEP5()
                         IdleMode();
                         break;
                     case RF_STATE_TX:
-                        transmit(buf, len);
+						// ??  this should be just turning on CARRIER
+                        setRFTx();
                         break;
                 }
                 txdata(app,cmd,len,buf);
                 break;
             case NIC_XMIT:
                 // FIXME:  this needs to place buf data into the FHSS txMsgQueue
-                transmit(buf, len);
-                { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
+                transmit(buf, 0);
+                //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
                 txdata(app, cmd, 1, (xdata u8*)"\x00");
                 break;
                 

@@ -17,7 +17,7 @@ print("[--- new serial number: %.4d ---]" % ser)
 file(".serial", 'wb').write("%.4d" % ser)
 sertxt = "%.4d" % ser
 
-sf = file("cc1111usb.c", 'r+')
+sf = file("chipcon_usb.c", 'r+')
 sfile = sf.read()
 idx = sfile.find('// Serial number')
 eos = sfile.find('// END OF STRINGS')
