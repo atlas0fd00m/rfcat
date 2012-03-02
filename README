@@ -39,10 +39,12 @@ your build environment:
        | USB                          7  8 |
        ------                         9 10 |
             |                        11 12 |
-            | GoodFET41              13 14 |
+            | GoodFET                13 14 |
             --------------------------------
 
 
+
+  * Chronos Dongle Details
             --------------------------------
             |                              |
             |             RST 1  2 TP      ------
@@ -50,8 +52,6 @@ your build environment:
             |            P2.2 5  6 P2.1    ------
             | Chronos                      |
             --------------------------------
-
-  * GoodFET41 ---> Chronos        
 
                GoodFET            Chronos
                  PIN                PIN
@@ -61,6 +61,28 @@ your build environment:
                   5 <----- RST ----> 1
                   7 <----- DC -----> 5
                   9 <----- GND ----> 3
+
+
+  * EMK Dongle Details
+            --------------------------------
+            | 2 4 6 8 10   2 4 6 8 10      |
+            | 1 3 5 7 9    1 3 5 7 9
+            |-TEST-PINS----DEBUG-PINS------|
+            |                              |
+       ------                              |
+       | USB                               |
+       ------                              |
+            | Don's Dongle (EMK)           |
+            --------------------------------
+
+               GoodFET              EMK  
+                 PIN                PIN
+
+                  1 <----- DD -----> 4
+                  2 <----- VCC ----> 2
+                  5 <----- RST ----> 7
+                  7 <----- DC -----> 3
+                  9 <----- GND ----> 1
 
 * install sdcc
 * install make
