@@ -284,13 +284,13 @@ class USBDongle:
         if (buf==None):
             buf = "\xff\x82\x07\x00ABCDEFG"
         while (len(buf)>0):
-            if (buf > EP5OUT_MAX_PACKET_SIZE-4):
-                drain = buf[:EP5OUT_MAX_PACKET_SIZE-4]
-                buf = buf[EP5OUT_MAX_PACKET_SIZE-4:]
+            if (buf > EP5OUT_MAX_PACKET_SIZE):
+                drain = buf[:EP5OUT_MAX_PACKET_SIZE]
+                buf = buf[EP5OUT_MAX_PACKET_SIZE:]
             else:
                 drain = buf[:]
             if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            self._do.bulkWrite(5, "\x00\x00\x00\x00" + drain, timeout)
+            self._do.bulkWrite(5, drain, timeout)
 
     def _recvEP5(self, timeout=100):
         retary = ["%c"%x for x in self._do.bulkRead(0x85, 500, timeout)]

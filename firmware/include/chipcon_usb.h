@@ -5,7 +5,7 @@
 #include "chipcon_usbdebug.h"
 
 #define     EP0_MAX_PACKET_SIZE     32
-#define     EP5OUT_MAX_PACKET_SIZE  256
+#define     EP5OUT_MAX_PACKET_SIZE  64
 #define     EP5IN_MAX_PACKET_SIZE   64
 
 #define     EP_STATE_IDLE      0
@@ -15,6 +15,7 @@
 
 #define     EP_INBUF_WRITTEN        1
 #define     EP_OUTBUF_WRITTEN       2
+#define     EP_OUTBUF_CONTINUED     4
 
 #define USB_STATE_UNCONFIGURED 0
 #define USB_STATE_IDLE      1
@@ -206,11 +207,12 @@ typedef struct {
     u16  INbytesleft;
     u8*  OUTbuf;
     u16  OUTlen;
-    u16  BUFmaxlen;
+    u8   OUTapp;
+    u8   OUTcmd;
+    u16  OUTbytesleft;
     volatile u8   flags;
     u8   epstatus;
-    //xdata u8*  reg;
-    //void*   OUTDONE_handle;                                     // this is a function pointer which is called when the OUT transfer is done.  i may destroy this.
+    xdata u8* dptr;
 } USB_EP_IO_BUF;
 
 typedef struct USB_Device_Desc_Type {
@@ -296,8 +298,8 @@ extern __code u8 USBDESCBEGIN[];
 extern USB_STATE usb_data;
 extern xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
 extern xdata u8  usb_ep5_OUTbuf[EP5OUT_MAX_PACKET_SIZE];               // these get pointed to by the above structure
-extern xdata USB_EP_IO_BUF     ep0iobuf;
-extern xdata USB_EP_IO_BUF     ep5iobuf;
+extern xdata USB_EP_IO_BUF     ep0;
+extern xdata USB_EP_IO_BUF     ep5;
 extern xdata u8 appstatus;
 
 extern xdata u8   ep0req;

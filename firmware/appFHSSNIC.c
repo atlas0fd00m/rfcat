@@ -524,26 +524,26 @@ void appMainLoop(void)
  * main handler routine for the application as endpoint 0 is normally used for system stuff.
  *
  * important things to know:
- *  * your data is in ep5iobuf.OUTbuf, the length is ep5iobuf.OUTlen, and the first two bytes are
+ *  * your data is in ep5.OUTbuf, the length is ep5.OUTlen, and the first two bytes are
  *      going to be \x40\xe0.  just craft your application to ignore those bytes, as i have ni
  *      puta idea what they do.  
  *  * transmit data back to the client-side app through txdatai().  this function immediately 
  *      xmits as soon as any previously transmitted data is out of the buffer (ie. it blocks 
- *      while (ep5iobuf.flags & EP_INBUF_WRITTEN) and then transmits.  this flag is then set, and 
+ *      while (ep5.flags & EP_INBUF_WRITTEN) and then transmits.  this flag is then set, and 
  *      cleared by an interrupt when the data has been received on the host side.                */
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd, len;
-    xdata u8 *buf;
+    u8 app, cmd;
+    u16 len;
+    __xdata u8 *buf = &ep5.OUTbuf[0];
 
-    app = ep5iobuf.OUTbuf[4];
-    cmd = ep5iobuf.OUTbuf[5];
-    buf = &ep5iobuf.OUTbuf[6];
-    //len = (u16)*buf;    - original firmware
+    app = *buf++;
+    cmd = *buf++;
     len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
     len += (u16)((*buf++) << 8);                                               // point at the address in memory
-    // ep5iobuf.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
+
+    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
     // check the application
     //  then check the cmd
     //   then process the data
@@ -683,7 +683,7 @@ int appHandleEP5()
         }
         break;
     }
-    ep5iobuf.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
+    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
 #endif
     return 0;
 }
@@ -703,17 +703,17 @@ void appHandleEP0OUT(void)
 
     // we are not called with the Request header as is appHandleEP0.  this function is only called after an OUT packet has been received,
     // which triggers another usb interrupt.  the important variables from the EP0 request are stored in ep0req, ep0len, and ep0value, as
-    // well as ep0iobuf.OUTlen (the actual length of ep0iobuf.OUTbuf, not just some value handed in).
+    // well as ep0.OUTlen (the actual length of ep0.OUTbuf, not just some value handed in).
 
     // for our purposes, we only pay attention to single-packet transfers.  in more complex firmwares, this may not be sufficient.
     switch (ep0req)
     {
         case 1:     // poke
             
-            src = (xdata u8*) &ep0iobuf.OUTbuf[0];
+            src = (xdata u8*) &ep0.OUTbuf[0];
             dst = (xdata u8*) ep0value;
 
-            for (loop=ep0iobuf.OUTlen; loop>0; loop--)
+            for (loop=ep0.OUTlen; loop>0; loop--)
             {
                 *dst++ = *src++;
             }
@@ -721,7 +721,7 @@ void appHandleEP0OUT(void)
     }
 
     // must be done with the buffer by now...
-    ep0iobuf.flags &= ~EP_OUTBUF_WRITTEN;
+    ep0.flags &= ~EP_OUTBUF_WRITTEN;
 #endif
 }
 
@@ -752,7 +752,7 @@ int appHandleEP0(USB_Setup_Header* pReq)
                 setup_send_ep0((u8*)pReq, pReq->wLength);
                 break;
             case EP0_CMD_PING1:
-                setup_sendx_ep0((xdata u8*)&ep0iobuf.OUTbuf[0], 16);//ep0iobuf.OUTlen);
+                setup_sendx_ep0((xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
                 break;
             case EP0_CMD_RESET:
                 if (strncmp((char*)&(pReq->wValue), "RSTN", 4))           // therefore, ->wValue == "RS" and ->wIndex == "TN" or no reset
