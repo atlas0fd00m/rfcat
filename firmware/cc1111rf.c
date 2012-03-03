@@ -24,8 +24,8 @@ volatile __xdata DMA_DESC rfDMA;
 volatile __xdata u8 bRepeatMode = 0;
 
 /*************************************************************************************************
-* RF init stuff                                                                                 *
-************************************************************************************************/
+ * RF init stuff                                                                                 *
+ ************************************************************************************************/
 void init_RF()
 {
     // MAC variables
@@ -126,22 +126,22 @@ u8 transmit(__xdata u8* buf, u16 len)
 	// If len is empty, assume first byte is the length
     // if we're in FIXED mode, skip the first byte
     // if we're in VARIABLE mode, make sure we copy the length byte + packet
-    if (len == 0)
+	if(len == 0)
 	{
-        len = buf[0];
+		len = buf[0];
 
         switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
-    {
+        {
             case PKTCTRL0_LENGTH_CONFIG_VAR:
-            len++;  // we need to send the length byte too...
+                len++;  // we need to send the length byte too...
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
-            buf++;  // skip sending the length byte
+                buf++;  // skip sending the length byte
                 break;
             default:
                 break;
 	    }
-	}
+    }
 
     /* If DMA transfer, disable rxtx interrupt */
 #ifndef RFDMA
@@ -177,7 +177,7 @@ u8 transmit(__xdata u8* buf, u16 len)
 
         DMA0CFGH = ((u16)(&rfDMA))>>8;
         DMA0CFGL = ((u16)(&rfDMA))&0xff;
-}
+    }
 #endif
 
     // FIXME: why are we using waitRSSI()? and why all the NOP();s?
@@ -205,7 +205,7 @@ u8 transmit(__xdata u8* buf, u16 len)
             DMAARM = DMAARM0;
             NOP(); NOP(); NOP(); NOP();
             NOP(); NOP(); NOP(); NOP();
-}
+        }
 #endif
 	    /* Put radio into tx state */
     	RFST = RFST_STX;
@@ -272,7 +272,7 @@ void startRX(void)
         DMAARM = DMAARM0;
         NOP(); NOP(); NOP(); NOP();
         NOP(); NOP(); NOP(); NOP();
-}
+    }
 #endif
 
     RFST = RFST_SRX;
@@ -292,7 +292,7 @@ void stopRX(void)
 
     S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);
     RFIF &= ~RFIF_IRQ_DONE;
-    }
+}
 
 
 void RxMode(void)
@@ -371,7 +371,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         RFIF &= ~RFIF_IRQ_SFD;
     }
 
-    if(RFIF & ( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT ))
+    if (RFIF & ( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT ))
     {
         // we want *all zee bytezen!*
         if(rf_status == RF_STATE_TX)
@@ -404,7 +404,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                     DMAARM = DMAARM0;
                     NOP(); NOP(); NOP(); NOP();
                     NOP(); NOP(); NOP(); NOP();
-            }
+                }
 #endif
             }
             else

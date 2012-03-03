@@ -25,8 +25,8 @@
 USB_STATE usb_data;
 xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
 xdata u8  usb_ep5_OUTbuf[EP5OUT_MAX_PACKET_SIZE];               // these get pointed to by the above structure
-xdata USB_EP_IO_BUF     ep0iobuf;
-xdata USB_EP_IO_BUF     ep5iobuf;
+xdata USB_EP_IO_BUF     ep0;
+xdata USB_EP_IO_BUF     ep5;
 xdata u8 appstatus;
 
 xdata u8   ep0req;
@@ -72,10 +72,10 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
 
     while (len>0)
      {
-        // if we do this in the loop, for some reason ep5iobuf.flags never clears between frames.  
+        // if we do this in the loop, for some reason ep5.flags never clears between frames.  
         // don't know why since this bit is cleared in the USB ISR.
         loop = TXDATA_MAX_WAIT;
-        //while (ep5iobuf.flags & EP_INBUF_WRITTEN && loop>0)                 // has last msg been recvd?
+        //while (ep5.flags & EP_INBUF_WRITTEN && loop>0)                 // has last msg been recvd?
         while (USBCSIL & USBCSIL_INPKT_RDY) // && loop>0)                 // has last msg been recvd?
         {
             REALLYFASTBLINK();
@@ -122,7 +122,7 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
         
         USBINDEX=5;
         USBCSIL |= USBCSIL_INPKT_RDY;
-        //ep5iobuf.flags |= EP_INBUF_WRITTEN;                         // set the 'written' flag
+        //ep5.flags |= EP_INBUF_WRITTEN;                         // set the 'written' flag
 
         len -= loop;
         dataptr += loop;
@@ -199,12 +199,14 @@ void usb_init(void)
     USBINDEX = 0;
     USBMAXI  = (EP0_MAX_PACKET_SIZE+7)>>3;      // these registers live in incrememnts of 8 bytes.  
     USBMAXO  = (EP0_MAX_PACKET_SIZE+7)>>3;      // these registers live in incrememnts of 8 bytes.  
-    ep0iobuf.epstatus   =  EP_STATE_IDLE;       // this tracks the status of our endpoint 0
-    ep0iobuf.flags      =  0;                   // reset flags for the OUT (recv) buffer
-    ep0iobuf.INbytesleft=  0;
-    ep0iobuf.OUTbuf     =  &usb_ep0_OUTbuf[0];
-    ep0iobuf.OUTlen     =  0;
-    ep0iobuf.BUFmaxlen  =  EP0_MAX_PACKET_SIZE;
+    ep0.epstatus   =  EP_STATE_IDLE;       // this tracks the status of our endpoint 0
+    ep0.flags      =  0;                   // reset flags for the OUT (recv) buffer
+    ep0.INbytesleft=  0;
+    ep0.OUTbuf     =  &usb_ep0_OUTbuf[0];
+    ep0.OUTlen     =  0;
+    ep0.OUTapp     =  0;
+    ep0.OUTcmd     =  0;
+    ep0.OUTbytesleft = 0;
 
 
     // configure EP5 (data endpoint)
@@ -213,15 +215,17 @@ void usb_init(void)
     USBMAXO  = (EP5OUT_MAX_PACKET_SIZE+7)>>3;   // these registers live in incrememnts of 8 bytes.  
     USBCSOH |= USBCSOH_AUTOCLEAR;               // when we drain the FIFO, automagically tell host
     USBCSIH |= USBCSIH_AUTOSET;                 // when the buffer is full, automagically tell host
-    ep5iobuf.epstatus   =  EP_STATE_IDLE;       // this tracks the status of our endpoint 5
-    ep5iobuf.flags      =  0;
-    ep5iobuf.INbytesleft=  0;
-    ep5iobuf.OUTbuf     =  &usb_ep5_OUTbuf[0];
-    ep5iobuf.OUTlen     =  0;
-    ep5iobuf.BUFmaxlen  =  EP5OUT_MAX_PACKET_SIZE;
+    ep5.epstatus   =  EP_STATE_IDLE;       // this tracks the status of our endpoint 5
+    ep5.flags      =  0;
+    ep5.INbytesleft=  0;
+    ep5.OUTbuf     =  &usb_ep5_OUTbuf[0];
+    ep5.OUTlen     =  0;
+    ep5.OUTapp     =  0;
+    ep5.OUTcmd     =  0;
+    ep5.OUTbytesleft = 0;
 
 
-
+   
     USB_INT_ENABLE();     // Enables USB Interrupts to call an ISR
 
 }
@@ -257,7 +261,7 @@ void usb_down(void)
  *************************************************************************************************/
 int setup_send_ep0(u8* payload, u16 length)
 {
-    if (ep0iobuf.epstatus != EP_STATE_IDLE)
+    if (ep0.epstatus != EP_STATE_IDLE)
     {
         /* catestropic error.  *must* fix! */
         blink(1000,1000);
@@ -266,9 +270,9 @@ int setup_send_ep0(u8* payload, u16 length)
         return -1;
     }
 
-    ep0iobuf.INbuf = payload;
-    ep0iobuf.INbytesleft = length;
-    ep0iobuf.epstatus = EP_STATE_TX;
+    ep0.INbuf = payload;
+    ep0.INbytesleft = length;
+    ep0.epstatus = EP_STATE_TX;
 
     return 0;
 }
@@ -276,7 +280,7 @@ int setup_send_ep0(u8* payload, u16 length)
 /* send from XDATA */
 int setup_sendx_ep0(xdata u8* payload, u16 length)
 {
-    if (ep0iobuf.epstatus != EP_STATE_IDLE)
+    if (ep0.epstatus != EP_STATE_IDLE)
     {
         /* catestropic error.  *must* fix! */
         blink(1000,1000);
@@ -285,9 +289,9 @@ int setup_sendx_ep0(xdata u8* payload, u16 length)
         return -1;
     }
 
-    ep0iobuf.INbuf = payload;
-    ep0iobuf.INbytesleft = length;
-    ep0iobuf.epstatus = EP_STATE_TX;
+    ep0.INbuf = payload;
+    ep0.INbytesleft = length;
+    ep0.epstatus = EP_STATE_TX;
 
     return 0;
 }
@@ -301,28 +305,28 @@ void usb_arm_ep0IN(){
 
     USBINDEX = 0;
     
-    if (ep0iobuf.INbytesleft > EP0_MAX_PACKET_SIZE)
+    if (ep0.INbytesleft > EP0_MAX_PACKET_SIZE)
         tlen = EP0_MAX_PACKET_SIZE;
     else
     {
-        tlen = ep0iobuf.INbytesleft;
+        tlen = ep0.INbytesleft;
         csReg |= USBCS0_DATA_END;
     }
 
     // FIXME:   IMPLEMENT DMA FOR THESE TRANSFERS
-    ep0iobuf.INbytesleft -= tlen;
+    ep0.INbytesleft -= tlen;
     for (; tlen>0; tlen--) {               // FIXME: Use DMA
-        USBF0 = *ep0iobuf.INbuf;
-        ep0iobuf.INbuf++;
+        USBF0 = *ep0.INbuf;
+        ep0.INbuf++;
     }
     USBCS0  |= csReg;
-    if (ep0iobuf.INbytesleft == 0)
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+    if (ep0.INbytesleft == 0)
+        ep0.epstatus = EP_STATE_IDLE;
 }
 
 
 u8 setup_recv_ep0(){
-    ep0iobuf.epstatus = EP_STATE_RX;
+    ep0.epstatus = EP_STATE_RX;
     return 0;
 }
 
@@ -334,27 +338,27 @@ u16 usb_recv_ep0OUT(){
      *******************************************************************************************/
     u16 loop;
 
-    xdata u8* payload = &ep0iobuf.OUTbuf[0];
+    xdata u8* payload = &ep0.OUTbuf[0];
     while (! USBCS0 & USBCS0_OUTPKT_RDY);           // wait for it...
 
     USBINDEX = 0;
     loop = USBCNT0;
-    ep0iobuf.OUTlen = loop;
+    ep0.OUTlen = loop;
 
-    if (ep0iobuf.flags & EP_OUTBUF_WRITTEN)
+    if (ep0.flags & EP_OUTBUF_WRITTEN)
     {
-        ep0iobuf.epstatus = EP_STATE_STALL;            // FIXME: don't currently handle stall->idle...
+        ep0.epstatus = EP_STATE_STALL;            // FIXME: don't currently handle stall->idle...
         return -1;
     }
-    ep0iobuf.flags |= EP_OUTBUF_WRITTEN;            // hey, we've written here, don't write again until this is cleared by a application handler
+    ep0.flags |= EP_OUTBUF_WRITTEN;            // hey, we've written here, don't write again until this is cleared by a application handler
 
-    if (ep0iobuf.OUTlen>EP0_MAX_PACKET_SIZE)
+    if (ep0.OUTlen>EP0_MAX_PACKET_SIZE)
         blink(300,300);
-        //ep0iobuf.OUTlen = EP0_MAX_PACKET_SIZE;
+        //ep0.OUTlen = EP0_MAX_PACKET_SIZE;
 
     ///////////////////////////////  FIXME: USE DMA //////////////////////////////////////////
-    //blink_binary_baby_lsb(ep0iobuf.OUTlen, 8);
-    for (loop=ep0iobuf.OUTlen; loop>0; loop--){
+    //blink_binary_baby_lsb(ep0.OUTlen, 8);
+    for (loop=ep0.OUTlen; loop>0; loop--){
         *payload++ = USBF0;
     }
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -363,16 +367,16 @@ u16 usb_recv_ep0OUT(){
     if (cb_ep0out)
         cb_ep0out();
 
-    if (ep0iobuf.OUTlen < EP0_MAX_PACKET_SIZE)
+    if (ep0.OUTlen < EP0_MAX_PACKET_SIZE)
     {
         if (cb_ep0outdone)
             cb_ep0outdone();
 
         USBCS0 |= USBCS0_DATA_END;
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+        ep0.epstatus = EP_STATE_IDLE;
     }
     USBCS0 |= USBCS0_CLR_OUTPKT_RDY;
-    return ep0iobuf.OUTlen;
+    return ep0.OUTlen;
     
 }
 
@@ -500,7 +504,7 @@ void handleCS0(void)
     // check if the last xaction ended prematurely by a new setup packet
     if (csReg & USBCS0_SETUP_END) 
     {
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+        ep0.epstatus = EP_STATE_IDLE;
         USBCS0 |= USBCS0_CLR_SETUP_END;
     }
 
@@ -509,20 +513,20 @@ void handleCS0(void)
     {
         USBCS0 = 0x00;
         lastCode[1] = LCE_USB_EP0_SENT_STALL;
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+        ep0.epstatus = EP_STATE_IDLE;
         blink(200,200);
     }
     
-    if (ep0iobuf.epstatus == EP_STATE_STALL)
+    if (ep0.epstatus == EP_STATE_STALL)
     {
         blink(500,500);
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+        ep0.epstatus = EP_STATE_IDLE;
     }
 
 
 
     ///////// begin handlers based on EP0 state.
-    if (ep0iobuf.epstatus == EP_STATE_IDLE)
+    if (ep0.epstatus == EP_STATE_IDLE)
     {
 
         if (csReg & USBCS0_OUTPKT_RDY)                          // do we have a SETUP packet ready for us to consume?
@@ -593,7 +597,7 @@ void handleCS0(void)
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
                         {
-                            //ep0iobuf.epstatus = EP_STATE_TX;
+                            //ep0.epstatus = EP_STATE_TX;
                             cb_ep0vendor(&req);
                         }
                         else
@@ -660,7 +664,7 @@ void handleCS0(void)
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
                         {
-                            //ep0iobuf.epstatus = EP_STATE_RX;
+                            //ep0.epstatus = EP_STATE_RX;
                             cb_ep0vendor(&req);
                         }
                         else
@@ -682,11 +686,11 @@ void handleCS0(void)
     }       // EP_STATE_IDLE
 
     
-    if (ep0iobuf.epstatus == EP_STATE_TX)
+    if (ep0.epstatus == EP_STATE_TX)
     {
         usb_arm_ep0IN(); 
     }
-    if (ep0iobuf.epstatus == EP_STATE_RX)
+    if (ep0.epstatus == EP_STATE_RX)
     {
         usb_recv_ep0OUT();
     }
@@ -718,7 +722,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq)
                 setup_send_ep0((u8*)pReq, pReq->wLength);
                 break;
             case EP0_CMD_PING1:
-                setup_sendx_ep0((xdata u8*)&ep0iobuf.OUTbuf[0], 16);//ep0iobuf.OUTlen);
+                setup_sendx_ep0((xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
                 break;
             case EP0_CMD_RESET:
                 if (strncmp((char*)&(pReq->wValue), "RSTN", 4))           // therefore, ->wValue == "RS" and ->wIndex == "TN" or no reset
@@ -751,7 +755,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq)
         }
 
         // must be done with the buffer by now...
-        ep0iobuf.flags &= ~EP_OUTBUF_WRITTEN;
+        ep0.flags &= ~EP_OUTBUF_WRITTEN;
     }
 #endif
     return 0;
@@ -764,7 +768,7 @@ int handleOUTEP5(void)
     u16 len;
     xdata u8* ptr; 
     USBINDEX = 5;
-    if (ep5iobuf.flags & EP_OUTBUF_WRITTEN)                     // have we processed the last OUTbuf?  don't want to clobber it.
+    if (ep5.flags & EP_OUTBUF_WRITTEN)                     // have we processed the last OUTbuf?  don't want to clobber it.
     {
         // // // // FIXME: forget the second memory buffering... rework this to use just the buffering in the usb controller // // // // 
         // FIXME: differentiate between SENT_STALL and SEND_STALL?   CLEAR THE STALLS!
@@ -773,10 +777,9 @@ int handleOUTEP5(void)
         lastCode[1] = LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN;
         return -1;
     }
-    ep5iobuf.flags |= EP_OUTBUF_WRITTEN;                        // track that we've read into the OUTbuf
 
     // setup DMA
-    ptr = &ep5iobuf.OUTbuf[0];
+    ptr = &ep5.OUTbuf[0];
     while ((DMAIRQ & DMAARM1))
         blink(20,20);
 
@@ -788,7 +791,7 @@ int handleOUTEP5(void)
     usbdma.srcInc = 0;
     usbdma.destInc = 1;
     usbdma.lenL = USBCNTL;
-    usbdma.lenH = USBCNTH;
+    usbdma.lenH = USBCNTH;  // should always be zero, but what if we move to a HS chip someday?
 
     len = (usbdma.lenH<<8)+usbdma.lenL;
     if (len > EP5OUT_MAX_PACKET_SIZE)                           // FIXME: if they wanna send too much data, do we accept what we can?  or bomb?
@@ -798,6 +801,13 @@ int handleOUTEP5(void)
         USBCSOL &= ~USBCSOL_OUTPKT_RDY;
         blink(300,200);
         blink(300,200);
+        blink(300,200);
+        blink(300,200);
+        blink(300,200);
+        blink(300,200);
+        blink(300,200);
+        blink_binary_baby_lsb(len, 16);
+        USBCSOL &= ~(USBCSOL_SEND_STALL | USBCSOL_SENT_STALL);
         return -1;
     }
 
@@ -805,81 +815,125 @@ int handleOUTEP5(void)
     DMAARM |= DMAARM1;
     DMAREQ |= DMAARM1;
 
-    ep5iobuf.OUTlen = len;
+    ep5.OUTlen = len;
+    ep5.flags |= EP_OUTBUF_WRITTEN;                        // track that we've read into the OUTbuf
+
+    while (!(DMAIRQ & DMAARM1));
+    DMAIRQ &= ~DMAARM1;
+
     return 0;
 }
 
 void processOUTEP5(void)
 {
-    u16 loop, len;
-    u8 cmd, app;
+    u16 loop;
     xdata u8* ptr; 
-    xdata u8* dptr;
 
-    while (!(DMAIRQ & DMAARM1));
-    DMAIRQ &= ~DMAARM1;
-
-    if (ep5iobuf.OUTlen >= 8)
+    if (ep5.OUTlen >= 4)           // OUTlen is per packet, OUTbytesleft is per transaction
     {
-        app = ep5iobuf.OUTbuf[4];
-        cmd = ep5iobuf.OUTbuf[5];
-        ptr = &ep5iobuf.OUTbuf[6];
-        len =  (u16)*ptr++;
-        len += (u16)*ptr++ << 8;
-            //ptr += 2;                                                   // point at the address in memory
+        ptr = &ep5.OUTbuf[0];
+        if (ep5.OUTbytesleft == 0)
+        {
+            ep5.OUTapp = *ptr++;
+            ep5.OUTcmd = *ptr++;
+            ep5.OUTbytesleft =  (u16)*ptr++;
+            ep5.OUTbytesleft += (u16)*ptr++ << 8;
 
-        if (app == 0xff)                                        // system application
-    {
+            ep5.flags &= ~EP_OUTBUF_CONTINUED;
+        } else
+        {
+            ep5.flags |= EP_OUTBUF_CONTINUED;
+        }
+        
+        if (ep5.OUTapp == 0xff)                                        // system application
+        {
 
-            switch (cmd)
+            switch (ep5.OUTcmd)
             {
                 case CMD_PEEK:
-                    len =  *ptr++;
-                    len += *ptr++ << 8;
-                    loop =  (u16)*ptr++;                                    // just using loop for our immediate purpose.  sorry.
-                    loop += (u16)*ptr++ << 8;                               // hack, but it works
-                    dptr = (xdata u8*) loop;
-                    txdata(app, cmd, len, dptr);
+                    ep5.OUTbytesleft =  *ptr++;
+                    ep5.OUTbytesleft += *ptr++ << 8;
+
+                    loop =  (u16)*ptr++;
+                    loop += (u16)*ptr++ << 8;
+                    ptr = (xdata u8*) loop;
+
+                    txdata(ep5.OUTapp, ep5.OUTcmd, ep5.OUTbytesleft, ptr);
+                    ep5.OUTbytesleft = 0;
 
                     break;
                 case CMD_POKE:
-                        loop =  *ptr++;
-                        loop += *ptr++ << 8;                                    // just using loop for our immediate purpose.  sorry.
-                        dptr = (xdata u8*) loop;                                // hack, but it works
-                    // FIXME: do we want to DMA here?
-                    for (loop=2;loop<len;loop++)
+                    if (!(ep5.flags & EP_OUTBUF_CONTINUED))
                     {
-                        *dptr++ = *ptr++;
+                        loop =  *ptr++;
+                        loop += *ptr++ << 8;
+                        ep5.dptr = (xdata u8*) loop;                                // hack, but it works
                     }
-                    txdata(app, cmd, 1, (xdata u8*)"0");
+                    // FIXME: do we want to DMA here?
+                    
+                    loop = ep5.OUTbytesleft;
+                    if (loop > EP5OUT_MAX_PACKET_SIZE)
+                    {
+                        loop = EP5OUT_MAX_PACKET_SIZE;
+                    }
+
+                    ep5.OUTbytesleft -= loop;
+                    debughex16(loop);
+
+                    for (;loop>0;loop--)
+                    {
+                        *ep5.dptr++ = *ptr++;
+                    }
+
+                    if (ep5.OUTbytesleft == 0)
+                        txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
 
                     break;
                 case CMD_POKE_REG:
-                    loop =  *ptr++;
-                    loop += *ptr++ << 8;                                    // just using loop for our immediate purpose.  sorry.
-                    dptr = (xdata u8*) loop;                                // hack, but it works
-                    for (loop=2;loop<len;loop++)
+                    if (!(ep5.flags & EP_OUTBUF_CONTINUED))
                     {
-                        *dptr = *ptr++;
+                        loop =  *ptr++;
+                        loop += *ptr++ << 8;
+                        ep5.dptr = (xdata u8*) loop;                                // hack, but it works
                     }
-                    txdata(app, cmd, 1, (xdata u8*)"");
+                    // FIXME: do we want to DMA here?
+                    
+                    loop = ep5.OUTbytesleft;
+                    if (loop > EP5OUT_MAX_PACKET_SIZE)
+                    {
+                        loop = EP5OUT_MAX_PACKET_SIZE;
+                    }
+
+                    ep5.OUTbytesleft -= loop;
+                    debughex16(loop);
+
+                    for (;loop>0;loop--)
+                    {
+                        *ep5.dptr++ = *ptr++;
+                    }
+
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
 
                     break;
                 case CMD_PING:
-                    txdata(app,cmd,len,ptr);
+                    txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
+                    ep5.OUTbytesleft = 0;
                     break;
 
                 case CMD_STATUS:
-                    txdata(app, cmd, 13, (xdata u8*)"UNIMPLEMENTED");
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 13, (xdata u8*)"UNIMPLEMENTED");
+                    ep5.OUTbytesleft = 0;
                     // unimplemented
                     break;
 
                 case CMD_GET_CLOCK:
-                    txdata(app, cmd, 4, (xdata u8*)clock);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 4, (xdata u8*)clock);
+                    ep5.OUTbytesleft = 0;
                     break;
 
                 case CMD_BUILDTYPE:
-                    txdata(app, cmd, sizeof(buildname), (xdata u8*)&buildname[0]);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(buildname), (xdata u8*)&buildname[0]);
+                    ep5.OUTbytesleft = 0;
                     break;
 
                 case CMD_RESET:
@@ -889,11 +943,14 @@ void processOUTEP5(void)
                     // implement a RESET by trigging the watchdog timer
                     WDCTL = 0x80;   // Watchdog ENABLE, Watchdog mode, 1s until reset
 
-                    txdata(app,cmd,len,ptr);
+                    txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
+                    ep5.OUTbytesleft = 0;
                 default:
-                    txdata(app,cmd,len,ptr);
+                    txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
+                    ep5.OUTbytesleft = 0;
             }
-            ep5iobuf.flags &= ~EP_OUTBUF_WRITTEN; 
+
+            ep5.flags &= ~EP_OUTBUF_WRITTEN; 
         }
         else
         {
@@ -901,8 +958,7 @@ void processOUTEP5(void)
             {
                 cb_ep5();
             }
-            //appHandleEP5();                                         // must clear this flag:   ep5iobuf.flags &= ~EP_OUTBUF_WRITTEN; 
-    }
+        }
     } else {
         lastCode[1] = LCE_USB_EP5_GOT_CRAP;                                            // got crap...
     }
@@ -910,12 +966,12 @@ void processOUTEP5(void)
     USBCSOL &= ~USBCSOL_OUTPKT_RDY;
 }
 
-#define handleINEP5()  ep5iobuf.flags &= ~EP_INBUF_WRITTEN 
+#define handleINEP5()  ep5.flags &= ~EP_INBUF_WRITTEN 
 
 //void handleINEP5(void)
 //{
 //    // change state so the firmware knows that the packet has been picked up and can be overwritten.
-//    ep5iobuf.flags &= ~EP_INBUF_WRITTEN;
+//    ep5.flags &= ~EP_INBUF_WRITTEN;
 //}
 
 void usbProcessEvents(void)
@@ -946,26 +1002,26 @@ void usbProcessEvents(void)
     if (USBCS0 & (USBCS0_SENT_STALL))
     {
         USBCS0 &= ~(USBCS0_SEND_STALL | USBCS0_SENT_STALL);
-        ep0iobuf.INbytesleft = 0;
-        ep0iobuf.OUTlen = 0;
-        ep0iobuf.epstatus = EP_STATE_IDLE;
+        ep0.INbytesleft = 0;
+        ep0.OUTlen = 0;
+        ep0.epstatus = EP_STATE_IDLE;
     }
     USBINDEX = 5;
     if (USBCSIL & (USBCSIL_SENT_STALL))
     {
         USBCSIL &= ~(USBCSIL_SEND_STALL | USBCSIL_SENT_STALL);
         lastCode[1] = LCE_USB_EP5_STALL;
-        ep5iobuf.INbytesleft = 0;
-        ep5iobuf.OUTlen = 0;
-        ep5iobuf.epstatus = EP_STATE_IDLE;          // not sure about this.  perhaps check to see if state us RX or TX?
+        ep5.INbytesleft = 0;
+        ep5.OUTlen = 0;
+        ep5.epstatus = EP_STATE_IDLE;          // not sure about this.  perhaps check to see if state us RX or TX?
     }
     if (USBCSOL & (USBCSOL_SENT_STALL))
     {
         USBCSOL &= ~(USBCSOL_SEND_STALL | USBCSOL_SENT_STALL);
         lastCode[1] = LCE_USB_EP5_STALL;
-        ep5iobuf.INbytesleft = 0;
-        ep5iobuf.OUTlen = 0;
-        ep5iobuf.epstatus = EP_STATE_IDLE;          // not sure about this.  perhaps check to see if state us RX or TX?
+        ep5.INbytesleft = 0;
+        ep5.OUTlen = 0;
+        ep5.epstatus = EP_STATE_IDLE;          // not sure about this.  perhaps check to see if state us RX or TX?
     }
 
 
@@ -989,9 +1045,9 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        if (handleOUTEP5() != -1)                   // handles the immediate read into ep5iobuf
+        if (handleOUTEP5() != -1)                   // handles the immediate read into ep5
         {
-            processOUTEP5();                            // process the data read into ep5iobuf
+            processOUTEP5();                            // process the data read into ep5
             usb_data.event &= ~USBD_OIF_OUTEP5IF;
         }
         
@@ -1043,7 +1099,7 @@ void usbIntHandler(void) __interrupt P2INT_VECTOR
     
     if (usb_data.event & (USBD_IIF_INEP5IF))
     {
-        ep5iobuf.flags &= ~EP_INBUF_WRITTEN;        // host received our message, ok to write more
+        ep5.flags &= ~EP_INBUF_WRITTEN;        // host received our message, ok to write more
         usb_data.event &= ~USBD_IIF_INEP5IF;
     }
  
@@ -1205,8 +1261,8 @@ __code u8 USBDESCBEGIN [] = {
               '0', 0,
               '0', 0,
               '7', 0,
-              '5', 0,
-                                
+              '9', 0,
+          
 // END OF STRINGS (len 0, type ff)
                0, 0xff
 };
