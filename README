@@ -17,7 +17,16 @@ a couple gotchas to keep in mind while developing for the cc1111:
 == INSTALLING and USAGE==
 installing and getting up to speed with rfcat...
 
-first things first.  using rfcat requires that you use the python client in root mode (sudo works well), and have one of the supported dongles flashed with the necessary application firmware.
+first things first.  using rfcat requires that you either use the python client in root mode (sudo works well), or configure udev to allow non-root users full access to the dongle. you must also have one of the supported dongles flashed with the necessary application firmware.
+
+allowing non-root dongle access:
+
+  create a file in /etc/udev/rules.d called 20-rfcat.rules with the following line in it:
+
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0666"
+
+  reboot or run 'sudo udevadm control --reload-rules'
+
 this tool is created, maintained, and used primarily on linux.  make and sdcc must be installed.
 
 supported dongles:
