@@ -173,6 +173,8 @@ int appHandleEP5()
     //   then process the data
     switch (app)
     {
+        default:
+            ep5.OUTbytesleft = 0;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
 #endif
