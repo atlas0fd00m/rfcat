@@ -119,8 +119,10 @@ int appHandleEP5()
                 transmit(buf, len);
                 { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
                 txdata(app, cmd, 1, (xdata u8*)"0");
+                ep5.OUTbytesleft = 0;
                 break;
             default:
+                ep5.OUTbytesleft = 0;
                 break;
         }
         break;

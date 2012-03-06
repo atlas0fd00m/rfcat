@@ -182,6 +182,8 @@ class CC111xTimeoutException(Exception):
     def __str__(self):
         return "Timeout waiting for USB response."
 
+direct=False
+
 class USBDongle:
     ######## INITIALIZATION ########
     def __init__(self, idx=0, debug=False):
@@ -281,17 +283,76 @@ class USBDongle:
         return ""
 
     def _sendEP5(self, buf=None, timeout=1000):
+        global direct
         if (buf==None):
             buf = "\xff\x82\x07\x00ABCDEFG"
+        if direct:
+            self._do.bulkWrite(5, buf, timeout)
+            return
+
         while (len(buf)>0):
-            if (buf > EP5OUT_MAX_PACKET_SIZE):
-                drain = buf[:EP5OUT_MAX_PACKET_SIZE]
-                buf = buf[EP5OUT_MAX_PACKET_SIZE:]
+            drain = buf[:self._usbmaxo]
+            buf = buf[self._usbmaxo:]
+
+            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
+            try:
+                self._do.bulkWrite(5, drain, timeout)
+            except Exception, e:
+                if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
+                self.xsema.acquire()
+                msg = self.xmit_queue.insert(0, drain)
+                self.xsema.release()
+                if self._debug: print >>sys.stderr, repr(self.xmit_queue)
+        '''
+        drain = buf[:self._usbmaxo]
+        buf = buf[self._usbmaxo:]
+        if len(buf):
+            if self._debug: print >>sys.stderr,"requeuing '%s'" % repr(buf)
+            self.xsema.acquire()
+            msg = self.xmit_queue.insert(0, buf)
+            self.xsema.release()
+            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
+        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
+        try:
+            self._do.bulkWrite(5, drain, timeout)
+        except Exception, e:
+            if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
+            self.xsema.acquire()
+            msg = self.xmit_queue.insert(0, drain)
+            self.xsema.release()
+            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
+
+        ---
+        while (len(buf)>0):
+            drain = buf[:self._usbmaxo]
+            buf = buf[self._usbmaxo:]
+
+            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
+            self._do.bulkWrite(5, drain, timeout)
+            time.sleep(1)
+        ---
+        if (len(buf) > self._usbmaxo):
+            drain = buf[:self._usbmaxo]
+            buf = buf[self._usbmaxo:]
+            self.xsema.acquire()
+            msg = self.xmit_queue.insert(0, buf)
+            self.xsema.release()
+        else:
+            drain = buf[:]
+        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
+        self._do.bulkWrite(5, drain, timeout)
+        ---
+        while (len(buf)>0):
+            if (len(buf) > self._usbmaxo):
+                drain = buf[:self._usbmaxo]
+                buf = buf[self._usbmaxo:]
             else:
                 drain = buf[:]
             if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
             self._do.bulkWrite(5, drain, timeout)
-
+            time.sleep(1)
+        '''
+        
     def _recvEP5(self, timeout=100):
         retary = ["%c"%x for x in self._do.bulkRead(0x85, 500, timeout)]
         if self._debug: print >>sys.stderr,"RECV:"+repr(retary)
@@ -418,9 +479,10 @@ class USBDongle:
                     elif ('No such device' in errstr):
                         self._threadGo = False
                         self.resetup(False)
+                    else:
+                        if self._debug: print "Error in runEP5() (receiving): %s" % errstr
+                        if self._debug>2: sys.excepthook(*sys.exc_info())
                     self._usberrorcnt += 1
-                    if self._debug: print "Error in runEP5() (receiving): %s" % errstr
-                    if self._debug>2: sys.excepthook(*sys.exc_info())
                 pass
 
 
@@ -430,7 +492,7 @@ class USBDongle:
                 if len(self.recv_queue):
                     idx = self.recv_queue.find('@')
                     if (idx==-1):
-                        if self._debug:
+                        if self._debug > 3:
                             sys.stderr.write('@')
                     else:
                         if (idx>0):
@@ -1775,6 +1837,17 @@ def unittest(self, mhz=24):
 
     print "\nTesting USB EP MAX_PACKET_SIZE handling (peek(0xf000, 300))"
     print repr(self.peek(0xf000, 400))
+
+    print "\nTesting USB poke/peek"
+    data = "".join([chr(c) for c in xrange(120)])
+    where = 0xf300
+    self.poke(where, data)
+    ndata = self.peek(where, len(data))
+    if ndata != data:
+        print " *FAILED*\n '%s'\n '%s'" % (data.encode("hex"), ndata.encode("hex"))
+        raise(Exception(" *FAILED*\n '%s'\n '%s'" % (data.encode("hex"), ndata.encode("hex"))))
+    else:
+        print "  passed  '%s'" % (ndata.encode("hex"))
 
     print "\nTesting getValueFromReprString()"
     starry = self.reprRadioConfig().split('\n')

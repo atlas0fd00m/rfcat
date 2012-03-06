@@ -209,6 +209,7 @@ u8 transmit(__xdata u8* buf, u16 len)
 #endif
 	    /* Put radio into tx state */
     	RFST = RFST_STX;
+        //memcpy(rftxbuf, buf, len);
     	while(!(MARCSTATE & MARC_STATE_TX));
         return 1;
     }

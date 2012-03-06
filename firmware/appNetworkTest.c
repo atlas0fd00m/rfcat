@@ -143,6 +143,7 @@ int appHandleEP5()
     switch (cmd)
     {
         default:
+            ep5.OUTbytesleft = 0;
             break;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.

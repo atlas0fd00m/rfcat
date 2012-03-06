@@ -569,22 +569,26 @@ int appHandleEP5()
                         break;
                 }
                 txdata(app,cmd,len,buf);
+                ep5.OUTbytesleft = 0;
                 break;
             case NIC_XMIT:
                 // FIXME:  this needs to place buf data into the FHSS txMsgQueue
                 transmit(buf, 0);
                 //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
                 txdata(app, cmd, 1, (xdata u8*)"\x00");
+                ep5.OUTbytesleft = 0;
                 break;
                 
             case NIC_SET_ID:
                 MAC_set_NIC_ID(*buf);
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_XMIT:
                 MAC_tx(buf, len);
                 txdata(app, cmd, 1, (xdata u8*)"\x00");
+                ep5.OUTbytesleft = 0;
                 break;
                 
             case FHSS_SET_CHANNELS:
@@ -597,50 +601,60 @@ int appHandleEP5()
                 } else {
                     txdata(app, cmd, 8, (xdata u8*)"NO DEAL");
                 }
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_NEXT_CHANNEL:
                 MAC_set_chanidx(MAC_getNextChannel());
                 txdata(app, cmd, 1, &g_Channels[macdata.curChanIdx]);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_CHANGE_CHANNEL:
                 PHY_set_channel(*buf);
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_START_HOPPING:
                 begin_hopping(0);
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_STOP_HOPPING:
                 stop_hopping();
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             // FIXME: do we even need g_MAC_threshold anymore?
             case FHSS_SET_MAC_THRESHOLD:
                 macdata.MAC_threshold = *buf;
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_GET_MAC_THRESHOLD:
                 txdata(app, cmd, 4, (xdata u8*)&macdata.MAC_threshold);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_SET_MAC_DATA:
                 memcpy((xdata u8*)&macdata, (xdata u8*)*buf, sizeof(macdata));
                 txdata(app, cmd, sizeof(macdata), buf);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_GET_MAC_DATA:
                 txdata(app, cmd, sizeof(macdata), (xdata u8*)&macdata);
+                ep5.OUTbytesleft = 0;
                 break;
 
             case FHSS_START_SYNC:
                 MAC_sync(*buf);
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
                 
             case FHSS_SET_STATE:
@@ -671,14 +685,17 @@ int appHandleEP5()
                 }
                 
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
                 
             case FHSS_GET_STATE:
                 txdata(app, cmd, 1, (xdata u8*)&macdata.mac_state);
+                ep5.OUTbytesleft = 0;
                 break;
                 
             default:
                 txdata(app, cmd, 1, buf);
+                ep5.OUTbytesleft = 0;
                 break;
         }
         break;
