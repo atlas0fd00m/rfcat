@@ -126,17 +126,53 @@ void drawstr(u8 row, u8 col, char *str){
   while (len--)
     putch(*(str++));
 }
-void drawint(u8 row, u8 col, u16 val){
-  u8 len=5;
+
+void drawint32(u8 row, u8 col, u32 val){
+  u8 byte, len = 0;
+  u32 temp = 0;
   //FIXME prints backward.
   if (row >8) return;
   setCursor(row, col*6);
-  
-  while (len--){
-    putch('0'+(val%10));
-    val/=10;
+
+  while (val>0)
+  {
+      temp *= 10;
+      temp += (val % 10);
+      val /= 10;
+      len ++;
+  }
+
+  for (;len>0; len--)
+  {
+    byte = (temp) % 10;
+    putch('0'+(byte));
+    temp /= 10;
   }
 }
+
+void drawint(u8 row, u8 col, u16 val){
+  u8 byte, len=0;
+  u16 temp = 0;
+  //FIXME prints backward.
+  if (row >8) return;
+  setCursor(row, col*6);
+
+  while (val>0)
+  {
+      temp *= 10;
+      temp += (val % 10);
+      val /= 10;
+      len++;
+  }
+
+  for (;len>0;len--)
+  {
+    byte = (temp) % 10;
+    putch('0'+(byte));
+    temp /= 10;
+  }
+}
+
 void drawhex(u8 row, u8 col, u16 val){
   u8 len=4;
   u16 nibble;
@@ -204,7 +240,7 @@ void setChanBW(u32 chanbw)
 
 u32 getChanBW(void)
 {
-    u8 chanbw_e, chanbw_m;
+    u16 chanbw_e, chanbw_m, divisor;
     u32 bw;
 
     chanbw_e = MDMCFG4;
@@ -213,7 +249,8 @@ u32 getChanBW(void)
     chanbw_m = MDMCFG4;
     chanbw_m >>= 4;
     chanbw_m &= 0x3;
-    bw = 26000000 / (8.0*(4+chanbw_m) * (1<<chanbw_e));
+    divisor = (8.0*(4+chanbw_m) * (1<<chanbw_e));
+    bw = 26000000 / divisor;
     return bw;
 }
 
@@ -280,9 +317,9 @@ u32 getRadioFrequency(void)
     u32 freq;
     freq = FREQ2;
     freq <<= 8;
-    freq |= FREQ1;
+    freq += FREQ1;
     freq <<= 8;
-    freq |= FREQ0;
+    freq += FREQ0;
     freq *= 396.7285132035613;
     return freq;
 }
@@ -312,10 +349,12 @@ void immeLCDShowRFConfig(void)
     drawstr(4,0,"BAUD");
     drawstr(5,0,"CHANBW");
     drawstr(6,0,"SYNCW");
-    drawint(1,6,(u16)((u32)getRadioFrequency()/10000));
+    drawstr(1,6,"          ");
+    dummy32 = getRadioFrequency();
+    drawint32(1,6,dummy32);
     drawhex(2,6,CHANNR);
     drawstr(3,6,getModulationStr());
-    dummy32 = getBaud() / 100;
+    dummy32 = getBaud();
     /*setCursor(4, 6);
     len = 4;
     pval = (u8*)&dummy32;
@@ -339,9 +378,11 @@ void immeLCDShowRFConfig(void)
     */
 
     drawstr(4,6,"        ");
-    drawint(4,6,(u16)dummy32);
+    drawint32(4,6,dummy32);
     drawstr(5,8,"        ");
-    drawint(5,8,(u16)((u32)getChanBW()/100));
+    dummy32 = getChanBW();
+    drawstr(5,8,"          ");
+    drawint32(5,8,dummy32);
     drawhex(4,15, MDMCFG4);
     drawhex(5,15, MDMCFG3);
     drawhex(6,15, MDMCFG2);
@@ -369,7 +410,7 @@ void immeLCDInitScreen(void)
 void immeLCDShowPacket(void)
 {
     xdata u8 *pval = &rfrxbuf[!rfRxCurrentBuffer][0];
-    u8 len   = *pval++;
+    u8 len   = rfRxCounter[!rfRxCurrentBuffer];
     u16 nibble;
 
     SSN=LOW;
@@ -666,11 +707,11 @@ void poll_keyboard() {
 	case KUP:   // bandwidth
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
-        //
         tmp = MDMCFG4;
-        tmp >>= 4;
-        if (tmp != 0xf)
-            MDMCFG4 += 0x10;
+        tmp = (tmp + 0x10);
+        if (tmp > 0xff)
+            tmp -= 0xf0;
+        MDMCFG4 = (u8)tmp;
 
         immeLCDShowRFConfig();
         imme_state = IMME_STATE_CONFIG_SCREEN;
@@ -683,14 +724,16 @@ void poll_keyboard() {
         while (MARCSTATE != MARC_STATE_RX);
 
         break;
+
 	case KDWN:  // bandwidth
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
-        //
         tmp = MDMCFG4;
-        tmp >>= 4;
-        if (tmp > 0)
-            MDMCFG4 -= 0x10;
+        if (tmp < 0x10)
+            tmp += 0x100;
+        tmp -= 0x10;
+
+        MDMCFG4 = (u8)tmp;
 
         immeLCDShowRFConfig();
         imme_state = IMME_STATE_CONFIG_SCREEN;
@@ -703,6 +746,7 @@ void poll_keyboard() {
         while (MARCSTATE != MARC_STATE_RX);
 
         break;
+
 	case KRIGHT:// baud incr
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
