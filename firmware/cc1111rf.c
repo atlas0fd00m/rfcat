@@ -347,11 +347,8 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         }
     }
     else if(MARCSTATE == MARC_STATE_TX)
-    {  // Transmit Byte
-        if(rftxbuf[rfTxCounter] != 0)
-        {
-            RFD = rftxbuf[rfTxCounter++];
-        }
+    {   // Transmit Byte
+        RFD = rftxbuf[rfTxCounter++];
     }
     RFTXRXIF = 0;
 }
