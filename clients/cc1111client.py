@@ -217,7 +217,7 @@ class USBDongle:
         for bus in usb.busses():
             for dev in bus.devices:
                 if dev.idProduct == 0x4715:
-                    if console: print >>sys.stderr,(dev)
+                    if self._debug: print >>sys.stderr,(dev)
                     do = dev.open()
                     iSN = do.getDescriptor(1,0,50)[16]
                     devnum = dev.devnum
@@ -256,7 +256,7 @@ class USBDongle:
     def resetup(self, console=True):
         self._do=None
         #self._threadGo = True
-        if console or self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
+        if self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
         while (self._do==None):
             try:
                 self.setup(console)
@@ -1214,7 +1214,7 @@ class USBDongle:
             raise(Exception("DRate does not translate into acceptable parameters.  Should you be changing this?"))
 
         drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
-        print "drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate)
+        if self._debug: print "drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate)
         
         radiocfg.mdmcfg3 = drate_m
         radiocfg.mdmcfg4 &= 0xf0
