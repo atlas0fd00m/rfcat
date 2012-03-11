@@ -356,6 +356,7 @@ FOC_PRE_K_3K                   = (0x03 << 3)
 FOC_PRE_K_4K                   = (0x04 << 3)
 FREND0                         = 0xDF1B
 FREND0_LODIV_BUF_CURRENT_TX    = 0x30
+FREND0_PA_POWER                = 0x04
 FREND1                         = 0xDF1A
 FREND1_LNA2MIX_CURRENT         = 0x30
 FREND1_LNA_CURRENT             = 0xC0
