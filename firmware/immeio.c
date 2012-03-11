@@ -655,7 +655,7 @@ void poll_keyboard() {
         while (MARCSTATE != MARC_STATE_RX);
 
         break;
-	case 'G':   // no sync word
+	case 'Z':   // no sync word
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
         MDMCFG2 &= 0xf8;
@@ -897,13 +897,142 @@ void poll_keyboard() {
 
         break;
 
-	case 'L': // freq incr
+	case 'I': // freq incr
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ1++;
+        if (FREQ1 == 0)
+            FREQ2++;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'M': // freq decr
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        if (FREQ1 == 0)
+            FREQ2--;
+        FREQ1--;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'U': // freq incr
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ2++;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'N': // freq decr
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ2--;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'L': // freq set 915
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ2       = 0x23;
+        FREQ1       = 0x31;//0x71;
+        FREQ0       = 0x3b;//0x7c;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'K': // freq set 868
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
 
         FREQ2       = 0x21;
-        FREQ1       = 0x65;//0x71;
-        FREQ0       = 0x6a;//0x7c;
+        FREQ1       = 0x62;//0x71;
+        FREQ0       = 0x76;//0x7c;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'J': // freq set 433
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ2       = 0x10;
+        FREQ1       = 0xa7;//0x71;
+        FREQ0       = 0x62;//0x7c;
+
+        immeLCDShowRFConfig();
+        imme_state = IMME_STATE_CONFIG_SCREEN;
+        imme_state_counter = 0;
+
+        RFST = RFST_SCAL;
+        while (MARCSTATE != MARC_STATE_IDLE);
+        RFST = RFST_SRX;
+        while (MARCSTATE != MARC_STATE_RX);
+
+        break;
+
+	case 'H': // freq set 315
+        RFST = RFST_SIDLE;
+        while (MARCSTATE != MARC_STATE_IDLE);
+
+        FREQ2       = 0x0c;
+        FREQ1       = 0x1d;//0x71;
+        FREQ0       = 0x89;//0x7c;
 
         immeLCDShowRFConfig();
         imme_state = IMME_STATE_CONFIG_SCREEN;
@@ -917,7 +1046,7 @@ void poll_keyboard() {
         break;
 
 
-	case 'I': // channr incr
+	case 'G': // channr incr
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
 
@@ -934,7 +1063,7 @@ void poll_keyboard() {
 
         break;
 
-	case 'K': // channr incr
+	case 'T': // channr incr
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
 
@@ -951,7 +1080,7 @@ void poll_keyboard() {
 
         break;
 
-	case 'J': // channr incr
+	case 'V': // channr incr
         RFST = RFST_SIDLE;
         while (MARCSTATE != MARC_STATE_IDLE);
 
@@ -977,7 +1106,7 @@ void poll_keyboard() {
   
         break;
 
-    case 'M':
+    case KSPK:
         if (MARCSTATE == MARC_STATE_RX)
         {
             RFOFF;
