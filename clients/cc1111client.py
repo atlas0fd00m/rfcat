@@ -1777,10 +1777,10 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, debug=None, lowball=1, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, SyncWordMatchList=None):
         oldebug = self._debug
         print "Entering Lowball mode and searching for possible SyncWords"
-        self.lowball()
+        self.lowball(lowball)
         self.makePktFLEN(30)
         if debug is not None:
             self._debug = debug
