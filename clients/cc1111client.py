@@ -1777,7 +1777,7 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, lowball=1, debug=None, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, doSyncWordAnalysis=True, SyncWordMatchList=None):
         oldebug = self._debug
         print "Entering Lowball mode and searching for possible SyncWords"
         self.lowball(lowball)
@@ -1789,16 +1789,18 @@ class USBDongle:
             try:
                 y, t = self.RFrecv()
                 print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-                if lowball:
-                    y = '\xaa\xaa' + y
-                poss = bits.findDword(y)
-                if len(poss):
-                    print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
 
-                if SyncWordMatchList is not None:
-                    for x in poss:
-                        if x in SyncWordMatchList:
-                            print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
+                if doSyncWordAnalysis:
+                    if lowball == 1:
+                        y = '\xaa\xaa' + y
+                    poss = bits.findDword(y)
+                    if len(poss):
+                        print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
+
+                    if SyncWordMatchList is not None:
+                        for x in poss:
+                            if x in SyncWordMatchList:
+                                print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
             except CC111xTimeoutException:
                 pass
 
