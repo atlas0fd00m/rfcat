@@ -778,38 +778,21 @@ int handleOUTEP5(void)
         return -1;
     }
 
+    // if new transaction, we want to reset OUTlen early so our overall length calculation is clean
+    if (ep5.OUTbytesleft == 0)
+        ep5.OUTlen = 0;
+
     // setup DMA
     len = USBCNTL;
     len += (u16)(USBCNTH<<8);
 
-    if (ep5.OUTbytesleft == 0)
-    {
-        ep5.OUTapp = *ptr++;
-        ep5.OUTcmd = *ptr++;
-        ep5.OUTbytesleft =  *ptr++;
-        ep5.OUTbytesleft += *ptr++ << 8;
-        ep5.OUTlen = 0;
-        if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
-            ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
-
-        //debug("New...");
-        //debughex16(loop);
-        //debughex16(ep5.OUTlen);
-        //debughex16(ep5.OUTbytesleft);
-
-        ep5.flags &= ~EP_OUTBUF_CONTINUED;
-
-    } else
-    {
-        //debug("Continued...");
-        //debughex16(ep5.OUTbytesleft);
-        //debughex16((u16)ep5.dptr);
-        ep5.flags |= EP_OUTBUF_CONTINUED;
-    }
     while ((DMAIRQ & DMAARM1))
         blink(20,20);
 
+    // points our destination at the next free point in our buffer
     ptr = &ep5.OUTbuf[0] + ep5.OUTlen;
+
+    // config and arm DMA 
     DMAARM |= 0x80 + DMAARM1;
     usbdma.srcAddrH = 0xde;     //USBF5 == 0xde2a
     usbdma.srcAddrL = 0x2a;
@@ -820,19 +803,16 @@ int handleOUTEP5(void)
     usbdma.lenL = USBCNTL;
     usbdma.lenH = USBCNTH;  // should always be zero, but what if we move to a HS chip someday?
 
+    // doublecheck that overall length is not going to go over our buffer size (no buffer overflows please!)
     if (len + ep5.OUTlen > EP5OUT_BUFFER_SIZE)
         len = EP5OUT_BUFFER_SIZE - ep5.OUTlen;
 
+    // make sure the controller isn't trying to slip in extra bytes (still don't know what to do with this yet, i think it needs to be a client fix)
     if (len > EP5OUT_MAX_PACKET_SIZE)                           // FIXME: if they wanna send too much data, do we accept what we can?  or bomb?
     {                                                           //  currently choosing to bomb.
         lastCode[1] = LCE_USB_EP5_LEN_TOO_BIG;
         //USBCSOL |= USBCSOL_SEND_STALL;
         USBCSOL &= ~USBCSOL_OUTPKT_RDY;
-        //blink(300,200);
-        //blink(300,200);
-        //blink(300,200);
-        //blink(300,200);
-        //blink(300,200);
         //blink(300,200);
         //blink(300,200);
         blink_binary_baby_lsb(len, 16);
@@ -844,15 +824,46 @@ int handleOUTEP5(void)
     DMAARM |= DMAARM1;
     DMAREQ |= DMAARM1;
 
-    ep5.OUTlen += len;
-
-    if (ep5.OUTlen == ep5.OUTbytesleft)
+    if (ep5.OUTbytesleft == 0)
     {
-        ep5.flags |= EP_OUTBUF_WRITTEN;                        // track that we've read into the OUTbuf
+        // already cleared OUTlen above
+        ep5.OUTapp = *ptr++;
+        ep5.OUTcmd = *ptr++;
+        ep5.OUTbytesleft =  *ptr++;
+        ep5.OUTbytesleft += *ptr++ << 8;
+        if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
+            ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
+
+        //debug("New...");
+        //debughex16(loop);
+        //debughex16(ep5.OUTlen);
+        //debughex16(ep5.OUTbytesleft);
+
+        //ep5.flags &= ~EP_OUTBUF_CONTINUED;
+
+    } else
+    {
+        //debug("Continued...");
+        //debughex16(ep5.OUTbytesleft);
+        //debughex16((u16)ep5.dptr);
+        //ep5.flags |= EP_OUTBUF_CONTINUED;
     }
+
+    // update out OUTlen.  this is vital for determining when we're done
+    ep5.OUTlen += len;
 
     while (!(DMAIRQ & DMAARM1));
     DMAIRQ &= ~DMAARM1;
+
+
+    if (ep5.OUTlen >= ep5.OUTbytesleft + 4)
+    {
+        ep5.flags |= EP_OUTBUF_WRITTEN;                         // track that we've read into the OUTbuf
+        ep5.OUTbytesleft = 0;
+        USBINDEX = 5;
+        USBCSOL &= ~USBCSOL_OUTPKT_RDY;
+        return 1;                                               // this return value is what gets processOUTEP5 to kick
+    }
 
     USBINDEX = 5;
     USBCSOL &= ~USBCSOL_OUTPKT_RDY;
@@ -864,30 +875,11 @@ void processOUTEP5(void)
     u16 loop;
     xdata u8* ptr; 
 
-    // FIXME: buffer this receipt up to MAX_PACKET_SIZE (say, probably 256 bytes)... and do it so that all apps can benefit.
+    // if the buffer is still being loaded or just plain empty, ignore this  (superfluous... may remove this check later)
+    if (ep5.flags & EP_OUTBUF_WRITTEN == 0)
+        return;
 
-    ptr = &ep5.OUTbuf[0];
-    if (ep5.OUTbytesleft == 0 && ep5.OUTlen >=4)
-    {
-        ep5.OUTapp = *ptr++;
-        ep5.OUTcmd = *ptr++;
-        ep5.OUTbytesleft =  *ptr++;
-        ep5.OUTbytesleft += *ptr++ << 8;
-        //debug("New...");
-        //debughex16(loop);
-        //debughex16(ep5.OUTlen);
-        //debughex16(ep5.OUTbytesleft);
-
-        ep5.flags &= ~EP_OUTBUF_CONTINUED;
-
-    } else
-    {
-        //debug("Continued...");
-        //debughex16(ep5.OUTbytesleft);
-        //debughex16((u16)ep5.dptr);
-        ep5.flags |= EP_OUTBUF_CONTINUED;
-    }
-
+    ptr = &ep5.OUTbuf[4];
     // system application
     if (ep5.OUTapp == 0xff)                                        
     {
@@ -970,24 +962,20 @@ void processOUTEP5(void)
 
                 break;
             case CMD_PING:
-                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
-                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
             case CMD_STATUS:
                 txdata(ep5.OUTapp, ep5.OUTcmd, 13, (xdata u8*)"UNIMPLEMENTED");
-                ep5.OUTbytesleft = 0;
                 // unimplemented
                 break;
 
             case CMD_GET_CLOCK:
                 txdata(ep5.OUTapp, ep5.OUTcmd, 4, (xdata u8*)clock);
-                ep5.OUTbytesleft = 0;
                 break;
 
             case CMD_BUILDTYPE:
                 txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(buildname), (xdata u8*)&buildname[0]);
-                ep5.OUTbytesleft = 0;
                 break;
 
             case CMD_RESET:
@@ -997,11 +985,9 @@ void processOUTEP5(void)
                 // implement a RESET by trigging the watchdog timer
                 WDCTL = 0x80;   // Watchdog ENABLE, Watchdog mode, 1s until reset
 
-                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
-                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
             default:
-                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTbytesleft,ptr);
-                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
 
         ep5.flags &= ~EP_OUTBUF_WRITTEN; 
@@ -1095,11 +1081,11 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        if (handleOUTEP5() != -1)                   // handles the immediate read into ep5
+        if (handleOUTEP5() == 1)                   // handles the immediate read into ep5
         {
             processOUTEP5();                            // process the data read into ep5
-            usb_data.event &= ~USBD_OIF_OUTEP5IF;
         }
+        usb_data.event &= ~USBD_OIF_OUTEP5IF;
         
     }
 
@@ -1310,8 +1296,8 @@ __code u8 USBDESCBEGIN [] = {
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
               '0', 0,
-              '8', 0,
-              '6', 0,
+              '9', 0,
+              '7', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
