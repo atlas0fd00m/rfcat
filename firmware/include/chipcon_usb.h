@@ -5,8 +5,10 @@
 #include "chipcon_usbdebug.h"
 
 #define     EP0_MAX_PACKET_SIZE     32
+#define     EP5_MAX_PACKET_SIZE     64
 #define     EP5OUT_MAX_PACKET_SIZE  64
 #define     EP5IN_MAX_PACKET_SIZE   64
+#define     EP5OUT_BUFFER_SIZE      260
 
 #define     EP_STATE_IDLE      0
 #define     EP_STATE_TX        1
@@ -297,7 +299,7 @@ typedef struct USB_Request_Type {
 extern __code u8 USBDESCBEGIN[];
 extern USB_STATE usb_data;
 extern xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
-extern xdata u8  usb_ep5_OUTbuf[EP5OUT_MAX_PACKET_SIZE];               // these get pointed to by the above structure
+extern xdata u8  usb_ep5_OUTbuf[EP5OUT_BUFFER_SIZE];               // these get pointed to by the above structure
 extern xdata USB_EP_IO_BUF     ep0;
 extern xdata USB_EP_IO_BUF     ep5;
 extern xdata u8 appstatus;

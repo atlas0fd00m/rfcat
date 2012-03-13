@@ -407,7 +407,7 @@ void appMainLoop(void)
             if (rfif)
             {
                 lastCode[0] = 0xd;
-                IEN2 &= ~IEN2_RFIE;
+                IEN2 &= ~IEN2_RFIE;   // FIXME: is this ok?
 
                 if(rfif & RFIF_IRQ_DONE)
                 {
@@ -495,7 +495,7 @@ void appMainLoop(void)
                 //LED = !LED;
                 lastCode[0] = 0xd;
 
-                if(rfif & RFIF_IRQ_DONE)
+                if(rfif & (RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT) )
                 {
                     processbuffer = !rfRxCurrentBuffer;
                     if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
@@ -511,7 +511,7 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~RFIF_IRQ_DONE;           // FIXME: rfif is way too easily tossed aside here...
+                    rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );           // FIXME: rfif is way too easily tossed aside here...
                 }
 
                 //LED = !LED;
@@ -538,20 +538,11 @@ int appHandleEP5()
     u16 len;
     __xdata u8 *buf = &ep5.OUTbuf[0];
 
-    app = *buf++;
-    cmd = *buf++;
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
-    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
-    // check the application
-    //  then check the cmd
-    //   then process the data
-    switch (app)
+    switch (ep5.OUTapp)
     {
         case APP_NIC:
 
-        switch (cmd)
+        switch (ep5.OUTcmd)
         {
             case NIC_RFMODE:
                 switch (*buf++)
