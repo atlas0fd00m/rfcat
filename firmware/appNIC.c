@@ -96,33 +96,20 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd;
-    u16 len;
-    __xdata u8 *buf = &ep5.OUTbuf[0];
+    __xdata u8 *ptr = &ep5.OUTbuf[0];
 
-    app = *buf++;
-    cmd = *buf++;
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
-    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
-    // check the application
-    //  then check the cmd
-    //   then process the data
-    switch (app)
+    switch (ep5.OUTapp)
     {
         case APP_NIC:
 
-        switch (cmd)
+        switch (ep5.OUTcmd)
         {
             case NIC_XMIT:
-                transmit(buf, len);
+                transmit(ptr, ep5.OUTlen);
                 { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                txdata(app, cmd, 1, (xdata u8*)"0");
-                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"0");
                 break;
             default:
-                ep5.OUTbytesleft = 0;
                 break;
         }
         break;

@@ -778,13 +778,39 @@ int handleOUTEP5(void)
         return -1;
     }
 
-    // if new transaction, we want to reset OUTlen early so our overall length calculation is clean
-    if (ep5.OUTbytesleft == 0)
-        ep5.OUTlen = 0;
 
     // setup DMA
     len = USBCNTL;
     len += (u16)(USBCNTH<<8);
+
+    // if new transaction, we want to reset OUTlen early so our overall length calculation is clean
+    if (ep5.OUTbytesleft == 0)
+    {
+        ep5.OUTlen = 0;
+        ep5.OUTapp = USBF5;
+        ep5.OUTcmd = USBF5;
+        ep5.OUTbytesleft =  USBF5;
+        ep5.OUTbytesleft += (USBF5 << 8);
+
+        len -= 4;
+
+        if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
+            ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
+
+        //debug("New...");
+        //debughex16(loop);
+        //debughex16(ep5.OUTlen);
+        //debughex16(ep5.OUTbytesleft);
+
+        //ep5.flags &= ~EP_OUTBUF_CONTINUED;
+
+    } else
+    {
+        //debug("Continued...");
+        //debughex16(ep5.OUTbytesleft);
+        //debughex16((u16)ep5.dptr);
+        //ep5.flags |= EP_OUTBUF_CONTINUED;
+    }
 
     while ((DMAIRQ & DMAARM1))
         blink(20,20);
@@ -824,31 +850,6 @@ int handleOUTEP5(void)
     DMAARM |= DMAARM1;
     DMAREQ |= DMAARM1;
 
-    if (ep5.OUTbytesleft == 0)
-    {
-        // already cleared OUTlen above
-        ep5.OUTapp = *ptr++;
-        ep5.OUTcmd = *ptr++;
-        ep5.OUTbytesleft =  *ptr++;
-        ep5.OUTbytesleft += *ptr++ << 8;
-        if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
-            ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
-
-        //debug("New...");
-        //debughex16(loop);
-        //debughex16(ep5.OUTlen);
-        //debughex16(ep5.OUTbytesleft);
-
-        //ep5.flags &= ~EP_OUTBUF_CONTINUED;
-
-    } else
-    {
-        //debug("Continued...");
-        //debughex16(ep5.OUTbytesleft);
-        //debughex16((u16)ep5.dptr);
-        //ep5.flags |= EP_OUTBUF_CONTINUED;
-    }
-
     // update out OUTlen.  this is vital for determining when we're done
     ep5.OUTlen += len;
 
@@ -856,7 +857,7 @@ int handleOUTEP5(void)
     DMAIRQ &= ~DMAARM1;
 
 
-    if (ep5.OUTlen >= ep5.OUTbytesleft + 4)
+    if (ep5.OUTlen >= ep5.OUTbytesleft)
     {
         ep5.flags |= EP_OUTBUF_WRITTEN;                         // track that we've read into the OUTbuf
         ep5.OUTbytesleft = 0;
@@ -879,7 +880,7 @@ void processOUTEP5(void)
     if (ep5.flags & EP_OUTBUF_WRITTEN == 0)
         return;
 
-    ptr = &ep5.OUTbuf[4];
+    ptr = &ep5.OUTbuf[0];
     // system application
     if (ep5.OUTapp == 0xff)                                        
     {
@@ -1295,9 +1296,9 @@ __code u8 USBDESCBEGIN [] = {
                10,                      // bLength
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
+              '1', 0,
+              '1', 0,
               '0', 0,
-              '9', 0,
-              '7', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
