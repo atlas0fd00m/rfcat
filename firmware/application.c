@@ -119,20 +119,9 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd;
-    u16 len;
-    __xdata u8 *buf = &ep5.OUTbuf[0];
+    __xdata u8 *ptr = &ep5.OUTbuf[0];
 
-    app = *buf++;
-    cmd = *buf++;
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
-    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
-    // check the application
-    //  then check the cmd
-    //   then process the data
-    switch (cmd)
+    switch (ep5.OUTcmd)
     {
         /*
         case CMD_RFMODE:
@@ -150,11 +139,9 @@ int appHandleEP5()
                     break;
             }
             txdata(app,cmd,len,ptr);
-            ep5.OUTbytesleft = 0;
             break;
             */
         default:
-            ep5.OUTbytesleft = 0;
             break;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
