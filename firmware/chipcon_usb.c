@@ -897,45 +897,24 @@ void processOUTEP5(void)
 
                 txdata(ep5.OUTapp, ep5.OUTcmd, ep5.OUTbytesleft, ptr);
                 ep5.OUTbytesleft = 0;
-
                 break;
+
             case CMD_POKE:
-                if (ep5.flags & EP_OUTBUF_CONTINUED)
-                {
-                    //debug("Poke Continued...");
-                    //debughex(ep5.flags);
-                    loop = ep5.OUTlen;
-                    if (loop > ep5.OUTbytesleft)
-                        loop = ep5.OUTbytesleft;
-                } else {
-                    //debug("Poke New...");
                     loop =  *ptr++;
                     loop += *ptr++ << 8;
                     ep5.dptr = (xdata u8*) loop;                                // hack, but it works
-                    ep5.OUTbytesleft -= 2;                                      // skip the target address bytes
 
-                    loop = ep5.OUTlen - 6;
-                    if (loop > ep5.OUTbytesleft)
-                        loop = ep5.OUTbytesleft;
-                }
-                // FIXME: do we want to DMA here?
-                //debughex16((u16)ep5.dptr);
+                    loop = ep5.OUTlen - 2;
 
+                    for (;loop>0;loop--)
+                    {
+                        *ep5.dptr++ = *ptr++;
+                    }
 
-                ep5.OUTbytesleft -= loop;
-                //debughex16(loop);
-                //debughex16(ep5.OUTlen);
-                //debughex16(ep5.OUTbytesleft);
-
-                for (;loop>0;loop--)
-                {
-                    *ep5.dptr++ = *ptr++;
-                }
-
-                if (ep5.OUTbytesleft == 0)
+                    //if (ep5.OUTbytesleft == 0)
                     txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
+                    break;
 
-                break;
             case CMD_POKE_REG:
                 if (!(ep5.flags & EP_OUTBUF_CONTINUED))
                 {
@@ -1298,7 +1277,7 @@ __code u8 USBDESCBEGIN [] = {
               '0', 0,
               '1', 0,
               '1', 0,
-              '0', 0,
+              '6', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
