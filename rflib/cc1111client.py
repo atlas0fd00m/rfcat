@@ -1743,7 +1743,7 @@ class USBDongle:
             self.RFxmit(data)
         sys.stdin.read(1)
 
-    def lowball(self, level=1, sync=0xaaaa):
+    def lowball(self, level=1, sync=0xaaaa, length=250, pqt=0, crc=False, fec=False, datawhite=False):
         '''
         this configures the radio to the lowest possible level of filtering, potentially allowing complete radio noise to come through as data.  very useful in some circumstances.
         level == 0 changes the Sync Mode to SYNCM_NONE (wayyy more garbage)
@@ -1752,15 +1752,16 @@ class USBDongle:
         level == 3 sets the Sync Mode to SYNCM_CARRIER_16_of_16 (requires a valid carrier detection and 16 of 16 bits of SYNC WORD match for the data to be considered a packet)
         '''
         if hasattr(self, '_last_radiocfg') and len(self._last_radiocfg):
-            raise(Exception('i simply will not allow you to run lowball() twice in a row!  lowballRestore() to restore the radio config from before last time you ran lowball'))
-        self._last_radiocfg = self.getRadioConfig()
+            print('not saving radio state.  already have one saved.  use lowballRestore() to restore the saved config and the next time you run lowball() the radio config will be saved.')
+        else:
+            self._last_radiocfg = self.getRadioConfig()
 
-        self.makePktFLEN(250)
-        self.setEnablePktCRC(False)
-        self.setEnableMdmFEC(False)
-        self.setEnablePktDataWhitening(False)
+        self.makePktFLEN(length)
+        self.setEnablePktCRC(crc)
+        self.setEnableMdmFEC(fec)
+        self.setEnablePktDataWhitening(datawhite)
         self.setMdmSyncWord(sync)
-        self.setPktPQT(0)
+        self.setPktPQT(pqt)
         
         if (level == 3):
             self.setMdmSyncMode(SYNCM_CARRIER_16_of_16)
@@ -1779,11 +1780,10 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, lowball=1, debug=None, IdentSyncWord=False, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None):
         oldebug = self._debug
         print "Entering Lowball mode and searching for possible SyncWords"
-        self.lowball(lowball)
-        self.makePktFLEN(30)
+        self.lowball(level=lowball, length=length)
         if debug is not None:
             self._debug = debug
         while not len(select.select([sys.stdin],[],[],0)[0]):
