@@ -407,7 +407,7 @@ void appMainLoop(void)
             if (rfif)
             {
                 lastCode[0] = 0xd;
-                IEN2 &= ~IEN2_RFIE;
+                IEN2 &= ~IEN2_RFIE;   // FIXME: is this ok?
 
                 if(rfif & RFIF_IRQ_DONE)
                 {
@@ -495,7 +495,7 @@ void appMainLoop(void)
                 //LED = !LED;
                 lastCode[0] = 0xd;
 
-                if(rfif & RFIF_IRQ_DONE)
+                if(rfif & (RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT) )
                 {
                     processbuffer = !rfRxCurrentBuffer;
                     if(rfRxProcessed[processbuffer] == RX_UNPROCESSED)
@@ -511,7 +511,7 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~RFIF_IRQ_DONE;           // FIXME: rfif is way too easily tossed aside here...
+                    rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );           // FIXME: rfif is way too easily tossed aside here...
                 }
 
                 //LED = !LED;
@@ -534,171 +534,144 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd;
-    u16 len;
     __xdata u8 *buf = &ep5.OUTbuf[0];
 
-    app = *buf++;
-    cmd = *buf++;
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
-    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
-    // check the application
-    //  then check the cmd
-    //   then process the data
-    switch (app)
+    switch (ep5.OUTapp)
     {
         case APP_NIC:
 
-        switch (cmd)
-        {
-            case NIC_RFMODE:
-                switch (*buf++)
-                {
-                    case RF_STATE_RX:
+            switch (ep5.OUTcmd)
+            {
+                case NIC_RFMODE:
+                    switch (*buf++)
+                    {
+                        case RF_STATE_RX:
 
-                        RxMode();
-                        break;
-                    case RF_STATE_IDLE:
-                        IdleMode();
-                        break;
-                    case RF_STATE_TX:
-						// ??  this should be just turning on CARRIER
-                        setRFTx();
-                        break;
-                }
-                txdata(app,cmd,len,buf);
-                ep5.OUTbytesleft = 0;
-                break;
-            case NIC_XMIT:
-                // FIXME:  this needs to place buf data into the FHSS txMsgQueue
-                transmit(buf, 0);
-                //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                txdata(app, cmd, 1, (xdata u8*)"\x00");
-                ep5.OUTbytesleft = 0;
-                break;
-                
-            case NIC_SET_ID:
-                MAC_set_NIC_ID(*buf);
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                            RxMode();
+                            break;
+                        case RF_STATE_IDLE:
+                            IdleMode();
+                            break;
+                        case RF_STATE_TX:
+                            // ??  this should be just turning on CARRIER
+                            setRFTx();
+                            break;
+                    }
+                    txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,buf);
+                    break;
 
-            case FHSS_XMIT:
-                MAC_tx(buf, len);
-                txdata(app, cmd, 1, (xdata u8*)"\x00");
-                ep5.OUTbytesleft = 0;
-                break;
-                
-            case FHSS_SET_CHANNELS:
-                macdata.NumChannels = (xdata u16)*buf;
-                if (macdata.NumChannels <= MAX_CHANNELS)
-                {
-                    buf += 2;
-                    memcpy(&g_Channels[0], buf, macdata.NumChannels);
-                    txdata(app, cmd, 2, (u8*)&macdata.NumChannels);
-                } else {
-                    txdata(app, cmd, 8, (xdata u8*)"NO DEAL");
-                }
-                ep5.OUTbytesleft = 0;
-                break;
+                case NIC_XMIT:
+                    // FIXME:  this needs to place buf data into the FHSS txMsgQueue
+                    transmit(buf, 0);
+                    //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    break;
+                    
+                case NIC_SET_ID:
+                    MAC_set_NIC_ID(*buf);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
 
-            case FHSS_NEXT_CHANNEL:
-                MAC_set_chanidx(MAC_getNextChannel());
-                txdata(app, cmd, 1, &g_Channels[macdata.curChanIdx]);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_XMIT:
+                    MAC_tx(buf, ep5.OUTlen);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    break;
+                    
+                case FHSS_SET_CHANNELS:
+                    macdata.NumChannels = (xdata u16)*buf;
+                    if (macdata.NumChannels <= MAX_CHANNELS)
+                    {
+                        buf += 2;
+                        memcpy(&g_Channels[0], buf, macdata.NumChannels);
+                        txdata(ep5.OUTapp, ep5.OUTcmd, 2, (u8*)&macdata.NumChannels);
+                    } else {
+                        txdata(ep5.OUTapp, ep5.OUTcmd, 8, (xdata u8*)"NO DEAL");
+                    }
+                    break;
 
-            case FHSS_CHANGE_CHANNEL:
-                PHY_set_channel(*buf);
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_NEXT_CHANNEL:
+                    MAC_set_chanidx(MAC_getNextChannel());
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, &g_Channels[macdata.curChanIdx]);
+                    break;
 
-            case FHSS_START_HOPPING:
-                begin_hopping(0);
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_CHANGE_CHANNEL:
+                    PHY_set_channel(*buf);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
 
-            case FHSS_STOP_HOPPING:
-                stop_hopping();
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_START_HOPPING:
+                    begin_hopping(0);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
 
-            // FIXME: do we even need g_MAC_threshold anymore?
-            case FHSS_SET_MAC_THRESHOLD:
-                macdata.MAC_threshold = *buf;
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_STOP_HOPPING:
+                    stop_hopping();
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
 
-            case FHSS_GET_MAC_THRESHOLD:
-                txdata(app, cmd, 4, (xdata u8*)&macdata.MAC_threshold);
-                ep5.OUTbytesleft = 0;
-                break;
+                // FIXME: do we even need g_MAC_threshold anymore?
+                case FHSS_SET_MAC_THRESHOLD:
+                    macdata.MAC_threshold = *buf;
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
 
-            case FHSS_SET_MAC_DATA:
-                memcpy((xdata u8*)&macdata, (xdata u8*)*buf, sizeof(macdata));
-                txdata(app, cmd, sizeof(macdata), buf);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_GET_MAC_THRESHOLD:
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 4, (xdata u8*)&macdata.MAC_threshold);
+                    break;
 
-            case FHSS_GET_MAC_DATA:
-                txdata(app, cmd, sizeof(macdata), (xdata u8*)&macdata);
-                ep5.OUTbytesleft = 0;
-                break;
+                case FHSS_SET_MAC_DATA:
+                    memcpy((xdata u8*)&macdata, (xdata u8*)*buf, sizeof(macdata));
+                    txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(macdata), buf);
+                    break;
 
-            case FHSS_START_SYNC:
-                MAC_sync(*buf);
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
-                
-            case FHSS_SET_STATE:
-                // store the main timer value for beginning of this phase.
-                macdata.tLastStateChange = clock;
-                macdata.mac_state = (u8)*buf;
-                
-                // if macdata.mac_state is > 2, make sure the T2 interrupt is set
-                // if macdata.mac_state <= 2, make sure T2 interrupt is ignored
-                switch (macdata.mac_state)
-                {
-                    case FHSS_STATE_NONHOPPING:
-                    case FHSS_STATE_DISCOVERY:
-                    case FHSS_STATE_SYNCHING:
-                        
-                        stop_hopping();
-                        break;
+                case FHSS_GET_MAC_DATA:
+                    txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(macdata), (xdata u8*)&macdata);
+                    break;
 
-                    case FHSS_STATE_SYNCINGMASTER:
-                        macdata.synched_chans = 0;
-                        begin_hopping(0);
-                        break;
+                case FHSS_START_SYNC:
+                    MAC_sync(*buf);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
+                    
+                case FHSS_SET_STATE:
+                    // store the main timer value for beginning of this phase.
+                    macdata.tLastStateChange = clock;
+                    macdata.mac_state = (u8)*buf;
+                    
+                    // if macdata.mac_state is > 2, make sure the T2 interrupt is set
+                    // if macdata.mac_state <= 2, make sure T2 interrupt is ignored
+                    switch (macdata.mac_state)
+                    {
+                        case FHSS_STATE_NONHOPPING:
+                        case FHSS_STATE_DISCOVERY:
+                        case FHSS_STATE_SYNCHING:
+                            
+                            stop_hopping();
+                            break;
 
-                    case FHSS_STATE_SYNCHED:
-                    case FHSS_STATE_SYNC_MASTER:
-                        begin_hopping(0);
-                        break;
-                }
-                
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
-                
-            case FHSS_GET_STATE:
-                txdata(app, cmd, 1, (xdata u8*)&macdata.mac_state);
-                ep5.OUTbytesleft = 0;
-                break;
-                
-            default:
-                txdata(app, cmd, 1, buf);
-                ep5.OUTbytesleft = 0;
-                break;
-        }
-        break;
+                        case FHSS_STATE_SYNCINGMASTER:
+                            macdata.synched_chans = 0;
+                            begin_hopping(0);
+                            break;
+
+                        case FHSS_STATE_SYNCHED:
+                        case FHSS_STATE_SYNC_MASTER:
+                            begin_hopping(0);
+                            break;
+                    }
+                    
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
+                    
+                case FHSS_GET_STATE:
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&macdata.mac_state);
+                    break;
+                    
+                default:
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    break;
+            }
+            break;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
 #endif

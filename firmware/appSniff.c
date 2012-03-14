@@ -81,54 +81,6 @@ void appMainLoop(void)
                 LED_RED = !LED_RED;
                 ++recvCnt;
                 immeLCDShowPacket();
-                //xdata u8 *pval = &rfrxbuf[processbuffer][0];
-                //u8 len   = *pval++;
-                //u16 nibble;
-//
-                //SSN=LOW;
-                //LED_RED = !LED_RED;
-                //drawstr(3,0, "                                ");
-                //drawstr(3,0, "                                ");
-                ////blink_binary_baby_lsb(len, 8);
-                //drawstr(1,0, "Length: ");
-                //drawhex(1,9, len);
-                //drawstr(2,0, "Curr: ");
-                //drawhex(2,6, rfRxCurrentBuffer);
-                //drawstr(2,12, "Cnt: ");
-                //drawhex(2,17, ++recvCnt);
-                //if (len>50)
-                    //len = 50;
-//
-                //// not print the packet data, one byte if "printable" or two bytes if hex-representation makes more sense
-                //setCursor(3, 0);
-                //while (len--)
-                //{
-                    //if (*pval > 0x1f && *pval < 0x7f)
-                    //{
-                        //putch(' ');
-                        //putch(*pval);
-                    //} else
-                    //{
-//
-                        //// high nibble
-                        //nibble=(*(pval) & 0xF0)>>4;
-                        //if(nibble<10)
-                            //putch('0'+nibble);
-                        //else
-                            //putch('A'+nibble-0xA);
-//
-                        //// low nibble
-                        //nibble=((*pval)&0x0F);
-                        //if(nibble<10)
-                            //putch('0'+nibble);
-                        //else
-                            //putch('A'+nibble-0xA);
-                    //}
-//
-                    //pval ++;
-                //}
-
-                //SSN=HIGH;
 #else
                 txdata(APP_NIC, SNIFF_RECV, (u8)rfrxbuf[processbuffer][0], (u8*)&rfrxbuf[processbuffer]);
 #endif  // imme
@@ -158,25 +110,15 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    u8 app, cmd;
-    u16 len;
-    __xdata u8 *buf = &ep5.OUTbuf[0];
+#ifndef IMME
+    __xdata u8 *ptr = &ep5.OUTbuf[0];
 
-    app = *buf++;
-    cmd = *buf++;
-    len = (u8)*buf++;         // FIXME: should we use this?  or the lower byte of OUTlen?
-    len += (u16)((*buf++) << 8);                                               // point at the address in memory
-
-    // ep5.OUTbuf should have the following bytes to start:  <app> <cmd> <lenlow> <lenhigh>
-    // check the application
-    //  then check the cmd
-    //   then process the data
-    switch (app)
+    switch (ep5.OUTapp)
     {
         default:
-            ep5.OUTbytesleft = 0;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
+#endif
 #endif
     return 0;
 }

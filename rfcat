@@ -37,33 +37,10 @@ gbls = globals()
 lcls = locals()
 
 try:
-    print ashdf
     import IPython.Shell
     ipsh = IPython.Shell.IPShell(argv=sys.argv, user_ns=lcls, user_global_ns=gbls)
     ipsh.mainloop(intro)
-except:
+except ImportError, e:
     shell = code.InteractiveConsole(lcls)
     shell.interact(intro)
-
-    '''
-    _go = True
-    print intro
-    print "<you really want to install ipython>"
-
-    def quit():
-        global _go
-        _go = False
-    
-    while _go:
-        try:
-            indata = raw_input("rfcat> ")
-            outdata = exec( indata , gbls, lcls )
-            if outdata is not None:
-                print repr( outdata )
-
-        except EOFError:
-            _go = False
-        except:
-            sys.excepthook(*sys.exc_info())
-    '''
 
