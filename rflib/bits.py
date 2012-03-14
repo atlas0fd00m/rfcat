@@ -138,3 +138,73 @@ def findDwordDoubled(byts):
 
 #def test():
 
+def visBits(data):
+    pass
+
+
+
+def getBit(data, bit):
+    idx = bit / 8
+    bidx = bit % 8
+    char = data[idx]
+    return (ord(char)>>(7-bidx)) & 1
+
+
+
+def detectRepeatPatterns(data, size=64):
+    c1 = 0
+    c2 = 0
+    d1 = 0
+    p1 = 0
+    while p1 < (8*len(data)-size-8):
+        d1 <<= 1
+        d1 |= getBit(data, p1)
+        d1 &= ((1<<(size)) - 1)
+
+        if c1 < (size):
+            p1 += 1
+            c1 += 1
+            continue
+
+        d2 = 0
+        p2 = p1+size
+        while p2 < (8*len(data)):
+            d2 <<= 1
+            d2 |= getBit(data, p2)
+            d2 &= ((1<<(size)) - 1)
+
+            if c2 < (size):
+                p2 += 1
+                c2 += 1
+                continue
+
+            if d1 == d2:
+                s1 = p1 - c1
+                s2 = p2 - c2
+                length = 0
+                # complete the pattern until the numbers differ or meet
+                while True:
+                    p1 += 1
+                    p2 += 1
+                    b1 = getBit(data,p1)
+                    b2 = getBit(data,p2)
+
+                    if p1 == s2 or b1 != b2:
+                        length = p1 - s1
+                        c1 = 0
+                        c2 = 0
+                        p1 -= size
+                        p2 -= size
+                        break
+                print "success:"
+                print "  * bit idx1: %4d (%4d bits) - '%s'" % (s1, length, bin(d1))
+                print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
+            #else:
+            #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
+            p2 += 1
+        p1 += 1
+
+
+                    
+
+                

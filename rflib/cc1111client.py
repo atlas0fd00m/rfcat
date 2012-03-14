@@ -217,7 +217,7 @@ class USBDongle:
         for bus in usb.busses():
             for dev in bus.devices:
                 if dev.idProduct == 0x4715:
-                    if console: print >>sys.stderr,(dev)
+                    if self._debug: print >>sys.stderr,(dev)
                     do = dev.open()
                     iSN = do.getDescriptor(1,0,50)[16]
                     devnum = dev.devnum
@@ -256,7 +256,7 @@ class USBDongle:
     def resetup(self, console=True):
         self._do=None
         #self._threadGo = True
-        if console or self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
+        if self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
         while (self._do==None):
             try:
                 self.setup(console)
@@ -1214,7 +1214,7 @@ class USBDongle:
             raise(Exception("DRate does not translate into acceptable parameters.  Should you be changing this?"))
 
         drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
-        print "drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate)
+        if self._debug: print "drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate)
         
         radiocfg.mdmcfg3 = drate_m
         radiocfg.mdmcfg4 &= 0xf0
@@ -1743,11 +1743,13 @@ class USBDongle:
             self.RFxmit(data)
         sys.stdin.read(1)
 
-    def lowball(self, level=1):
+    def lowball(self, level=1, sync=0xaaaa):
         '''
         this configures the radio to the lowest possible level of filtering, potentially allowing complete radio noise to come through as data.  very useful in some circumstances.
         level == 0 changes the Sync Mode to SYNCM_NONE (wayyy more garbage)
         level == 1 (default) sets the Sync Mode to SYNCM_CARRIER (requires a valid carrier detection for the data to be considered a packet)
+        level == 2 sets the Sync Mode to SYNCM_CARRIER_15_of_16 (requires a valid carrier detection and 15 of 16 bits of SYNC WORD match for the data to be considered a packet)
+        level == 3 sets the Sync Mode to SYNCM_CARRIER_16_of_16 (requires a valid carrier detection and 16 of 16 bits of SYNC WORD match for the data to be considered a packet)
         '''
         if hasattr(self, '_last_radiocfg') and len(self._last_radiocfg):
             raise(Exception('i simply will not allow you to run lowball() twice in a row!  lowballRestore() to restore the radio config from before last time you ran lowball'))
@@ -1757,7 +1759,7 @@ class USBDongle:
         self.setEnablePktCRC(False)
         self.setEnableMdmFEC(False)
         self.setEnablePktDataWhitening(False)
-        self.setMdmSyncWord(0xaaaa)
+        self.setMdmSyncWord(sync)
         self.setPktPQT(0)
         
         if (level == 3):
@@ -1777,10 +1779,10 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, debug=None, lowball=1, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, IdentSyncWord=False, SyncWordMatchList=None):
         oldebug = self._debug
         print "Entering Lowball mode and searching for possible SyncWords"
-        self.lowball()
+        self.lowball(lowball)
         self.makePktFLEN(30)
         if debug is not None:
             self._debug = debug
@@ -1789,16 +1791,18 @@ class USBDongle:
             try:
                 y, t = self.RFrecv()
                 print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-                if lowball:
-                    y = '\xaa\xaa' + y
-                poss = bits.findDword(y)
-                if len(poss):
-                    print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
 
-                if SyncWordMatchList is not None:
-                    for x in poss:
-                        if x in SyncWordMatchList:
-                            print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
+                if SyncWordMatching:
+                    if lowball == 1:
+                        y = '\xaa\xaa' + y
+                    poss = bits.findDword(y)
+                    if len(poss):
+                        print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
+
+                    if SyncWordMatchList is not None:
+                        for x in poss:
+                            if x in SyncWordMatchList:
+                                print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
             except CC111xTimeoutException:
                 pass
 
