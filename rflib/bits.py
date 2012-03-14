@@ -138,7 +138,7 @@ def findDwordDoubled(byts):
 
 #def test():
 
-def visGraphBits(data):
+def visBits(data):
     pass
 
 

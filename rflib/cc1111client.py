@@ -1743,11 +1743,13 @@ class USBDongle:
             self.RFxmit(data)
         sys.stdin.read(1)
 
-    def lowball(self, level=1):
+    def lowball(self, level=1, sync=0xaaaa):
         '''
         this configures the radio to the lowest possible level of filtering, potentially allowing complete radio noise to come through as data.  very useful in some circumstances.
         level == 0 changes the Sync Mode to SYNCM_NONE (wayyy more garbage)
         level == 1 (default) sets the Sync Mode to SYNCM_CARRIER (requires a valid carrier detection for the data to be considered a packet)
+        level == 2 sets the Sync Mode to SYNCM_CARRIER_15_of_16 (requires a valid carrier detection and 15 of 16 bits of SYNC WORD match for the data to be considered a packet)
+        level == 3 sets the Sync Mode to SYNCM_CARRIER_16_of_16 (requires a valid carrier detection and 16 of 16 bits of SYNC WORD match for the data to be considered a packet)
         '''
         if hasattr(self, '_last_radiocfg') and len(self._last_radiocfg):
             raise(Exception('i simply will not allow you to run lowball() twice in a row!  lowballRestore() to restore the radio config from before last time you ran lowball'))
@@ -1757,7 +1759,7 @@ class USBDongle:
         self.setEnablePktCRC(False)
         self.setEnableMdmFEC(False)
         self.setEnablePktDataWhitening(False)
-        self.setMdmSyncWord(0xaaaa)
+        self.setMdmSyncWord(sync)
         self.setPktPQT(0)
         
         if (level == 3):
@@ -1777,7 +1779,7 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, lowball=1, debug=None, SyncWordMatching=True, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, IdentSyncWord=False, SyncWordMatchList=None):
         oldebug = self._debug
         print "Entering Lowball mode and searching for possible SyncWords"
         self.lowball(lowball)
