@@ -178,10 +178,9 @@ def detectRepeatPatterns(data, size=64):
                 c2 += 1
                 continue
 
-            if d1 == d2:
-                s1 = p1 - c1
-                s2 = p2 - c2
-                length = 0
+            if d1 == d2 and d1 > 0:
+                s1 = p1 - size
+                s2 = p2 - size
                 # complete the pattern until the numbers differ or meet
                 while True:
                     p1 += 1
@@ -191,18 +190,50 @@ def detectRepeatPatterns(data, size=64):
 
                     if p1 == s2 or b1 != b2:
                         length = p1 - s1
-                        c1 = 0
                         c2 = 0
-                        p1 -= size
-                        p2 -= size
+                        p2 = s2
                         break
                 print "success:"
-                print "  * bit idx1: %4d (%4d bits) - '%s'" % (s1, length, bin(d1))
+                print "  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSectString(data, s1, s1+length).encode("hex"))
                 print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
             #else:
             #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
             p2 += 1
         p1 += 1
+
+def bitSectString(string, startbit, endbit):
+    '''
+    bitsects a string... ie. chops out the bits from the middle of the string
+    '''
+    s = ''
+    bit = startbit
+
+    Bidx = bit / 8
+    bidx = (bit % 8)
+
+    while bit < endbit:
+
+        byte1 = ord( string[Bidx] )
+        byte2 = ord( string[Bidx+1] )
+
+        byte = (byte1 << bidx) & 0xff
+        byte |= (byte2 >> (8-bidx))
+        bit += 8
+        Bidx += 1
+
+        if bit > endbit:
+            diff = bit-endbit
+            mask = ~ ( (1<<diff) - 1 )
+            byte &= mask
+
+        s += chr(byte)
+    return s
+
+
+        
+
+
+
 
 
                     
