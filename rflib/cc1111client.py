@@ -1792,7 +1792,7 @@ class USBDongle:
                 y, t = self.RFrecv()
                 print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
 
-                if SyncWordMatching:
+                if IdentSyncWord:
                     if lowball == 1:
                         y = '\xaa\xaa' + y
                     poss = bits.findDword(y)
