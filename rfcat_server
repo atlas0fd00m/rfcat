@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import re
 import os
 import sys
@@ -5,7 +7,7 @@ import cmd
 import socket
 import threading
 
-from rfcat import *
+from rflib import *
 
 DATA_START_IDX = 4      # without the app/cmd/len bytes, the data starts at byte 4
 

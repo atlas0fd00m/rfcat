@@ -12,10 +12,11 @@
 :tabnew ./firmware/include/cc1111rf.h
 :tabnew ./firmware/include/cc1110-ext.h
 :tabnew ./firmware/include/cc1111_vcom.h
-:tabnew ./clients/cc1111client.py
-:tabnew ./clients/rfcat.py
-:tabnew ./clients/rfcat_server.py
-:tabnew ./clients/cc111Xhparser.py
-:tabnew ./clients/chipcondefs.py
+:tabnew ./rfcat
+:tabnew ./rfcat_server
+:tabnew ./rflib/__init__.py
+:tabnew ./rflib/cc1111client.py
+:tabnew ./rflib/cc111Xhparser.py
+:tabnew ./rflib/chipcondefs.py
 :tabnext
 :q
