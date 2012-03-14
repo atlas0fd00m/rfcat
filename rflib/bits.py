@@ -179,12 +179,10 @@ def detectRepeatPatterns(data, size=64):
                 continue
 
             if d1 == d2:
-                print "success:"
-                print "  * idx1: %4d - '%s'" % (p1-c1, bin(d1))
-                print "  * idx2: %4d - '%s'" % (p2-c2, bin(d2))
+                s1 = p1 - c1
+                s2 = p2 - c2
+                length = 0
                 # complete the pattern until the numbers differ or meet
-                s1 = p1
-                s2 = p2
                 while True:
                     p1 += 1
                     p2 += 1
@@ -192,11 +190,15 @@ def detectRepeatPatterns(data, size=64):
                     b2 = getBit(data,p2)
 
                     if p1 == s2 or b1 != b2:
+                        length = p1 - s1
                         c1 = 0
                         c2 = 0
                         p1 -= size
                         p2 -= size
                         break
+                print "success:"
+                print "  * bit idx1: %4d (%4d bits) - '%s'" % (s1, length, bin(d1))
+                print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
             #else:
             #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
             p2 += 1
