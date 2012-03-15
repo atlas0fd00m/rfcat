@@ -178,7 +178,11 @@ for lcl in lcls.keys():
         LCS[lcl] = lcls[lcl]
         LCS[lcls[lcl]] = lcl
 
-class CC111xTimeoutException(Exception):
+def keystop():
+    return len(select.select([sys.stdin],[],[],0)[0])
+
+
+class ChipconUsbTimeoutException(Exception):
     def __str__(self):
         return "Timeout waiting for USB response."
 
@@ -602,9 +606,9 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
-            time.sleep(.001)                                      # only hits here if we don't have something in queue
+            time.sleep(.0001)                                      # only hits here if we don't have something in queue
             
-        raise(CC111xTimeoutException())
+        raise(ChipconUsbTimeoutException())
 
     def recvAll(self, app, cmd=None):
         retval = self.recv_mbox.get(app,None)
@@ -705,7 +709,7 @@ class USBDongle:
             
             try:
                 r = self.send(APP_SYSTEM, SYS_CMD_PING, buf, wait)
-            except CC111xTimeoutException, e:
+            except ChipconUsbTimeoutException, e:
                 r = None
                 pass #print e
             r,rt = r
@@ -721,7 +725,7 @@ class USBDongle:
     def RESET(self):
         try:
             r = self.send(APP_SYSTEM, SYS_CMD_RESET, "RESET_NOW\x00")
-        except CC111xTimeoutException:
+        except ChipconUsbTimeoutException:
             pass
         
     def peek(self, addr, bytecount=1):
@@ -1780,38 +1784,6 @@ class USBDongle:
         self._last_radiocfg = ''
 
    
-    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None):
-        oldebug = self._debug
-        print "Entering Lowball mode and searching for possible SyncWords"
-        self.lowball(level=lowball, length=length)
-        if debug is not None:
-            self._debug = debug
-        while not len(select.select([sys.stdin],[],[],0)[0]):
-
-            try:
-                y, t = self.RFrecv()
-                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-
-                if IdentSyncWord:
-                    if lowball == 1:
-                        y = '\xaa\xaa' + y
-                    poss = bits.findDword(y)
-                    if len(poss):
-                        print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
-
-                    if SyncWordMatchList is not None:
-                        for x in poss:
-                            if x in SyncWordMatchList:
-                                print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
-            except CC111xTimeoutException:
-                pass
-
-        sys.stdin.read(1)
-        self._debug = oldebug
-        self.lowballRestore()
-        print "Exiting..."
-
-
     def checkRepr(self, matchstr, checkval, maxdiff=0):
         starry = self.reprRadioConfig().split('\n')
         line,val = getValueFromReprString(starry, matchstr)

@@ -130,7 +130,7 @@ class CC1111NIC_Server(cmd.Cmd):
                             try:
                                 data = self.nic.RFrecv(0)
                                 rs.sendall(data[DATA_START_IDX:])
-                            except CC111xTimeoutException:
+                            except ChipconUsbTimeoutException:
                                 pass
 
                         print >>sys.stderr,("NIC connection on port %d terminated" % self._nicport)

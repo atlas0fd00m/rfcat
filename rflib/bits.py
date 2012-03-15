@@ -151,15 +151,17 @@ def getBit(data, bit):
 
 
 
-def detectRepeatPatterns(data, size=64):
+def detectRepeatPatterns(data, size=64, minEntropy=.07):
     c1 = 0
     c2 = 0
     d1 = 0
     p1 = 0
+    mask = (1<<size) - 1
+
     while p1 < (8*len(data)-size-8):
         d1 <<= 1
         d1 |= getBit(data, p1)
-        d1 &= ((1<<(size)) - 1)
+        d1 &= mask
 
         if c1 < (size):
             p1 += 1
@@ -171,7 +173,7 @@ def detectRepeatPatterns(data, size=64):
         while p2 < (8*len(data)):
             d2 <<= 1
             d2 |= getBit(data, p2)
-            d2 &= ((1<<(size)) - 1)
+            d2 &= mask
 
             if c2 < (size):
                 p2 += 1
@@ -181,6 +183,8 @@ def detectRepeatPatterns(data, size=64):
             if d1 == d2 and d1 > 0:
                 s1 = p1 - size
                 s2 = p2 - size
+                #print "s1: %d\t  p1: %d\t  " % (s1, p1)
+                #print "s2: %d\t  p2: %d\t  " % (s2, p2)
                 # complete the pattern until the numbers differ or meet
                 while True:
                     p1 += 1
@@ -191,20 +195,29 @@ def detectRepeatPatterns(data, size=64):
                     if p1 == s2 or b1 != b2:
                         length = p1 - s1
                         c2 = 0
-                        p2 = s2
+                        p2 -= size
                         break
-                print "success:"
-                print "  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSectString(data, s1, s1+length).encode("hex"))
-                print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
+
+                bitSection, ent = bitSectString(data, s1, s1+length)
+                if ent > minEntropy:
+                    print "success:"
+                    print "  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSection.encode("hex"))
+                    print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
             #else:
             #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
             p2 += 1
         p1 += 1
 
+
 def bitSectString(string, startbit, endbit):
     '''
     bitsects a string... ie. chops out the bits from the middle of the string
+    returns the new string and the entropy (ratio of 0:1)
     '''
+    ones = 0
+    zeros = 0
+    entropy = [zeros, ones]
+
     s = ''
     bit = startbit
 
@@ -218,6 +231,11 @@ def bitSectString(string, startbit, endbit):
 
         byte = (byte1 << bidx) & 0xff
         byte |= (byte2 >> (8-bidx))
+        #calculate entropy over the byte
+        for bi in range(8):
+            b = (byte>>bi) & 1
+            entropy[b] += 1
+
         bit += 8
         Bidx += 1
 
@@ -227,15 +245,80 @@ def bitSectString(string, startbit, endbit):
             byte &= mask
 
         s += chr(byte)
-    return s
+    
+    ent = (min(entropy)+1.0) / (max(entropy)+1)
+    #print "entropy: %f" % ent
+    return (s, ent)
 
 
         
+def genBitArray(string, startbit, endbit):
+    '''
+    bitsects a string... ie. chops out the bits from the middle of the string
+    returns the new string and the entropy (ratio of 0:1)
+    '''
+    binStr, ent = bitSectString(string, startbit, endbit)
+
+    s = []
+    for byte in binStr:
+        for bitx in range(7, -1, -1):
+            bit = (byte>>bitx) & 1
+            s.append(chr(0x30|bit))
+
+    return (s, ent)
 
 
+chars_top = [
+        " ", #000
+        " ", #001
+        "^", #010
+        "/", #011
+        " ", #100
+        " ", #101
+        "\\",#110
+        "-", #111
+        ]
+
+chars_mid = [
+        " ", #000
+        "|", #001
+        "#", #010
+        " ", #011
+        "|", #100
+        "#", #101
+        " ", #110
+        " ", #110
+        ]
+
+chars_bot = [
+        "-", #000
+        "/", #001
+        " ", #010
+        " ", #011
+        "\\",#100
+        "V", #101
+        " ", #110
+        " ", #110
+        ]
 
 
+def reprBitArray(bitAry, width=194):
+    top = []
+    mid = []
+    bot = []
 
-                    
+    # top line
+    for bindex in xrange(width):
+        aryidx = int((1.0 * bindex / width) * len(bitAry))
+        bits = 0
+        for bitx in range(3):
+            bits += bitAry[aryidix + bitx]
+            top.append( chars_top[ bits ] )
+            mid.append( chars_mid[ bits ] )
+            bot.append( chars_bot[ bits ] )
 
-                
+    tops = "".join(top)
+    mids = "".join(mid)
+    bots = "".join(bot)
+    return "\n".join([tops, mids, bots])
+
