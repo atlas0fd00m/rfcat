@@ -190,7 +190,7 @@ direct=False
 
 class USBDongle:
     ######## INITIALIZATION ########
-    def __init__(self, idx=0, debug=False):
+    def __init__(self, idx=0, debug=False, copyDongle=None):
         self.rsema = None
         self.xsema = None
         self._do = None
@@ -203,7 +203,7 @@ class USBDongle:
         self.recv_thread = threading.Thread(target=self.runEP5)
         self.recv_thread.setDaemon(True)
         self.recv_thread.start()
-        self.resetup()
+        self.resetup(copyDongle=copyDongle)
 
     def cleanup(self):
         self._usberrorcnt = 0;
@@ -212,8 +212,24 @@ class USBDongle:
         self.xmit_queue = []
         self.trash = []
     
-    def setup(self, console=True):
+    def setup(self, console=True, copyDongle=None):
         global dongles
+
+        if copyDongle is not None:
+            self.devnum = copyDongle.devnum
+            self._d = copyDongle._d
+            self._do = copyDongle._do
+            self._usbmaxi = copyDongle._usbmaxi
+            self._usbmaxo = copyDongle._usbmaxo
+            self._usbcfg = copyDongle._usbcfg
+            self._usbintf = copyDongle._usbintf
+            self._usbeps = copyDongle._usbeps
+            self._threadGo = True
+            self.ep5timeout = EP_TIMEOUT_ACTIVE
+            copyDongle._threadGo = False            # we're taking over from here.
+            self.rsema = copyDongle.rsema
+            self.xsema = copyDongle.xsema
+            return
 
         dongles = []
         self.ep5timeout = EP_TIMEOUT_ACTIVE
@@ -257,14 +273,15 @@ class USBDongle:
 
         self._threadGo = True
 
-    def resetup(self, console=True):
+    def resetup(self, console=True, copyDongle=None):
         self._do=None
         #self._threadGo = True
         if self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
         while (self._do==None):
             try:
-                self.setup(console)
-                self._clear_buffers(False)
+                self.setup(console, copyDongle)
+                if copyDongle is None:
+                    self._clear_buffers(False)
 
             except Exception, e:
                 if console: sys.stderr.write('.')
@@ -700,7 +717,7 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
-    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=1000):
+    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=3000):
         good=0
         bad=0
         start = time.time()
