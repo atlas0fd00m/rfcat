@@ -80,8 +80,8 @@ def calculateT2(ms, mhz=24):
             
 
 class FHSSNIC(USBDongle):
-    def __init__(self, idx=0, debug=False):
-        USBDongle.__init__(self, idx, debug)
+    def __init__(self, idx=0, debug=False, copyDongle=None):
+        USBDongle.__init__(self, idx, debug, copyDongle)
 
     def setRfMode(self, rfmode, parms=''):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
@@ -91,6 +91,35 @@ class FHSSNIC(USBDongle):
 
     def RFrecv(self, timeout=100):
         return self.recv(APP_NIC, NIC_RECV, timeout)
+
+    def RFlisten(self):
+        ''' kinda like discover() but without changing any of the communications settings '''
+        while not keystop():
+
+            try:
+                y, t = self.RFrecv()
+                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+
+            except ChipconUsbTimeoutException:
+                pass
+
+        sys.stdin.read(1)
+
+    def RFcapture(self):
+        ''' kinda like discover() but without changing any of the communications settings '''
+        capture = []
+        while not keystop():
+
+            try:
+                y, t = self.RFrecv()
+                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                capture.append(y)
+
+            except ChipconUsbTimeoutException:
+                pass
+
+        sys.stdin.read(1)
+        return ''.join(capture)
 
     def FHSSxmit(self, data):
         self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data)+1, data))

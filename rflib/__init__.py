@@ -29,9 +29,27 @@ class RfCat(FHSSNIC):
 
         self.lowballRestore()
 
+
+def interactive(idx=0, DongleClass=RfCat, intro=''):
+    d = DongleClass(idx=idx)
+
+    gbls = globals()
+    lcls = locals()
+
+    try:
+        import IPython.Shell
+        ipsh = IPython.Shell.IPShell(argv=sys.argv, user_ns=lcls, user_global_ns=gbls)
+        print intro
+        ipsh.mainloop(intro)
+
+    except ImportError, e:
+        shell = code.InteractiveConsole(lcls)
+        shell.interact(intro)
+
+
 if __name__ == "__main__":
     idx = 0
     if len(sys.argv) > 1:
         idx = int(sys.argv.pop())
-    d = RfCat(idx=idx)
 
+    interactive(idx)
