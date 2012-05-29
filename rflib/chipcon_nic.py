@@ -1,5 +1,10 @@
 #!/usr/bin/env ipython
-import sys, usb, threading, time, struct
+import sys
+import usb
+import code
+import time
+import struct
+import threading
 #from chipcondefs import *
 from cc1111client import *
 
@@ -78,6 +83,34 @@ def calculateT2(ms, mhz=24):
     return best
     #return ms, candidates, best
             
+def invertBits(data):
+    output = []
+    ldata = len(data)
+    off = 0
+
+    if ldata&1:
+        output.append( chr( ord( data[0] ) ^ 0xff) )
+        off = 1
+
+    if ldata&2:
+        output.append( struct.pack( "<H", struct.unpack( "<H", data[off:off+2] )[0] ^ 0xffff) )
+        off += 2
+
+    #method 1
+    #for idx in xrange( off, ldata, 4):
+    #    output.append( struct.pack( "<I", struct.unpack( "<I", data[idx:idx+4] )[0] & 0xffff) )
+
+    #method2
+    count = ldata / 4
+    #print ldata, count
+    numlist = struct.unpack( "<%dI" % count, data[off:] )
+    modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
+    output.extend(modlist)
+
+    return ''.join(output)
+
+
+
 
 class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None):

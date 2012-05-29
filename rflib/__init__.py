@@ -43,8 +43,14 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         ipsh.mainloop(intro)
 
     except ImportError, e:
-        shell = code.InteractiveConsole(lcls)
-        shell.interact(intro)
+        try:
+            from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
+            ipsh = TerminalInteractiveShell(user_ns=lcls)
+            ipsh.mainloop(intro)
+        except ImportError, e:
+            print e
+            shell = code.InteractiveConsole(lcls)
+            shell.interact(intro)
 
 
 if __name__ == "__main__":
