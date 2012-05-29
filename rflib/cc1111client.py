@@ -919,7 +919,7 @@ class USBDongle:
         chanspc_m = radiocfg.mdmcfg0
         chanspc_e = radiocfg.mdmcfg1 & 3
         chanspc = 1000000.0 * mhz/pow(2,18) * (256 + chanspc_m) * pow(2, chanspc_e)
-        print "chanspc_e: %x   chanspc_m: %x   chanspc: %f hz" % (chanspc_e, chanspc_m, chanspc)
+        #print "chanspc_e: %x   chanspc_m: %x   chanspc: %f hz" % (chanspc_e, chanspc_m, chanspc)
         return (chanspc)
 
     def setMdmChanSpc(self, chanspc=None, chanspc_m=None, chanspc_e=None, mhz=24, radiocfg=None):
@@ -1198,7 +1198,7 @@ class USBDongle:
             raise(Exception("ChanBW does not translate into acceptable parameters.  Should you be changing this?"))
 
         bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
-        print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
+        #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
 
         self.radiocfg.mdmcfg4 &= 0x0f
         self.radiocfg.mdmcfg4 |= ((chanbw_e<<6) | (chanbw_m<<4))
@@ -1279,7 +1279,7 @@ class USBDongle:
             raise(Exception("Deviation does not translate into acceptable parameters.  Should you be changing this?"))
 
         dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
-        print "dev_e: %x   dev_m: %x   deviatn: %f Hz" % (e, m, dev)
+        #print "dev_e: %x   dev_m: %x   deviatn: %f Hz" % (e, m, dev)
         
         self.radiocfg.deviatn = (dev_e << 4) | dev_m
         self.setRFRegister(DEVIATN, self.radiocfg.deviatn)
