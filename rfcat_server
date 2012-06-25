@@ -78,9 +78,10 @@ class CC1111NIC_Server(cmd.Cmd):
         welcome to the cc1111usb interactive config tool.  hack fun!
 """
 
-    def __init__(self, nicidx=0, ip='0.0.0.0', nicport=900, cfgport=899, go=True):
+    def __init__(self, nicidx=0, ip='0.0.0.0', nicport=1900, cfgport=1899, go=True, printable=False, rawinput=False):
         cmd.Cmd.__init__(self)
-        self.use_rawinput = False
+        self.use_rawinput = rawinput
+        self.printable = printable
 
         self.nic = FHSSNIC(nicidx)
         self._ip = ip
@@ -121,15 +122,24 @@ class CC1111NIC_Server(cmd.Cmd):
                                 continue
 
                             if rs in x:
-                                data = rs.recv(MAX_PACKET_SIZE)
+                                data = rs.recv(self.nic.max_packet_size)
                                 if not len(data):       # terminated socket
                                     break
+
+                                #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
+                                if self.use_rawinput:
+                                    data = eval('"%s"'%data)
 
                                 self.nic.RFxmit(data)
 
                             try:
-                                data = self.nic.RFrecv(0)
-                                rs.sendall(data[DATA_START_IDX:])
+                                data, time = self.nic.RFrecv(0)
+                                if self.printable:
+                                    data = "\n"+str(time)+": "+repr(data)
+                                else:
+                                    data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                                rs.sendall(data)
+
                             except ChipconUsbTimeoutException:
                                 pass
 
@@ -277,8 +287,9 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         * MODULATION - set the RF modulation scheme.  values include "2FSK", "GFSK", "MSK", "ASK_OOK".  note: GFSK/OOK/ASK only up to 250kbaud, MSK only above 26kbaud and no manchester encoding.
         '''
-        if len(line) or line not in ("2FSK", "GFSK", "MSK", "ASK_OOK"):
-            self.Print('need to give me one of the values "2FSK", "GFSK", "MSK", "ASK_OOK"')
+        if not len(line) or line not in ("2FSK", "GFSK", "MSK", "ASK_OOK"):
+            self.Print('need to give me one of the values "2FSK", "GFSK", "MSK", "ASK_OOK"  got: "%s"' % line)
+            return
 
         mod = eval("MOD_"+line.strip())
         self.nic.setModeIDLE()
@@ -650,13 +661,13 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         * show_config - Print a represented string of the radio configuration
         '''
-        self.Print(self.reprRadioConfig())
+        self.Print(self.nic.reprRadioConfig())
 
     def do_dump_config(self, line):
         '''
         * dump_config - Print a hex representation of the radio configuration registers
         '''
-        self.Print(repr(self.getRadioConfig()))
+        self.Print(repr(self.nic.getRadioConfig()))
 
     def do_hack_loose_settings(self, line):
         '''
@@ -743,7 +754,7 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         * get the last RSSI value
         '''
-        self.Print("RSSI: %x") % (ord(self.getRSSI()) & 0x7f)
+        self.Print("RSSI: %x" % (ord(self.getRSSI()) & 0x7f) )
 
     def do_lqi(self, line):
         '''
@@ -768,6 +779,40 @@ class CC1111NIC_Server(cmd.Cmd):
 
         else:
             self.Print("must include the register to get/set")
+
+    def do_printable(self, line):
+        '''
+        printable y/n  - repr() all data sent to TCP socket for readability of binary data
+        '''
+        if len(line):
+            args = splitargs(line)
+            val = (args[0])
+            if val.lower()[0] in ('y', '1'):
+                self.printable = True
+            else:
+                self.printable = False
+
+        else:
+            self.printable = True
+
+        self.Print("printable output is: %s" % ('disabled','enabled')[self.printable])
+
+    def do_rawinput(self, line):
+        '''
+        rawinput y/n  - accept in pythonic string reprs (eg.  \x80 gets translated to the actual byte '\x80')
+                        input data is run through 'eval' before sending to get a real string from your typed binary input.
+        '''
+        if len(line):
+            args = splitargs(line)
+            val = (args[0])
+            if val.lower()[0] in ('y', '1'):
+                self.use_rawinput = True
+            else:
+                self.use_rawinput = False
+
+        else:
+            self.use_rawinput = True
+        self.Print("raw input is: %s" % ('disabled','enabled')[self.use_rawinput])
 
 
     ''' 
