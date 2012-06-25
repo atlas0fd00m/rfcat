@@ -125,6 +125,13 @@ SYNCMODES = {
         SYNCM_CARRIER_30_of_32: "Carrier Detect and 30 of 32 sync bits must match",
         }
 
+BSLIMITS = {
+        BSCFG_BS_LIMIT_0: "No data rate offset compensation performed",
+        BSCFG_BS_LIMIT_3: "+/- 3.125% data rate offset",
+        BSCFG_BS_LIMIT_6: "+/- 6.25% data rate offset",
+        BSCFG_BS_LIMIT_12: "+/- 12.5% data rate offset",
+        }
+
 NUM_PREAMBLE = [2, 3, 4, 6, 8, 12, 16, 24 ]
 
 ADR_CHK_TYPES = [
@@ -909,7 +916,7 @@ class USBDongle:
 
     def reprMdmModulation(self, radiocfg=None):
         mod = self.getMdmModulation(radiocfg)
-        return ("Modulation:           %s" % MODULATIONS[mod])
+        return ("Modulation:          %s" % MODULATIONS[mod])
 
     def getMdmChanSpc(self, mhz=24, radiocfg=None):
         if radiocfg==None:
@@ -1321,6 +1328,22 @@ class USBDongle:
         radiocfg.mdmcfg2 |= syncmode
         self.setRFRegister(MDMCFG2, (self.radiocfg.mdmcfg2))
 
+    def getBSLimit(self, radiocfg=None):
+        if radiocfg==None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        return radiocfg.bscfg&BSCFG_BS_LIMIT
+
+    def setBSLimit(self, bslimit, radiocfg=None):
+        if radiocfg==None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        radiocfg.bscfg &= ~BSCFG_BS_LIMIT
+        radiocfg.bscfg |= bslimit
+        self.setRFRegister(BSCFG, (self.radiocfg.bscfg))
+
     def calculateMdmDeviatn(self, mhz=24, radiocfg=None):
         ''' calculates the optimal DEVIATN setting for the current freq/baud
         * totally experimental *
@@ -1399,6 +1422,9 @@ class USBDongle:
         #drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
         drate = self.getMdmDRate(mhz, radiocfg)
         output.append("DRate:               %f hz"%drate)
+
+        bslimit = self.radiocfg.bscfg & BSCFG_BS_LIMIT
+        output.append("BSLimit:             %s"%BSLIMITS[bslimit])
 
         #output.append("DC Filter:           %s" % (("enabled", "disabled")[radiocfg.mdmcfg2>>7]))
         output.append("DC Filter:           %s" % (("enabled", "disabled")[self.getEnableMdmDCFilter(radiocfg)]))
