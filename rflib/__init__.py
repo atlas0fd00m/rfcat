@@ -29,6 +29,45 @@ class RfCat(FHSSNIC):
 
         self.lowballRestore()
 
+    def rf_configure(*args, **k2args):
+        pass
+
+    def rf_redirection(self, fdtup):
+        if len(fdtup)>1:
+            fd0i, fd0o = fdtup 
+        else:
+            fd0i, = fdtup 
+            fd0o, = fdtup 
+
+        fdsock = False      # socket or fileio?
+        if hasattr(fd0i, 'recv'):
+            fdsock = True
+
+        while True:
+            x,y,z = select.select([fd0i ], [], [], .1)
+            #if self._pause:
+            #    continue
+
+            if fd0i in x:
+                if fdsock:
+                    data = fd0i.recv(self.max_packet_size)
+                else:
+                    data = fd0i.read(self.max_packet_size)
+
+                if not len(data):       # terminated socket
+                    break
+
+                self.RFxmit(data)
+
+            try:
+                data = self.RFrecv(0)
+                if fdsock:
+                    fd0o.sendall(data)
+                else:
+                    fd0o.write(data)
+            except ChipconUsbTimeoutException:
+                pass
+
 
 def interactive(idx=0, DongleClass=RfCat, intro=''):
     d = DongleClass(idx=idx)
