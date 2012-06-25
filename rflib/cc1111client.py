@@ -211,6 +211,7 @@ class USBDongle:
         self.recv_thread.setDaemon(True)
         self.recv_thread.start()
         self.resetup(copyDongle=copyDongle)
+        self.max_packet_size = 255
 
     def cleanup(self):
         self._usberrorcnt = 0;
