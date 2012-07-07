@@ -116,6 +116,14 @@ immeSniff.hex: appSniff.c $(libsimme) $(apps1111i)
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) $(apps1111) -DIMME
 	packihx <appSniff.ihx >bins/immeSniff.hex
 
+immeGame1.hex: imme-blackhat-game1.c $(libsimme) $(apps1111i)
+	sdcc $(CFLAGS) $(LFLAGS) imme-blackhat-game1.c $(libsi) $(apps1111) -DIMME
+	packihx <imme-blackhat-game1.ihx >bins/immeGame1.hex
+
+immeGame2.hex: imme-blackhat-game2.c $(libsimme) $(apps1111i)
+	sdcc $(CFLAGS) $(LFLAGS) imme-blackhat-game2.c $(libsi) $(apps1111) -DIMME
+	packihx <imme-blackhat-game2.ihx >bins/immeGame2.hex
+
 chronostestxmitusb.hex: appNetworkTest.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DTRANSMIT_TEST 
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
@@ -167,7 +175,7 @@ installchronosnicfw: chronosNIC.hex
 	goodfet.cc flash bins/chronosNIC.hex
 	goodfet.cc info
 
-installchronosfhssnicfw: chronosFHSS.hex
+installRfCatChronosDongle: chronosFHSS.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/chronosFHSS.hex
 	goodfet.cc info
@@ -177,7 +185,7 @@ installdonsnicfw: donsNIC.hex
 	goodfet.cc flash bins/donsNIC.hex
 	goodfet.cc info
 
-installdonsfhssnicfw: donsFHSS.hex
+installRfCatDonsDongle: donsFHSS.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/donsFHSS.hex
 	goodfet.cc info
@@ -195,6 +203,16 @@ installdonssnifffw: donsSniff.hex
 installimmesnifffw: immeSniff.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/immeSniff.hex
+	goodfet.cc info
+
+installimmegame1: immeGame1.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/immeGame1.hex
+	goodfet.cc info
+
+installimmegame2: immeGame2.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/immeGame2.hex
 	goodfet.cc info
 
 installchronostestrecvusbfw: chronostestrecvusb.hex
