@@ -117,11 +117,10 @@ int waitRSSI()
 }
 //***********************************************************************/
 
-u8 transmit(__xdata u8* buf, u16 len)
+u8 transmit(__xdata u8* buf, u8 len)
 {
-    //u8 uiRSSITries = 5;
-	// /* Put radio into idle state */
-	// setRFIdle();
+    u8 *txbuf;
+    txbuf = &rftxbuf[0];
 
     while (MARCSTATE == MARC_STATE_TX);
 
@@ -143,6 +142,23 @@ u8 transmit(__xdata u8* buf, u16 len)
             default:
                 break;
 	    }
+    } else
+    {
+        // If len is nonzero, use that as the length, and make sure the copied buffer is setup appropriately
+        // if we're in FIXED mode, all is well
+        // if we're in VARIABLE mode, must insert that length byte first.
+        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
+        {
+            case PKTCTRL0_LENGTH_CONFIG_VAR:
+                rftxbuf[0] = len;
+                txbuf++;
+                break;
+            case PKTCTRL0_LENGTH_CONFIG_FIX:
+                // all good here
+                break;
+            default:
+                break;
+	    }
     }
 
     /* If DMA transfer, disable rxtx interrupt */
@@ -153,7 +169,7 @@ u8 transmit(__xdata u8* buf, u16 len)
 #endif
 
     // Copy userdata to tx buffer //
-    memcpy(rftxbuf, buf, len);
+    memcpy(txbuf, buf, len);
 
     // Reset byte pointer //
     rfTxCounter = 0;
