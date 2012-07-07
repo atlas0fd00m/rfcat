@@ -209,7 +209,7 @@ static void appInitRf(void)
     IOCFG0      = 0x00;
     SYNC1       = 0x0c;
     SYNC0       = 0x4e;
-    PKTLEN      = 0x0a;//0xff;
+    PKTLEN      = 0xff;
     PKTCTRL1    = 0x20;//0x40; // PQT threshold  - was 0x00
     PKTCTRL0    = 0x00;//0x01; // Fixed LEN:0, Variable LEN:1, CRC:4
     ADDR        = 0x00;

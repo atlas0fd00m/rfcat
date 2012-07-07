@@ -410,12 +410,15 @@ void immeLCDInitScreen(void)
 void immeLCDShowPacket(void)
 {
     xdata u8 *pval = &rfrxbuf[!rfRxCurrentBuffer][0];
-    u8 len   = rfRxCounter[!rfRxCurrentBuffer];
-    u16 nibble;
+    xdata u8 len   = rfRxCounter[!rfRxCurrentBuffer];
+    xdata u8 count = 0;
+    xdata u8 line = 3;
+    xdata u16 nibble;
 
     SSN=LOW;
     drawstr(3,0, "                                ");
-    drawstr(3,0, "                                ");
+    drawstr(4,0, "                                ");
+    drawstr(5,0, "                                ");
     //blink_binary_baby_lsb(len, 8);
     drawstr(1,0, "Length: ");
     drawhex(1,9, len);
@@ -423,11 +426,11 @@ void immeLCDShowPacket(void)
     drawhex(2,6, rfRxCurrentBuffer);
     drawstr(2,12, "Cnt: ");
     drawhex(2,17, recvCnt);
-    if (len>50)
-        len = 50;
+    if (len>30)
+        len = 30;
 
     // not print the packet data, one byte if "printable" or two bytes if hex-representation makes more sense
-    setCursor(3, 0);
+    setCursor(line, 0);
     while (len--)
     {
         if (*pval > 0x1f && *pval < 0x7f)
@@ -452,6 +455,10 @@ void immeLCDShowPacket(void)
                 putch('A'+nibble-0xA);
         }
 
+        if (++count % 10 == 0)
+        {
+            setCursor(++line, 0);
+        }
         pval ++;
     }
 
