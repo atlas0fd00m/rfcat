@@ -9,7 +9,7 @@ from rflib import *
 
 
 
-intro = """
+intro = """'RfCat, the greatest thing since Frequency Hopping!'
 
 Don't you wish this were a CLI!?  Sorry.  Maybe soon...
 For now, enjoy the raw power of rflib, or write your own device-specific CLI!
@@ -27,8 +27,20 @@ you interact with the rfcat dongle, for :
 """
 
 if __name__ == "__main__":
-    idx = 0
-    if len(sys.argv) > 1:
-        idx = int(sys.argv.pop())
+    import argparse
 
-    interactive(idx, DongleClass=RfCat, intro=intro)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
+    parser.add_argument('-i', '--index', default=0, type=int) 
+
+    ifo = parser.parse_args()
+
+    if ifo.research:
+        interactive(ifo.index, DongleClass=RfCat, intro=intro)
+
+    else:
+        # do the full-rfcat thing
+        d = RfCat(ifo.index)
+        d.rf_configure(**ifo.__dict__)
+        d.rf_redirection((sys.stdin, sys.stdout))
+
