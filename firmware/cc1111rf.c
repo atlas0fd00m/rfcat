@@ -79,21 +79,21 @@ void init_RF()
 void setRFRx(void)
 {
     RFST = RFST_SRX;
-    while(!(MARCSTATE & MARC_STATE_RX));
+    while(MARCSTATE != MARC_STATE_RX);
     rf_status = RF_STATE_RX;
 }
 
 void setRFTx(void)
 {
     RFST = RFST_STX;
-    while(!(MARCSTATE & MARC_STATE_TX));
+    while(MARCSTATE != MARC_STATE_TX);
     rf_status = RF_STATE_TX;
 }
 
 void setRFIdle(void)
 {
     RFST = RFST_SIDLE;
-    while(!(MARCSTATE & MARC_STATE_IDLE));
+    while(MARCSTATE != MARC_STATE_IDLE);
     rf_status = RF_STATE_IDLE;
 }
 
@@ -123,9 +123,11 @@ u8 transmit(__xdata u8* buf, u16 len)
 	// /* Put radio into idle state */
 	// setRFIdle();
 
-	// If len is empty, assume first byte is the length
-    // if we're in FIXED mode, skip the first byte
-    // if we're in VARIABLE mode, make sure we copy the length byte + packet
+    while (MARCSTATE == MARC_STATE_TX);
+
+        // If len is zero, assume first byte is the length
+        // if we're in FIXED mode, skip the first byte
+        // if we're in VARIABLE mode, make sure we copy the length byte + packet
 	if(len == 0)
 	{
 		len = buf[0];
@@ -186,7 +188,7 @@ u8 transmit(__xdata u8* buf, u16 len)
 	// FIXME: doublecheck CCA enabled and that we're in RX mode
 	/* Strobe to rx */
 	//RFST = RFST_SRX;
-    //while(!(MARCSTATE & MARC_STATE_RX));
+    //while((MARCSTATE != MARC_STATE_RX));
     //* wait for good RSSI, TODO change while loop this could hang forever */
     //do
     //{
@@ -210,7 +212,8 @@ u8 transmit(__xdata u8* buf, u16 len)
 	    /* Put radio into tx state */
     	RFST = RFST_STX;
         //memcpy(rftxbuf, buf, len);
-    	while(!(MARCSTATE & MARC_STATE_TX));
+    	while (MARCSTATE != MARC_STATE_TX); // wait until we're safely in TX mode
+        while (MARCSTATE == MARC_STATE_TX); // wait until we're safely *out* of TX mode (so we return with an available buffer)
         return 1;
     }
     return 0;
@@ -277,7 +280,7 @@ void startRX(void)
 #endif
 
     RFST = RFST_SRX;
-    while(!(MARCSTATE & MARC_STATE_RX));
+    while(MARCSTATE != MARC_STATE_RX);
 
     RFIM |= RFIF_IRQ_DONE;
 }
@@ -429,9 +432,9 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         LED = !LED;
 
         RFST = RFST_SIDLE;
-        while(!(MARCSTATE & MARC_STATE_IDLE));
+        while(MARCSTATE != MARC_STATE_IDLE);
         RFST = RFST_SRX;
-        while(!(MARCSTATE & MARC_STATE_RX));
+        while(MARCSTATE != MARC_STATE_RX);
 
         LED = !LED;
         RFIF &= ~RFIF_IRQ_RXOVF;
@@ -444,10 +447,10 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         LED = !LED;
 
         RFST = RFST_SIDLE;
-        while(!(MARCSTATE & MARC_STATE_IDLE));
+        while(MARCSTATE != MARC_STATE_IDLE);
         RFST = RFST_SRX;
 
-        while(!(MARCSTATE & MARC_STATE_RX));
+        while(MARCSTATE != MARC_STATE_RX);
         LED = !LED;
 
         //resetRf();
