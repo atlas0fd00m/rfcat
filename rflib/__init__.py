@@ -70,6 +70,8 @@ class RfCat(FHSSNIC):
 
 
 def interactive(idx=0, DongleClass=RfCat, intro=''):
+    import rflib.chipcon_nic as rfnic
+
     d = DongleClass(idx=idx)
 
     gbls = globals()
@@ -84,11 +86,14 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
     except ImportError, e:
         try:
             from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
-            ipsh = TerminalInteractiveShell(user_ns=lcls)
+            ipsh = TerminalInteractiveShell()
+            ipsh.user_global_ns.update(globals())
+            ipsh.user_global_ns.update(locals())
+            ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
             ipsh.mainloop(intro)
         except ImportError, e:
             print e
-            shell = code.InteractiveConsole(lcls)
+            shell = code.InteractiveConsole(gbls)
             shell.interact(intro)
 
 
