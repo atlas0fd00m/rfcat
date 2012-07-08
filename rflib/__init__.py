@@ -87,8 +87,8 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         try:
             from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
             ipsh = TerminalInteractiveShell()
-            ipsh.user_global_ns.update(globals())
-            ipsh.user_global_ns.update(locals())
+            ipsh.user_global_ns.update(gbls)
+            ipsh.user_global_ns.update(lcls)
             ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
             ipsh.mainloop(intro)
         except ImportError, e:
