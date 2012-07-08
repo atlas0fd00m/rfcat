@@ -259,7 +259,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                 packet[26] = 'H';
                 packet[27] = ' ';
 
-                transmit((xdata u8*)&packet, packet[0]);
+                transmit((xdata u8*)&packet, 0);
                 macdata.synched_chans++;
                 break;
 
@@ -534,6 +534,7 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
+    __xdata u16 len = ep5.OUTlen -1;
     __xdata u8 *buf = &ep5.OUTbuf[0];
 
     switch (ep5.OUTapp)
@@ -562,9 +563,14 @@ int appHandleEP5()
 
                 case NIC_XMIT:
                     // FIXME:  this needs to place buf data into the FHSS txMsgQueue
-                    transmit(buf, 0);
+                    //transmit(buf, 0);
+                    buf++;
+                    transmit(buf, (u8)len);
                     //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    //txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&len);
+                    //debughex(*buf);
+                    //debughex(len);
                     break;
                     
                 case NIC_SET_ID:
@@ -810,7 +816,7 @@ static void appInitRf(void)
     TEST2       = 0x88; // low data rates, increased sensitivity provided by 0x81- was 0x88
     TEST1       = 0x31; // always 0x31 in tx-mode, for low data rates 0x35 provides increased sensitivity - was 0x31
     TEST0       = 0x09;
-    PA_TABLE0   = 0x50;
+    PA_TABLE0   = 0xc0;
 
 
 #ifndef RADIO_EU
