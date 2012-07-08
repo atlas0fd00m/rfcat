@@ -359,6 +359,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
+        rf_status = RF_STATE_RX;
         rfrxbuf[rfRxCurrentBuffer][rfRxCounter[rfRxCurrentBuffer]++] = RFD;
         if(rfRxCounter[rfRxCurrentBuffer] >= BUFFER_SIZE || rfRxCounter[rfRxCurrentBuffer] == 0)
         {
@@ -367,6 +368,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
     }
     else if(MARCSTATE == MARC_STATE_TX)
     {   // Transmit Byte
+        rf_status = RF_STATE_TX;
         RFD = rftxbuf[rfTxCounter++];
     }
     RFTXRXIF = 0;
@@ -395,6 +397,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         {
             // rearm the DMA?  not sure this is a good thing.
             DMAARM |= 0x81;
+            rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT );
         }
         else
         {
