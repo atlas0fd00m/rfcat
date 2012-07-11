@@ -38,9 +38,9 @@
 #define RX_PROCESSED 1
 
 /* Type for registers:
-	NORMAL: registers are configured by client
-	RECV: registers are set for receive
-	XMIT: registers are set for transmit
+    NORMAL: registers are configured by client
+    RECV: registers are set for receive
+    XMIT: registers are set for transmit
 */
 typedef enum{NORMAL,RECV,XMIT} register_e;
 

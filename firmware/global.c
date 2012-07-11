@@ -165,9 +165,9 @@ static void io_init(void)
     //Disable WDT
     IEN2&=~IEN2_WDTIE;
     IEN0&=~EA;
-	setIOPorts();
-	configureSPI();
-	LCDReset();
+    setIOPorts();
+    configureSPI();
+    LCDReset();
   
     //Startup display.
     setDisplayStart(0);

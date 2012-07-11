@@ -124,12 +124,12 @@ u8 transmit(__xdata u8* buf, u8 len)
 
     while (MARCSTATE == MARC_STATE_TX);
 
-        // If len is zero, assume first byte is the length
-        // if we're in FIXED mode, skip the first byte
-        // if we're in VARIABLE mode, make sure we copy the length byte + packet
-	if(len == 0)
-	{
-		len = buf[0];
+    // If len is zero, assume first byte is the length
+    // if we're in FIXED mode, skip the first byte
+    // if we're in VARIABLE mode, make sure we copy the length byte + packet
+    if(len == 0)
+    {
+        len = buf[0];
 
         switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
         {
@@ -141,7 +141,7 @@ u8 transmit(__xdata u8* buf, u8 len)
                 break;
             default:
                 break;
-	    }
+        }
     } else
     {
         // If len is nonzero, use that as the length, and make sure the copied buffer is setup appropriately
@@ -158,12 +158,12 @@ u8 transmit(__xdata u8* buf, u8 len)
                 break;
             default:
                 break;
-	    }
+        }
     }
 
     /* If DMA transfer, disable rxtx interrupt */
 #ifndef RFDMA
-	RFTXRXIE = 1;
+    RFTXRXIE = 1;
 #else
     RFTXRXIE = 0;
 #endif
@@ -201,9 +201,9 @@ u8 transmit(__xdata u8* buf, u8 len)
     // FIXME: why are we using waitRSSI()? and why all the NOP();s?
     // FIXME: nops should be "while (!(DMAIRQ & DMAARM1));"
     // FIXME: waitRSSI()?  not sure about that one.
-	// FIXME: doublecheck CCA enabled and that we're in RX mode
-	/* Strobe to rx */
-	//RFST = RFST_SRX;
+    // FIXME: doublecheck CCA enabled and that we're in RX mode
+    /* Strobe to rx */
+    //RFST = RFST_SRX;
     //while((MARCSTATE != MARC_STATE_RX));
     //* wait for good RSSI, TODO change while loop this could hang forever */
     //do
@@ -215,7 +215,7 @@ u8 transmit(__xdata u8* buf, u8 len)
     {
 #ifdef RFDMA
         {
-	        /* Arm DMA channel */
+            /* Arm DMA channel */
             DMAIRQ &= ~DMAARM0;
             DMAARM |= (0x80 | DMAARM0);
             NOP(); NOP(); NOP(); NOP();
@@ -225,10 +225,10 @@ u8 transmit(__xdata u8* buf, u8 len)
             NOP(); NOP(); NOP(); NOP();
         }
 #endif
-	    /* Put radio into tx state */
-    	RFST = RFST_STX;
+        /* Put radio into tx state */
+        RFST = RFST_STX;
         //memcpy(rftxbuf, buf, len);
-    	while (MARCSTATE != MARC_STATE_TX); // wait until we're safely in TX mode
+        while (MARCSTATE != MARC_STATE_TX); // wait until we're safely in TX mode
         while (MARCSTATE == MARC_STATE_TX); // wait until we're safely *out* of TX mode (so we return with an available buffer)
         return 1;
     }

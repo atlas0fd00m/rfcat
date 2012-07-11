@@ -123,7 +123,7 @@ struct usb_line_coding {
   unsigned char   data_bits;
 };
 
-#define USB_READ_AGAIN	((char) -1)
+#define USB_READ_AGAIN    ((char) -1)
 
 #define USB_VID 0xFFFE
 #define USB_PID 0x000A
