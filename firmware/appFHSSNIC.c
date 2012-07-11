@@ -534,7 +534,7 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-    __xdata u16 len = ep5.OUTlen -1;
+    __xdata u16 len;
     __xdata u8 *buf = &ep5.OUTbuf[0];
 
     switch (ep5.OUTapp)
@@ -562,15 +562,11 @@ int appHandleEP5()
                     break;
 
                 case NIC_XMIT:
-                    // FIXME:  this needs to place buf data into the FHSS txMsgQueue
+                    // this needs to place buf data into the FHSS txMsgQueue
                     //transmit(buf, 0);
-                    buf++;
-                    transmit(buf, (u8)len);
-                    //{ LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                    //txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    len = *buf++;
+                    transmit(buf, len);
                     txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&len);
-                    //debughex(*buf);
-                    //debughex(len);
                     break;
                     
                 case NIC_SET_ID:

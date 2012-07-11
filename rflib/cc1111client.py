@@ -1412,22 +1412,15 @@ class USBDongle:
         reprMdmModulation = self.reprMdmModulation(radiocfg)
         syncmode = self.getMdmSyncMode(radiocfg)
 
-        #chanbw_e = radiocfg.mdmcfg4>>6
-        #chanbw_m = (radiocfg.mdmcfg4>>4) & 0x3
-        #bw = 1000000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
         bw = self.getMdmChanBW(mhz, radiocfg)
         output.append("ChanBW:              %f hz"%bw)
 
-        #drate_e = radiocfg.mdmcfg4 & 0xf
-        #drate_m = radiocfg.mdmcfg3
-        #drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
         drate = self.getMdmDRate(mhz, radiocfg)
         output.append("DRate:               %f hz"%drate)
 
         bslimit = self.radiocfg.bscfg & BSCFG_BS_LIMIT
         output.append("BSLimit:             %s"%BSLIMITS[bslimit])
 
-        #output.append("DC Filter:           %s" % (("enabled", "disabled")[radiocfg.mdmcfg2>>7]))
         output.append("DC Filter:           %s" % (("enabled", "disabled")[self.getEnableMdmDCFilter(radiocfg)]))
 
         output.append(reprMdmModulation)
@@ -1438,16 +1431,12 @@ class USBDongle:
         mchstr = self.getEnableMdmManchester(radiocfg)
         output.append("Manchester Encoding: %s" %  (("disabled","enabled")[mchstr]))
 
-        #fec = radiocfg.mdmcfg1>>7
         fec = self.getEnableMdmFEC(radiocfg)
         output.append("Fwd Err Correct:     %s" % (("disabled","enabled")[fec]))
         
         num_preamble = (radiocfg.mdmcfg1>>4)&7
         output.append("Min TX Preamble:     %d bytes" % (NUM_PREAMBLE[num_preamble]) )
 
-        #chanspc_e = radiocfg.mdmcfg1&3
-        #chanspc_m = radiocfg.mdmcfg0
-        #chanspc = 1000000.0 * mhz/pow(2,18) * (256 + chanspc_m) * pow(2, chanspc_e)
         chanspc = self.getMdmChanSpc(mhz, radiocfg)
         output.append("Chan Spacing:        %f hz" % chanspc)
 
@@ -1495,8 +1484,6 @@ class USBDongle:
         output.append("Channel:             %d" % radiocfg.channr)
 
 
-        #freq_if = (radiocfg.fsctrl1&0x1f) * (1000000.0 * mhz / pow(2,10))
-        #freqoff = radiocfg.fsctrl0
         freq_if = self.getFsIF(mhz, radiocfg)
         freqoff = self.getFsOffset(mhz, radiocfg)
         
@@ -1515,7 +1502,6 @@ class USBDongle:
         output.append("Packet Length:       %d" % radiocfg.pktlen)
         output.append("Configured Address: 0x%x" % radiocfg.addr)
 
-        #pqt = radiocfg.pktctrl1>>5
         pqt = self.getPktPQT(radiocfg)
         output.append("Preamble Quality Threshold: 4 * %d" % pqt)
 
@@ -1525,14 +1511,12 @@ class USBDongle:
         adr_chk = radiocfg.pktctrl1&3
         output.append("Rcvd Packet Check:   %s" % ADR_CHK_TYPES[adr_chk])
 
-        #whitedata = (radiocfg.pktctrl0>>6)&1
         whitedata = self.getEnablePktDataWhitening(radiocfg)
         output.append("Data Whitening:      %s" % ("off", "ON (but only with cc2400_en==0)")[whitedata])
 
         pkt_format = (radiocfg.pktctrl0>>5)&3
         output.append("Packet Format:       %s" % PKT_FORMATS[pkt_format])
 
-        #crc = (radiocfg.pktctrl0>>2)&1
         crc = self.getEnablePktCRC(radiocfg)
         output.append("CRC:                 %s" % ("disabled", "ENABLED")[crc])
 
