@@ -10,7 +10,7 @@ def shiftString(string, bits):
     news.append("%c"%newc)
     return "".join(news)
 
-def findDword(byts):
+def findDword(byts, inverted=False):
         possDwords = []
         # find the preamble (if any)
         bitoff = 0
@@ -33,7 +33,7 @@ def findDword(byts):
             
             #print "sbyts: %s" % repr(sbyts)
             # now we look at the next 16 bits to narrow the possibilities to 8
-            # at this point we have no hints at bit-alignment
+            # at this point we have no hints at bit-alignment aside from 0xaa vs 0x55
             dwbits, = struct.unpack(">H", sbyts[:2])
             if len(sbyts)>=3:
                 bitcnt = 0
@@ -47,16 +47,16 @@ def findDword(byts):
                 bits1 >>= bitoff            # now we should be aligned correctly
                 #print "bits: %x" % (bits1)
 
-                bit = (5 * 8) - 2  # bytes times bits/byte
+                bit = (5 * 8) - 2  # bytes times bits/byte          #FIXME: MAGIC NUMBERS!?
                 while (bits1 & (3<<bit) == (2<<bit)):
                     bit -= 2
-                #print "bit = %d" % bit
-                bits1 >>= (bit-14)
+                print "bit = %d" % bit
+                bits1 >>= (bit-16)
                 #while (bits1 & 0x30000 != 0x20000): # now we align the end of the 101010 pattern with the beginning of the dword
                 #    bits1 >>= 2
                 #print "bits: %x" % (bits1)
                 
-                for frontbits in xrange(0, 16, 2):
+                for frontbits in xrange((0,1)[inverted], 17, 2):
                     poss = (bits1 >> frontbits) & 0xffff
                     if not poss in possDwords:
                         possDwords.append(poss)
