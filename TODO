@@ -2,25 +2,18 @@
 create methods to get/set PA_POWER and assist in ASK/OOK modulation.
 create method setPktPreambleTX() and change g/setPktPQT to g/setPktPreambleRX(numTimesFour)
 
-fill out options for CC1111 stuff like DMA, etc....  right now it's skeleton and fits what i need, but perhaps not what others want.
+continuous detection mode cleanup and enhancement
+port hedyattack spectrum analysis code to rfcat
 
-detection mode cleanup and enhancement
+fill out options for CC1111 stuff like DMA, etc....  right now it's skeleton and fits what i need, but perhaps not what others want.
 
 
 CLEAN UP CODE/PROJECT  / UNBORK
-    convert all USB to use 64 bytes (max for FULL SPEED devices)
-        ugh, this gets ugly...
-    turn current rfcat.py into rflib.py
-    create actual CLI tool called rfcat
-        yes, something that doesn't require ipython...
     make firmware CC25x1-friendly
         consolidate chipcon code from cc1111/cc2531/cc2511 code
 
-rfcat_server.py
+rfcat_server
     make this more complete and tested!
-
-IMME Sniffer
-    * make realtime config not suck!
 
 all USB firmwares:
     * add reset capability to EP0's commands
