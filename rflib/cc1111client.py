@@ -874,6 +874,37 @@ class USBDongle:
         freq = num / freqmult
         return freq, hex(num)
 
+    # power settings are frequency dependent, so set frequency before calling
+    def setMaxPower(self, radiocfg=None):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        freq= self.getFreq(radiocfg=radiocfg)[0]
+        mod= self.getMdmModulation(radiocfg=radiocfg)
+
+        if freq <= 400000000:
+            power= 0xC2
+        elif freq <= 464000000:
+            power= 0xC0
+        elif freq <= 900000000:
+            power= 0xC2
+        else:
+            power= 0xC0
+
+        self.radiocfg.frend0 &= ~FREND0_PA_POWER
+        if mod == MOD_ASK_OOK:
+            self.radiocfg.pa_table0= 0x00
+            self.radiocfg.pa_table1= power
+            self.radiocfg.frend0 |= 0x01
+        else:
+            self.radiocfg.pa_table0= power
+            self.radiocfg.pa_table1= 0x00
+
+        self.setRFRegister(PA_TABLE0, radiocfg.pa_table0)
+        self.setRFRegister(PA_TABLE1, radiocfg.pa_table1)
+        self.setRFRegister(FREND0, radiocfg.frend0)
+
     def setMdmModulation(self, mod, radiocfg=None):
         if radiocfg == None:
             self.getRadioConfig()
@@ -889,6 +920,7 @@ class USBDongle:
     def getMdmModulation(self, radiocfg=None):
         if radiocfg == None:
             self.getRadioConfig()
+            radiocfg = self.radiocfg
         
         mdmcfg2 = radiocfg.mdmcfg2
         mod = (mdmcfg2) & 0x70
