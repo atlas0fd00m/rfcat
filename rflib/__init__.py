@@ -19,14 +19,18 @@ class RfCat(FHSSNIC):
         self.setMdmDRate(drate)
         print "Scanning range: "
         while not keystop():
-            print
-            for freq in xrange(int(basefreq), int(basefreq+(inc*count)), int(inc)):
-                print "Scanning for frequency %d..." % freq
-                self.setFreq(freq)
-                self.RFdump(timeoutms=delaysec*1000)
-                if keystop():
-                    break
+            try:
+                print
+                for freq in xrange(int(basefreq), int(basefreq+(inc*count)), int(inc)):
+                    print "Scanning for frequency %d..." % freq
+                    self.setFreq(freq)
+                    self.RFdump(timeoutms=delaysec*1000)
+                    if keystop():
+                        break
+            except KeyboardInterrupt:
+                print "Please press <enter> to stop"
 
+        sys.stdin.read(1)
         self.lowballRestore()
 
     def rf_configure(*args, **k2args):

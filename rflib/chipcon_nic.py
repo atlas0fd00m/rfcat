@@ -126,7 +126,8 @@ class FHSSNIC(USBDongle):
         return self.recv(APP_NIC, NIC_RECV, timeout)
 
     def RFlisten(self):
-        ''' kinda like discover() but without changing any of the communications settings '''
+        ''' just sit and dump packets as they come in
+        kinda like discover() but without changing any of the communications settings '''
         while not keystop():
 
             try:
@@ -135,11 +136,14 @@ class FHSSNIC(USBDongle):
 
             except ChipconUsbTimeoutException:
                 pass
+            except KeyboardInterrupt:
+                print "Please press <enter> to stop"
 
         sys.stdin.read(1)
 
     def RFcapture(self):
-        ''' kinda like discover() but without changing any of the communications settings '''
+        ''' dump packets as they come in, but return a list of packets when you exit capture mode.
+        kinda like discover() but without changing any of the communications settings '''
         capture = []
         while not keystop():
 
@@ -150,6 +154,8 @@ class FHSSNIC(USBDongle):
 
             except ChipconUsbTimeoutException:
                 pass
+            except KeyboardInterrupt:
+                print "Please press <enter> to stop"
 
         sys.stdin.read(1)
         return ''.join(capture)
@@ -254,10 +260,17 @@ u16 synched_chans           %x
 
     def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None):
         oldebug = self._debug
-        print "Entering Lowball mode and searching for possible SyncWords"
+        if IdentSyncWord:
+            print "Entering Discover mode and searching for possible SyncWords..."
+            if SyncWordMatchList is not None:
+                print "  seeking one of: %s" % repr([hex(x) for x in SyncWordMatchList])
+        else:
+            print "Entering Discover mode..."
+
         self.lowball(level=lowball, length=length)
         if debug is not None:
             self._debug = debug
+
         while not keystop():
 
             try:
@@ -277,11 +290,13 @@ u16 synched_chans           %x
                                 print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
             except ChipconUsbTimeoutException:
                 pass
+            except KeyboardInterrupt:
+                print "Please press <enter> to stop"
 
         sys.stdin.read(1)
         self._debug = oldebug
         self.lowballRestore()
-        print "Exiting..."
+        print "Exiting Discover mode..."
 
 
 def unittest(dongle):

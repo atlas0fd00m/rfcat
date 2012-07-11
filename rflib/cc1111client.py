@@ -1469,13 +1469,13 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         output = []
-        output.append("GDO2_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg2>>6)&1])
-        output.append("GDO2CFG:             0x%x" % (radiocfg.iocfg2&0x3f))
-        output.append("GDO_DS:              %s" % (("minimum drive (>2.6vdd","Maximum drive (<2.6vdd)")[radiocfg.iocfg1>>7]))
-        output.append("GDO1_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg1>>6)&1])
-        output.append("GDO1CFG:             0x%x"%(radiocfg.iocfg1&0x3f))
-        output.append("GDO0_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg0>>6)&1])
-        output.append("GDO0CFG:             0x%x"%(radiocfg.iocfg0&0x3f))
+        #output.append("GDO2_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg2>>6)&1])
+        #output.append("GDO2CFG:             0x%x" % (radiocfg.iocfg2&0x3f))
+        #output.append("GDO_DS:              %s" % (("minimum drive (>2.6vdd","Maximum drive (<2.6vdd)")[radiocfg.iocfg1>>7]))
+        #output.append("GDO1_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg1>>6)&1])
+        #output.append("GDO1CFG:             0x%x"%(radiocfg.iocfg1&0x3f))
+        #output.append("GDO0_INV:            %s" % ("do not Invert Output", "Invert output")[(radiocfg.iocfg0>>6)&1])
+        #output.append("GDO0CFG:             0x%x"%(radiocfg.iocfg0&0x3f))
         output.append("TEST2:               0x%x"%radiocfg.test2)
         output.append("TEST1:               0x%x"%radiocfg.test1)
         output.append("TEST0:               0x%x"%(radiocfg.test0&0xfd))
