@@ -26,16 +26,16 @@ libsusbi  = immeusb.reli immeusbdebug.reli
 libsimme  = $(appsi) immeio.reli immekeys.reli immefont.reli   #  immedisplay.rel immeterm.rel
 libsimmed  = $(appsid) immeio.relid immekeys.relid immefont.relid   #  immedisplay.rel immeterm.rel
 libsi  = $(apps) immeio.rel immekeys.rel immefont.rel   #  immedisplay.rel immeterm.rel
-#srcs = $(libs,.rel=.c) 
 
 
-all: chronosapplication.hex
-donfw: donsapplication.hex
-immefw: immeapplication.hex
+all: chronosFHSS.hex
+donfw: donsFHSS.hex
+immefw: immeSniff.hex
 testrecv: testrecvapplication.hex
 testxmit: testxmitapplication.hex
 
 
+# helper targets (used to build object files with defines telling which type of firmware we're building)
 chipcon_usb.rc : chipcon_usb.c
 	./new_serial.py
 	$(CC) $(CFLAGS) -DCHRONOSDONGLE -DCC1111 -c chipcon_usb.c
@@ -63,42 +63,11 @@ chipcon_usb.rd : chipcon_usb.c
 %.relid : %.c
 	$(CC) $(CFLAGS) -DIMME -DIMMEDONGLE -c $<
 
-chronosapplication.hex: application.c $(libsusbc) $(apps1111c)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DCC1111
-	packihx <application.ihx >bins/application.hex
 
-cc2531.hex: appCC2531.c $(libsusbd3) $(apps2531d3)
-	sdcc $(CFLAGS) $(LFLAGS) appCC2531.c $(libsusb) $(apps2531) -DCC2531
-	packihx <appCC2531.ihx >bins/appCC2531.hex
-
-donsapplication.hex: application.c $(libsusbd) $(apps1111d)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DDONSDONGLES
-	packihx <application.ihx >bins/application.hex
-
-chronostestusbonly.hex: usbonly.c chipcon_usb.rc global.relc
-	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DCHRONOSDONGLE
-	packihx <usbonly.ihx >bins/usbonly.hex
-
-donstestusbonly.hex: usbonly.c chipcon_usb.rc global.reld
-	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DDONSDONGLES
-	packihx <usbonly.ihx >bins/usbonly.hex
-
-#	may be helpful when we actually have one...
-#immedongleapplication.hex: application.c $(libsusbi)
-#	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) -DIMMEDONGLE -DIMME
-#	packihx <application.ihx >bins/application.hex
-#
-chronosNIC.hex: appNIC.c $(libsusbc) $(apps1111c)
-	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
-	packihx <appNIC.ihx >bins/chronosNIC.hex
-
+# firmware build targets
 chronosFHSS.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/chronosFHSS.hex
-
-donsNIC.hex: appNIC.c $(libsusbd) $(apps1111c)
-	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
-	packihx <appNIC.ihx >bins/donsNIC.hex
 
 donsFHSS.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
@@ -116,6 +85,14 @@ immeSniff.hex: appSniff.c $(libsimme) $(apps1111i)
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) $(apps1111) -DIMME
 	packihx <appSniff.ihx >bins/immeSniff.hex
 
+chronosNIC.hex: appNIC.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
+	packihx <appNIC.ihx >bins/chronosNIC.hex
+
+donsNIC.hex: appNIC.c $(libsusbd) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <appNIC.ihx >bins/donsNIC.hex
+
 immeGame1.hex: imme-blackhat-game1.c $(libsimme) $(apps1111i)
 	sdcc $(CFLAGS) $(LFLAGS) imme-blackhat-game1.c $(libsi) $(apps1111) -DIMME
 	packihx <imme-blackhat-game1.ihx >bins/immeGame1.hex
@@ -124,6 +101,31 @@ immeGame2.hex: imme-blackhat-game2.c $(libsimme) $(apps1111i)
 	sdcc $(CFLAGS) $(LFLAGS) imme-blackhat-game2.c $(libsi) $(apps1111) -DIMME
 	packihx <imme-blackhat-game2.ihx >bins/immeGame2.hex
 
+chronosapplication.hex: application.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DCC1111
+	packihx <application.ihx >bins/application.hex
+
+donsapplication.hex: application.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <application.ihx >bins/application.hex
+
+cc2531.hex: appCC2531.c $(libsusbd3) $(apps2531d3)
+	sdcc $(CFLAGS) $(LFLAGS) appCC2531.c $(libsusb) $(apps2531) -DCC2531
+	packihx <appCC2531.ihx >bins/appCC2531.hex
+
+chronostestusbonly.hex: usbonly.c chipcon_usb.rc global.relc
+	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DCHRONOSDONGLE
+	packihx <usbonly.ihx >bins/usbonly.hex
+
+donstestusbonly.hex: usbonly.c chipcon_usb.rc global.reld
+	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel -DDONSDONGLES
+	packihx <usbonly.ihx >bins/usbonly.hex
+
+#	may be helpful when we actually have one...
+#immedongleapplication.hex: application.c $(libsusbi)
+#	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) -DIMMEDONGLE -DIMME
+#	packihx <application.ihx >bins/application.hex
+#
 chronostestxmitusb.hex: appNetworkTest.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DTRANSMIT_TEST 
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
@@ -150,26 +152,7 @@ testrecvapplication.hex: appNetworkTest.c $(libsvcomc) $(apps1111c)
 
 
 
-installchronosfw: chronosapplication.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/application.hex
-	goodfet.cc info
-
-installdonfw: donsapplication.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/application.hex
-	goodfet.cc info
-
-installcc2531: cc2531.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/appCC2531.hex
-	goodfet.cc info
-
-#installimmefw: immedongleapplication.hex
-#	goodfet.cc erase
-#	goodfet.cc flash bins/application.hex
-#	goodfet.cc info
-
+# installer targets (depend on the firmware build targets above and require a goodfet)
 installchronosnicfw: chronosNIC.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/chronosNIC.hex
@@ -214,6 +197,16 @@ installimmegame2: immeGame2.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/immeGame2.hex
 	goodfet.cc info
+
+installcc2531: cc2531.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/appCC2531.hex
+	goodfet.cc info
+
+#installimmefw: immedongleapplication.hex
+#	goodfet.cc erase
+#	goodfet.cc flash bins/application.hex
+#	goodfet.cc info
 
 installchronostestrecvusbfw: chronostestrecvusb.hex
 	goodfet.cc erase
@@ -262,8 +255,11 @@ testall: chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donst
 
 # testing should see that each enumerates correctly in linux
 
-verify: chronosapplication.hex
-	goodfet.cc verify bins/application.hex
+verifyRfCatChronosDongle: chronosapplication.hex
+	goodfet.cc verify bins/chronosFHSS.hex
+
+verifyRfCatDonsDongle: chronosapplication.hex
+	goodfet.cc verify bins/chronosFHSS.hex
 
 clean:
 	rm -f *.ihx *.rel *.hex *.sym *.asm *.lst *.lnk *.map *.mem *.rst
