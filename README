@@ -85,7 +85,7 @@ your build environment:
             --------------------------------
 
                GoodFET              EMK  
-                 PIN                PIN
+                 PIN             DEBUG PIN
 
                   1 <----- DD -----> 4
                   2 <----- VCC ----> 2
@@ -106,8 +106,8 @@ your build environment:
 
 * "make backupdongle" will read the current firmware from your dongle to the file .../bins/original-dongle-hex.backup.
   ("make restoredongle") to revert to the original firmware. 
-* "make clean installchronosfhssnicfw" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a Chronos dongle.
-* "make clean installdonsfhssnicfw" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a cc1111emk.
+* "make clean installRfCatChronosDongle" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a Chronos dongle.
+* "make clean installRfCatDonsDongle" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a cc1111emk.
 
 = MAKING USE =
 using the client:
