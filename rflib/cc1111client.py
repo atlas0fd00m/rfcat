@@ -874,14 +874,38 @@ class USBDongle:
         freq = num / freqmult
         return freq, hex(num)
 
-    # power settings are frequency dependent, so set frequency before calling
-    def setMaxPower(self, radiocfg=None):
+    # set 'standard' power - for more complex power shaping this will need to be done manually
+    def setPower(self, power, radiocfg=None, invert=False):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        mod= self.getMdmModulation(radiocfg=radiocfg)
+
+        # we may be only changing PA_POWER, not power levels
+        if power:
+            if mod == MOD_ASK_OOK and not invert:
+                self.radiocfg.pa_table0= 0x00
+                self.radiocfg.pa_table1= power
+            else:
+                self.radiocfg.pa_table0= power
+                self.radiocfg.pa_table1= 0x00
+            self.setRFRegister(PA_TABLE0, radiocfg.pa_table0)
+            self.setRFRegister(PA_TABLE1, radiocfg.pa_table1)
+
+        self.radiocfg.frend0 &= ~FREND0_PA_POWER
+        if mod == MOD_ASK_OOK:
+            self.radiocfg.frend0 |= 0x01
+
+        self.setRFRegister(FREND0, radiocfg.frend0)
+
+    # max power settings are frequency dependent, so set frequency before calling
+    def setMaxPower(self, radiocfg=None, invert=False):
         if radiocfg == None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         freq= self.getFreq(radiocfg=radiocfg)[0]
-        mod= self.getMdmModulation(radiocfg=radiocfg)
 
         if freq <= 400000000:
             power= 0xC2
@@ -892,20 +916,9 @@ class USBDongle:
         else:
             power= 0xC0
 
-        self.radiocfg.frend0 &= ~FREND0_PA_POWER
-        if mod == MOD_ASK_OOK:
-            self.radiocfg.pa_table0= 0x00
-            self.radiocfg.pa_table1= power
-            self.radiocfg.frend0 |= 0x01
-        else:
-            self.radiocfg.pa_table0= power
-            self.radiocfg.pa_table1= 0x00
+        self.setPower(power, radiocfg=radiocfg, invert=invert)
 
-        self.setRFRegister(PA_TABLE0, radiocfg.pa_table0)
-        self.setRFRegister(PA_TABLE1, radiocfg.pa_table1)
-        self.setRFRegister(FREND0, radiocfg.frend0)
-
-    def setMdmModulation(self, mod, radiocfg=None):
+    def setMdmModulation(self, mod, radiocfg=None, invert=False):
         if radiocfg == None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
@@ -915,7 +928,18 @@ class USBDongle:
 
         radiocfg.mdmcfg2 &= 0x8f
         radiocfg.mdmcfg2 |= (mod)
+
+        power= None
+        # ASK_OOK needs to flip power table
+        if mod == MOD_ASK_OOK and not invert:
+            if radiocfg.pa_table1 == 0x00 and radiocfg.pa_table0 != 0x00:
+                power= radiocfg.pa_table0
+        else:
+            if radiocfg.pa_table0 == 0x00 and radiocfg.pa_table1 != 0x00:
+                power= radiocfg.pa_table1
+
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
+        self.setPower(power, radiocfg=radiocfg, invert=invert)
 
     def getMdmModulation(self, radiocfg=None):
         if radiocfg == None:
