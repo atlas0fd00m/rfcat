@@ -875,7 +875,7 @@ class USBDongle:
         return freq, hex(num)
 
     # set 'standard' power - for more complex power shaping this will need to be done manually
-    def setPower(self, power, radiocfg=None, invert=False):
+    def setPower(self, power=None, radiocfg=None, invert=False):
         if radiocfg == None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
@@ -883,7 +883,7 @@ class USBDongle:
         mod= self.getMdmModulation(radiocfg=radiocfg)
 
         # we may be only changing PA_POWER, not power levels
-        if power:
+        if power is not None:
             if mod == MOD_ASK_OOK and not invert:
                 self.radiocfg.pa_table0= 0x00
                 self.radiocfg.pa_table1= power
