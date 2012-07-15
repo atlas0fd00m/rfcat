@@ -83,7 +83,7 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
 
     try:
         import IPython.Shell
-        ipsh = IPython.Shell.IPShell(argv=sys.argv, user_ns=lcls, user_global_ns=gbls)
+        ipsh = IPython.Shell.IPShell(argv=[''], user_ns=lcls, user_global_ns=gbls)
         print intro
         ipsh.mainloop(intro)
 
