@@ -65,6 +65,14 @@ chipcon_usb.rd : chipcon_usb.c
 
 
 # firmware build targets
+RfCatChronos.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
+	packihx <appFHSSNIC.ihx >bins/RfCatChronos.hex
+
+RfCatDons.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <appFHSSNIC.ihx >bins/RfCatDons.hex
+
 chronosFHSS.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/chronosFHSS.hex
@@ -153,24 +161,34 @@ testrecvapplication.hex: appNetworkTest.c $(libsvcomc) $(apps1111c)
 
 
 # installer targets (depend on the firmware build targets above and require a goodfet)
+installRfCatChronosDongle: RfCatChronos.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/RfCatChronos.hex
+	goodfet.cc info
+
+installRfCatDonsDongle: RfCatDons.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/RfCatDons.hex
+	goodfet.cc info
+
+installchronosfhssnicfw: chronosFHSS.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/chronosFHSS.hex
+	goodfet.cc info
+	
+installdonsfhssnicfw: donsFHSS.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/donsFHSS.hex
+	goodfet.cc info
+	
 installchronosnicfw: chronosNIC.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/chronosNIC.hex
 	goodfet.cc info
 
-installRfCatChronosDongle: chronosFHSS.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/chronosFHSS.hex
-	goodfet.cc info
-
 installdonsnicfw: donsNIC.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/donsNIC.hex
-	goodfet.cc info
-
-installRfCatDonsDongle: donsFHSS.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/donsFHSS.hex
 	goodfet.cc info
 
 installchronossnifffw: chronosSniff.hex
@@ -250,7 +268,7 @@ restoredongle:
 	goodfet.cc flash bins/original-dongle-hex.backup
 	goodfet.cc info
 
-testall: chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donstestrecvusb.hex chronostestxmitusb.hex donstestxmitusb.hex testrecvapplication.hex testxmitapplication.hex chronosNIC.hex donsNIC.hex chronosFHSS.hex donsFHSS.hex chronosSniff.hex donsSniff.hex immeSniff.hex cc2531.hex
+testall: RfCatChronos.hex RfCatDons.hex chronosapplication.hex donsapplication.hex chronostestrecvusb.hex donstestrecvusb.hex chronostestxmitusb.hex donstestxmitusb.hex testrecvapplication.hex testxmitapplication.hex chronosNIC.hex donsNIC.hex chronosFHSS.hex donsFHSS.hex chronosSniff.hex donsSniff.hex immeSniff.hex cc2531.hex
 ##immedongleapplication.hex 
 
 # testing should see that each enumerates correctly in linux

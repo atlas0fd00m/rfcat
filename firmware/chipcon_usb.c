@@ -1277,7 +1277,7 @@ __code u8 USBDESCBEGIN [] = {
               '0', 0,
               '0', 0,
               '0', 0,
-              '5', 0,
+              '8', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
