@@ -113,8 +113,8 @@ your build environment:
 
 * "make backupdongle" will read the current firmware from your dongle to the file .../bins/original-dongle-hex.backup.
   ("make restoredongle") to revert to the original firmware. 
-* "make clean installRfCatChronosDongle" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a Chronos dongle.
-* "make clean installRfCatDonsDongle" will clean, build, and install the FHSS NIC (appFHSSNIC.c) firmware for a cc1111emk.
+* "make clean installRfCatChronosDongle" will clean, build, and install the RfCat (appFHSSNIC.c) firmware for a Chronos dongle.
+* "make clean installRfCatDonsDongle" will clean, build, and install the RfCat (appFHSSNIC.c) firmware for a cc1111emk.
 * "make clean installimmesnifffw" will clean, build, and install the RfSniff firmware for the IMME girls toy from girltech 
 
 
