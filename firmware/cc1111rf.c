@@ -121,10 +121,13 @@ int waitRSSI()
     return 0;
 }
 //***********************************************************************/
-
+/** FIXME: how can i fail thee?  let me count the ways... and put them into the contract...
+ */
 u8 transmit(__xdata u8* buf, u8 len)
 {
     u8 *txbuf;
+    __xdata u16 countdown;
+
     txbuf = &rftxbuf[0];
 
     while (MARCSTATE == MARC_STATE_TX)
@@ -238,17 +241,28 @@ u8 transmit(__xdata u8* buf, u8 len)
         RFST = RFST_STX;
 
         // wait until we're safely in TX mode
-        while (MARCSTATE != MARC_STATE_TX)
+        countdown = 1000;
+        while (MARCSTATE != MARC_STATE_TX && --countdown)
         {
+            // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
             LED = !LED;
             usbProcessEvents(); 
         }
+        if (!countdown)
+            lastCode[1] = LCE_RFTX_NEVER_TX;
 
         // wait until we're safely *out* of TX mode (so we return with an available buffer)
-        while (MARCSTATE == MARC_STATE_TX)
+        countdown = 1000;
+        while (MARCSTATE == MARC_STATE_TX && countdown--)
         {
             LED = !LED;
             usbProcessEvents();
+        }
+        if (!countdown)
+        {
+            lastCode[1] = LCE_RFTX_NEVER_LEAVE_TX;
+            // FIXME: should this be a "reset" function?
+            RFST = RFST_SRX;
         }
 
         LED = 0;
@@ -431,7 +445,6 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 // EXPECTED RESULT - RX complete.
                 //
                 /* Clear processed buffer */
-                //memset(rfrxbuf[!rfRxCurrentBuffer],0,BUFFER_SIZE);      // FIXME: do we want to waste cycles on this?
                 /* Switch current buffer */
                 rfRxCurrentBuffer ^= 1;
                 rfRxCounter[rfRxCurrentBuffer] = 0;
@@ -454,9 +467,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
             {
                 // contingency - Packet Not Handled!
                 /* Main app didn't process previous packet yet, drop this one */
+                lastCode[1] = LCE_DROPPED_PACKET;
                 LED = !LED;
-                //REALLYFASTBLINK();
-                //memset(rfrxbuf[rfRxCurrentBuffer],0,BUFFER_SIZE);
                 rfRxCounter[rfRxCurrentBuffer] = 0;
                 LED = !LED;
             }

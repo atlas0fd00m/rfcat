@@ -41,6 +41,9 @@ extern __xdata u32 clock;
 #define LCE_USB_DATA_LEFTOVER_FLAGS             0x9
 #define LCE_RF_RXOVF                            0x10
 #define LCE_RF_TXUNF                            0x11
+#define LCE_DROPPED_PACKET                      0x12
+#define LCE_RFTX_NEVER_TX                       0x13
+#define LCE_RFTX_NEVER_LEAVE_TX                 0x14
 
 // USB activities
 #define USB_ENABLE_PIN              P1_0
