@@ -99,7 +99,7 @@ void MAC_sync(u16 CellID)
     while (1)
     {
         MAC_set_chanidx(macdata.curChanIdx);
-        while (!MARCSTATE == MARC_STATE_RX)
+        while (MARCSTATE != MARC_STATE_RX)
             ;
         if ((RSSI&0x7f) < 0x60)
             break;
@@ -224,10 +224,10 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
 #ifdef DEBUG_HOPPING
         debug("hop");
         RFST = RFST_SIDLE;
-        while(!(MARCSTATE & MARC_STATE_IDLE));
+        while(MARCSTATE != MARC_STATE_IDLE);
         RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
         LED = !LED;
-        while(!(MARCSTATE & MARC_STATE_TX));
+        while(MARCSTATE != MARC_STATE_TX);
 #else
 
         // if we are the SYNC_MASTER and are in the process of "doing the SYNC"

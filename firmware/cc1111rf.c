@@ -127,7 +127,11 @@ u8 transmit(__xdata u8* buf, u8 len)
     u8 *txbuf;
     txbuf = &rftxbuf[0];
 
-    while (MARCSTATE == MARC_STATE_TX);
+    while (MARCSTATE == MARC_STATE_TX)
+    {
+            LED = !LED;
+            usbProcessEvents();
+    }
 
     // If len is zero, assume first byte is the length
     // if we're in FIXED mode, skip the first byte
@@ -232,9 +236,23 @@ u8 transmit(__xdata u8* buf, u8 len)
 #endif
         /* Put radio into tx state */
         RFST = RFST_STX;
-        //memcpy(rftxbuf, buf, len);
-        while (MARCSTATE != MARC_STATE_TX); // wait until we're safely in TX mode
-        while (MARCSTATE == MARC_STATE_TX); // wait until we're safely *out* of TX mode (so we return with an available buffer)
+
+        // wait until we're safely in TX mode
+        while (MARCSTATE != MARC_STATE_TX)
+        {
+            LED = !LED;
+            usbProcessEvents(); 
+        }
+
+        // wait until we're safely *out* of TX mode (so we return with an available buffer)
+        while (MARCSTATE == MARC_STATE_TX)
+        {
+            LED = !LED;
+            usbProcessEvents();
+        }
+
+        LED = 0;
+
         return 1;
     }
     return 0;
