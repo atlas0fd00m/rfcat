@@ -597,6 +597,10 @@ int appHandleEP5()
                     }
                     break;
 
+                case FHSS_GET_CHANNELS:
+                    txdata(ep5.OUTapp, ep5.OUTcmd, macdata.NumChannels, &g_Channels[0]);
+                    break;
+
                 case FHSS_NEXT_CHANNEL:
                     MAC_set_chanidx(MAC_getNextChannel());
                     txdata(ep5.OUTapp, ep5.OUTcmd, 1, &g_Channels[macdata.curChanIdx]);

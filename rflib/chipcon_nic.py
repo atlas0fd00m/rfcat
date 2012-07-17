@@ -22,6 +22,7 @@ FHSS_GET_MAC_THRESHOLD =        0x14
 FHSS_SET_MAC_DATA =             0x15
 FHSS_GET_MAC_DATA =             0x16
 FHSS_XMIT =                     0x17
+FHSS_GET_CHANNELS =             0x18
 
 FHSS_SET_STATE =                0x20
 FHSS_GET_STATE =                0x21
@@ -166,10 +167,12 @@ class FHSSNIC(USBDongle):
     def changeChannel(self, chan):
         return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
 
+    def getChannels(self, channels=[]):
+        return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
+
     def setChannels(self, channels=[]):
         chans = ''.join(["%c" % chan for chan in channels])
         length = struct.pack("<H", len(chans))
-        
         
         return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
 

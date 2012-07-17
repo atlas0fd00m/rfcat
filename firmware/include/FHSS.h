@@ -6,6 +6,7 @@
 #define FHSS_SET_MAC_DATA       0x15
 #define FHSS_GET_MAC_DATA       0x16
 #define FHSS_XMIT               0x17
+#define FHSS_GET_CHANNELS       0x18
 
 #define FHSS_SET_STATE          0x20
 #define FHSS_GET_STATE          0x21
