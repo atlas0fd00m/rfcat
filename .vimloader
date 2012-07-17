@@ -1,7 +1,7 @@
 :tabnew ./firmware/application.c
 :tabnew ./firmware/cc1111rf.c
 :tabnew ./firmware/global.c
-:tabnew ./firmware/cc1111usb.c
+:tabnew ./firmware/chipcon_usb.c
 :tabnew ./firmware/cc1111_vcom.c
 :tabnew ./firmware/cc1111_vcomdesc.c
 :tabnew ./firmware/include/global.h
@@ -15,6 +15,7 @@
 :tabnew ./rfcat
 :tabnew ./rfcat_server
 :tabnew ./rflib/__init__.py
+:tabnew ./rflib/chipcon_nic.py
 :tabnew ./rflib/cc1111client.py
 :tabnew ./rflib/cc111Xhparser.py
 :tabnew ./rflib/chipcondefs.py
