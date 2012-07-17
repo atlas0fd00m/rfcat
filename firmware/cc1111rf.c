@@ -52,6 +52,11 @@ void init_RF()
     T2CTL |= T2CTL_TIP_64;  // 64, 128, 256, 1024
     T2CTL |= T2CTL_TIG;
 
+    // interrupt priority settings.  RF interrupts needs to be priority 2 since tx needs to happen from Timer interrupts
+    // however, usb will rank above RF
+    IP0 |= 0;       // grp0 is RF/RFTXRX/DMA
+    IP1 |= 1;
+
     // RF state
     rf_status = RF_STATE_IDLE;
 

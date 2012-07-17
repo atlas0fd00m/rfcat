@@ -166,6 +166,10 @@ void usb_init(void)
     USB_RESUME_INT_CLEAR();                 // P0IFG= 0; P0IF= 0
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
+    // set usb interrupt priority to 3
+    IP0 |= 2;
+    IP1 |= 2;
+
 
     // usb dma
     DMA1CFGH = ((u16)(&usbdma))>>8;

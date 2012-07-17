@@ -141,6 +141,7 @@ void MAC_do_Master_scanny_thingy()
     macdata.mac_state = FHSS_STATE_SYNCINGMASTER;
     macdata.synched_chans = 0;
     macdata.tLastStateChange = clock;
+    begin_hopping(0);
 }
 
 
@@ -205,13 +206,18 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
     // if we are here, the T2CT must have cycled.  increment rf_MAC_timer
     if (++rf_MAC_timer >= macdata.MAC_threshold)
     {
-        // change to the next channel
+        // mark last hop time
         macdata.tLastHop = T2CT | (rf_MAC_timer<<8);
         
+        // change to the next channel
         if (++macdata.curChanIdx >= macdata.NumChannelHops)
         {
             macdata.curChanIdx = 0;
         }
+
+        // actually change the channel to our new index
+        if (MARCSTATE == MARC_STATE_TX)
+            return;
 
         MAC_set_chanidx(macdata.curChanIdx);
         rf_MAC_timer = 0;
@@ -259,7 +265,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                 packet[26] = 'H';
                 packet[27] = ' ';
 
-                transmit((xdata u8*)&packet, 0);
+                transmit((xdata u8*)&packet[1], 28);
                 macdata.synched_chans++;
                 break;
 
@@ -275,7 +281,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                     // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
                     g_txMsgQueue[macdata.txMsgIdxDone][0] = 0;
 
-                    if (++macdata.txMsgIdxDone > MAX_TX_MSGS)
+                    if (++macdata.txMsgIdxDone >= MAX_TX_MSGS)
                     {
                         macdata.txMsgIdxDone = 0;
                     }
@@ -652,8 +658,7 @@ int appHandleEP5()
                             break;
 
                         case FHSS_STATE_SYNCINGMASTER:
-                            macdata.synched_chans = 0;
-                            begin_hopping(0);
+                            MAC_do_Master_scanny_thingy();
                             break;
 
                         case FHSS_STATE_SYNCHED:
