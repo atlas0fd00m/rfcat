@@ -568,7 +568,14 @@ int appHandleEP5()
                     break;
 
                 case NIC_XMIT:
-                    // this needs to place buf data into the FHSS txMsgQueue
+                    // this needs to place buf data into the FHSS txMsgQueue    - really?
+                    // certainly don't want to allow this function if we're HOPPING.  that would be baaaaaaaaad.
+                    if (macdata.mac_state != FHSS_STATE_NONHOPPING)
+                    {
+                        debug("crap, please use FHSSxmit() instead!");
+                        break;
+                    }
+
                     //transmit(buf, 0);
                     len = *buf++;
                     transmit(buf, len);
