@@ -704,7 +704,7 @@ class USBDongle:
                 good+=1
         return (good,bad)
 
-    def debug(self):
+    def debug(self, delay=1):
         while True:
             """
             try:
@@ -720,7 +720,7 @@ class USBDongle:
             print self.reprRadioState()
             print self.reprClientState()
 
-            x,y,z = select.select([sys.stdin],[],[],1)
+            x,y,z = select.select([sys.stdin],[],[], delay)
             if sys.stdin in x:
                 sys.stdin.read(1)
                 break
@@ -950,23 +950,26 @@ class USBDongle:
         mod = (mdmcfg2) & 0x70
         return mod
 
+    def printRadioConfig(self, mhz=24, radiocfg=None):
+        print self.reprRadioConfig(mhz, radiocfg)
+
     def reprRadioConfig(self, mhz=24, radiocfg=None):
         if radiocfg == None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         output = []
 
-        output.append( "Frequency Configuration")
+        output.append( "== Frequency Configuration ==")
         output.append( self.reprFreqConfig(mhz, radiocfg))
-        output.append( "\nModem Configuration")
+        output.append( "\n== Modem Configuration ==")
         output.append( self.reprModemConfig(mhz, radiocfg))
-        output.append( "\nPacket Configuration")
+        output.append( "\n== Packet Configuration ==")
         output.append( self.reprPacketConfig(radiocfg))
-        output.append( "\nRadio Test Signal Configuration")
+        output.append( "\n== Radio Test Signal Configuration ==")
         output.append( self.reprRadioTestSignalConfig(radiocfg))
-        output.append( "\nRadio State")
+        output.append( "\n== Radio State ==")
         output.append( self.reprRadioState(radiocfg))
-        output.append("\nClient State")
+        output.append("\n== Client State ==")
         output.append( self.reprClientState())
         return "\n".join(output)
 
@@ -1468,21 +1471,28 @@ class USBDongle:
         reprMdmModulation = self.reprMdmModulation(radiocfg)
         syncmode = self.getMdmSyncMode(radiocfg)
 
-        bw = self.getMdmChanBW(mhz, radiocfg)
-        output.append("ChanBW:              %f hz"%bw)
+        output.append(reprMdmModulation)
 
         drate = self.getMdmDRate(mhz, radiocfg)
         output.append("DRate:               %f hz"%drate)
+
+        bw = self.getMdmChanBW(mhz, radiocfg)
+        output.append("ChanBW:              %f hz"%bw)
+
+        output.append("DEVIATION:           %f hz" % self.getMdmDeviatn(mhz, radiocfg))
+
+        output.append("Sync Mode:           %s" % SYNCMODES[syncmode])
+
+        num_preamble = (radiocfg.mdmcfg1>>4)&7
+        output.append("Min TX Preamble:     %d bytes" % (NUM_PREAMBLE[num_preamble]) )
+
+        chanspc = self.getMdmChanSpc(mhz, radiocfg)
+        output.append("Chan Spacing:        %f hz" % chanspc)
 
         bslimit = self.radiocfg.bscfg & BSCFG_BS_LIMIT
         output.append("BSLimit:             %s"%BSLIMITS[bslimit])
 
         output.append("DC Filter:           %s" % (("enabled", "disabled")[self.getEnableMdmDCFilter(radiocfg)]))
-
-        output.append(reprMdmModulation)
-        output.append("DEVIATION:           %f hz" % self.getMdmDeviatn(mhz, radiocfg))
-
-        output.append("Sync Mode:           %s" % SYNCMODES[syncmode])
 
         mchstr = self.getEnableMdmManchester(radiocfg)
         output.append("Manchester Encoding: %s" %  (("disabled","enabled")[mchstr]))
@@ -1490,12 +1500,6 @@ class USBDongle:
         fec = self.getEnableMdmFEC(radiocfg)
         output.append("Fwd Err Correct:     %s" % (("disabled","enabled")[fec]))
         
-        num_preamble = (radiocfg.mdmcfg1>>4)&7
-        output.append("Min TX Preamble:     %d bytes" % (NUM_PREAMBLE[num_preamble]) )
-
-        chanspc = self.getMdmChanSpc(mhz, radiocfg)
-        output.append("Chan Spacing:        %f hz" % chanspc)
-
 
         return "\n".join(output)
 
@@ -1554,9 +1558,12 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         output = []
-        output.append("Sync Bytes:      %.2x %.2x" % (radiocfg.sync1, radiocfg.sync0))
+        output.append("Sync Word:           0x%.2X%.2X" % (radiocfg.sync1, radiocfg.sync0))
         output.append("Packet Length:       %d" % radiocfg.pktlen)
-        output.append("Configured Address: 0x%x" % radiocfg.addr)
+        length_config = radiocfg.pktctrl0&3
+        output.append("Length Config:       %s" % LENGTH_CONFIGS[length_config])
+
+        output.append("Configured Address:  0x%x" % radiocfg.addr)
 
         pqt = self.getPktPQT(radiocfg)
         output.append("Preamble Quality Threshold: 4 * %d" % pqt)
@@ -1575,9 +1582,6 @@ class USBDongle:
 
         crc = self.getEnablePktCRC(radiocfg)
         output.append("CRC:                 %s" % ("disabled", "ENABLED")[crc])
-
-        length_config = radiocfg.pktctrl0&3
-        output.append("Length Config:       %s" % LENGTH_CONFIGS[length_config])
 
         return "\n".join(output)
     """
@@ -1634,19 +1638,19 @@ class USBDongle:
 
         return "\n".join(output)
 
-    def reprClientState(self):
-        output = []
+    def reprClientState(self, width=120):
+        output = ["="*width]
         output.append('     client thread cycles:      %d' % self.threadcounter)
         output.append('     client errored cycles:     %d' % self._usberrorcnt)
-        output.append('     recv_queue:\t\t (%d bytes) "%s"'%(len(self.recv_queue),repr(self.recv_queue)[:len(self.recv_queue)%39+20]))
-        output.append('     trash:     \t\t (%d bytes) "%s"'%(len(self.trash),repr(self.trash)[:min(len(self.trash),39)+20]))
-        output.append('     recv_mbox  \t\t (%d keys)  "%s"'%(len(self.recv_mbox),repr(self.recv_mbox)[:min(len(repr(self.recv_mbox)),79)]))
+        output.append('     recv_queue:                (%d bytes) %s'%(len(self.recv_queue),repr(self.recv_queue)[:width-42]))
+        output.append('     trash:                     (%d blobs) "%s"'%(len(self.trash),repr(self.trash)[:width-44]))
+        output.append('     recv_mbox                  (%d keys)  "%s"'%(len(self.recv_mbox),repr(self.recv_mbox.keys())[:width-44]))
         for app in self.recv_mbox.keys():
             appbox = self.recv_mbox[app]
-            output.append('       app 0x%x\t (%d records)  "%s"'%(app,len(appbox),repr(appbox)[:min(len(repr(appbox)),79)]))
+            output.append('       app 0x%x (%d records)'%(app,len(appbox)))
             for cmd in appbox.keys():
-                strlen = min(len(repr(appbox[cmd])),79)
-                output.append('             [0x%x]\t (%d records)  "%s"'%(cmd, len(appbox[cmd]), repr(appbox[cmd])[:strlen]))
+                output.append('             [0x%x]    (%d frames)  "%s"'%(cmd, len(appbox[cmd]), repr(appbox[cmd])[:width-36]))
+            output.append('')
         return "\n".join(output)
 
 
