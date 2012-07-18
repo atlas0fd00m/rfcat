@@ -5,6 +5,7 @@ import code
 import time
 import struct
 import threading
+import re
 #from chipcondefs import *
 from cc1111client import *
 
@@ -258,7 +259,7 @@ u16 synched_chans           %x
     def getPktAddr(self):
         return self.peek(ADDR)
 
-    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None, Search=None, string=0):
         oldebug = self._debug
         if IdentSyncWord:
             print "Entering Discover mode and searching for possible SyncWords..."
@@ -271,11 +272,25 @@ u16 synched_chans           %x
         if debug is not None:
             self._debug = debug
 
+        # Search for incoming hex values. Example: "534d415348"
+        if Search:
+            print "Search:",Search
+            # Discover displays hex values of string data. Strings need to be converted. 
+            # Example "SMASH" == "534d415348"
+            if string:
+                Search = Search.encode('hex')
+                print "Search string converted to hex:",Search
+
         while not keystop():
 
             try:
                 y, t = self.RFrecv()
-                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                in_y = y.encode('hex')
+                #print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                print "(%5.3f) Received:  %s" % (t, in_y)
+                if Search:
+                    if re.search(Search,in_y):
+                        print "    SEARCH SUCCESS:",Search
 
                 if IdentSyncWord:
                     if lowball == 1:
