@@ -307,12 +307,18 @@ u16 synched_chans           %x
 
                 print "(%5.3f) Received:  %s" % (t, yhex)
                 if RegExpSearch is not None:
-                    if (re.Search(RegExpSearch, y) is not None):
-                        print "    REG EXP SEARCH SUCCESS:",RegExpSearch
+                    ynext = y
+                    for loop in range(8):
+                        if (re.Search(RegExpSearch, ynext) is not None):
+                            print "    REG EXP SEARCH SUCCESS:",RegExpSearch
+                        ynext = bits.shiftString(ynext, 1)
 
                 if Search is not None:
-                    if (Search in y):
-                        print "    SEARCH SUCCESS:",Search
+                    ynext = y
+                    for loop in range(8):
+                        if (Search in ynext):
+                            print "    SEARCH SUCCESS:",Search
+                        ynext = bits.shiftString(ynext, 1)
 
                 if IdentSyncWord:
                     if lowball == 1:
