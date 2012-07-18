@@ -631,7 +631,7 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
-            time.sleep(.0001)                                      # only hits here if we don't have something in queue
+            time.sleep(.001)                                      # only hits here if we don't have something in queue
             
         raise(ChipconUsbTimeoutException())
 
