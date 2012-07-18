@@ -5,6 +5,7 @@ import code
 import time
 import struct
 import threading
+import re
 #from chipcondefs import *
 from cc1111client import *
 
@@ -261,28 +262,62 @@ u16 synched_chans           %x
     def getPktAddr(self):
         return self.peek(ADDR)
 
-    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None):
+    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None, Search=None, RegExpSearch=None):
+        '''
+        discover() sets lowball mode to the mode requested (length too), and begins to dump packets to the screen.  
+                press <enter> to quit, and your radio config will be set back to its original configuration.
+
+            lowball             - lowball level of choosing (see help on lowball)
+            debug               - sets _debug to this setting if not None.  
+            length              - arbitrary length of bytes we want to see per pseudopacket. (should be enough to identify interesting packets, but not too long)
+            IdentSyncWord       - look for preamble in each packet and determine possible sync-words in use
+            SyncWordMatchList   - attempt to find *these* sync words (provide a list)
+            Search              - byte string to search through each received packet for (real bytes, not hex repr)
+            RegExpSearch        - regular expression to search through received bytes (not the hex repr that is printed)
+
+        '''
         oldebug = self._debug
-        if IdentSyncWord:
+        if IdentSyncWord and lowball <= 1:
             print "Entering Discover mode and searching for possible SyncWords..."
             if SyncWordMatchList is not None:
                 print "  seeking one of: %s" % repr([hex(x) for x in SyncWordMatchList])
+
         else:
+            if IdentSyncWord and lowball > 1: 
+                print "-- lowball too high -- ignoring request to IdentSyncWord"
+                IdentSyncWord = False
+
             print "Entering Discover mode..."
 
         self.lowball(level=lowball, length=length)
         if debug is not None:
             self._debug = debug
 
+        if Search is not None:
+            print "Search:",repr(Search)
+
+        if RegExpSearch is not None:
+            print "RegExpSearch:",repr(RegExpSearch)
+
         while not keystop():
 
             try:
                 y, t = self.RFrecv()
-                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                yhex = y.encode('hex')
+
+                print "(%5.3f) Received:  %s" % (t, yhex)
+                if RegExpSearch is not None:
+                    if (re.Search(RegExpSearch, y) is not None):
+                        print "    REG EXP SEARCH SUCCESS:",RegExpSearch
+
+                if Search is not None:
+                    if (Search in y):
+                        print "    SEARCH SUCCESS:",Search
 
                 if IdentSyncWord:
                     if lowball == 1:
                         y = '\xaa\xaa' + y
+
                     poss = bits.findDword(y)
                     if len(poss):
                         print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
@@ -291,6 +326,7 @@ u16 synched_chans           %x
                         for x in poss:
                             if x in SyncWordMatchList:
                                 print "MATCH WITH KNOWN SYNC WORD:" + hex(x)
+
             except ChipconUsbTimeoutException:
                 pass
             except KeyboardInterrupt:
