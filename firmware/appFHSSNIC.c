@@ -797,7 +797,7 @@ static void appInitRf(void)
     SYNC0       = 0x4e;
     PKTLEN      = 0xff;
     PKTCTRL1    = 0x40; // PQT threshold  - was 0x00
-    PKTCTRL0    = 0x01;
+    PKTCTRL0    = 0x00; // FLEN.  for VLEN use |1 (ie.  FLEN=00, VLEN=01)
     ADDR        = 0x00;
     CHANNR      = 0x00;
     FSCTRL1     = 0x06;
@@ -807,7 +807,7 @@ static void appInitRf(void)
     FREQ0       = 0xf1;
     MDMCFG4     = 0xca;
     MDMCFG3     = 0xa3;
-    MDMCFG2     = 0x03;
+    MDMCFG2     = 0x01;
     MDMCFG1     = 0x23;
     MDMCFG0     = 0x11;
     DEVIATN     = 0x36;
