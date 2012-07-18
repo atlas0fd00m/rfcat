@@ -133,7 +133,9 @@ u8 transmit(__xdata u8* buf, u8 len)
     while (MARCSTATE == MARC_STATE_TX)
     {
             LED = !LED;
+#ifndef IMME
             usbProcessEvents();
+#endif
     }
 
     // If len is zero, assume first byte is the length
@@ -246,7 +248,9 @@ u8 transmit(__xdata u8* buf, u8 len)
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
             LED = !LED;
+#ifndef IMME
             usbProcessEvents(); 
+#endif
         }
         if (!countdown)
             lastCode[1] = LCE_RFTX_NEVER_TX;
@@ -256,7 +260,9 @@ u8 transmit(__xdata u8* buf, u8 len)
         while (MARCSTATE == MARC_STATE_TX && countdown--)
         {
             LED = !LED;
+#ifndef IMME
             usbProcessEvents();
+#endif
         }
         if (!countdown)
         {

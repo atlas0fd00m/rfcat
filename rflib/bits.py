@@ -152,6 +152,7 @@ def getBit(data, bit):
 
 
 def detectRepeatPatterns(data, size=64, minEntropy=.07):
+    #FIXME: convert strings to bit arrays before comparing.
     c1 = 0
     c2 = 0
     d1 = 0
