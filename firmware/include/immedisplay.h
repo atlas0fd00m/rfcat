@@ -67,4 +67,3 @@ void setNormalReverse(unsigned char normal);
 void clear();
 
 void putchar(char c);
-

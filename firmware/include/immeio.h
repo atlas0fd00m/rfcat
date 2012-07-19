@@ -14,6 +14,10 @@ void poll_keyboard();
 void usb_up(void);
 void initIMME(void);
 
+// provided by firmware //////////
+void immeLCDInitialState(void);
+//////////////////////////////////
+
 // Set a clock rate of approx. 2.5 Mbps for 26 MHz Xtal clock
 #define SPI_BAUD_M  170
 #define SPI_BAUD_E  16
