@@ -100,21 +100,24 @@ void setRFRx(void)
 {
     RFST = RFST_SRX;
     while(MARCSTATE != MARC_STATE_RX);
-    rf_status = RF_STATE_RX;
 }
 
 void setRFTx(void)
 {
     RFST = RFST_STX;
     while(MARCSTATE != MARC_STATE_TX);
-    rf_status = RF_STATE_TX;
 }
 
 void setRFIdle(void)
 {
     RFST = RFST_SIDLE;
     while(MARCSTATE != MARC_STATE_IDLE);
-    rf_status = RF_STATE_IDLE;
+}
+
+void setRFCal(void)
+{
+    RFST = RFST_SCAL;
+    while (MARCSTATE != MARC_STATE_IDLE);
 }
 
 //************************** never used.. *****************************
@@ -355,43 +358,54 @@ void startRX(void)
     }
 #endif
 
-    RFST = RFST_SRX;
-    while(MARCSTATE != MARC_STATE_RX);
+    setRFRx();
 
     RFIM |= RFIF_IRQ_DONE;
 }
 
-void stopRX(void)
-{
-    RFIM &= ~RFIF_IRQ_DONE;
-    setRFIdle();
 
-    DMAARM |= 0x81;                 // ABORT anything on DMA 0
-
-    DMAIRQ &= ~1;
-
-    S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);
-    RFIF &= ~RFIF_IRQ_DONE;
-}
-
-
-// enter RX mode
+// enter RX mode    (this is significant!  don't do lightly or quickly!)
 void RxMode(void)
 {
     if (rf_status != RF_STATE_RX)
     {
+        MCSM1 &= 0xf0;
+        MCSM1 |= 0x03;
         rf_status = RF_STATE_RX;
+
         startRX();
-        // FIXME: make this also adjust radio register settings for "return to" state?
     }
 }
 
-// enter IDLE mode
+// enter TX mode
+void TxMode(void)
+{
+    if (rf_status != RF_STATE_TX)
+    {
+        rf_status = RF_STATE_TX;
+        setRFTx();
+
+        MCSM1 &= 0xf0;
+        MCSM1 |= 0x02;
+    }
+}
+
+// enter IDLE mode  (this is significant!  don't do lightly or quickly!)
 void IdleMode(void)
 {
     if (rf_status == RF_STATE_RX)
     {
-        stopRX();
+        {
+            MCSM1 &= 0xf0;
+            RFIM &= ~RFIF_IRQ_DONE;
+            setRFIdle();
+
+            DMAARM |= 0x81;                 // ABORT anything on DMA 0
+            DMAIRQ &= ~1;
+
+            S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
+            RFIF &= ~RFIF_IRQ_DONE;
+        }
         rf_status = RF_STATE_IDLE;
         // FIXME: make this also adjust radio register settings for "return to" state?
     }

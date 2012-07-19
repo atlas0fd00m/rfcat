@@ -37,11 +37,11 @@ int appHandleEP5();
 void PHY_set_channel(u16 chan)
 {
     // set mode IDLE
-    IdleMode();
+    setRFIdle();
     // set the channel
     CHANNR = chan;
     // if we want to transmit in this time slot, it needs to happen after a minimum delay
-    RxMode();
+    setRFRx();
 }
 
 
@@ -561,7 +561,7 @@ int appHandleEP5()
                             break;
                         case RF_STATE_TX:
                             // ??  this should be just turning on CARRIER
-                            setRFTx();
+                            TxMode();
                             break;
                     }
                     txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,buf);

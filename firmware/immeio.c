@@ -518,10 +518,8 @@ void poll_keyboard() {
         sleepMillis(50);
 
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'A':   // highest nibble decr
@@ -536,10 +534,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'W':   // highbyte, lower nibble incr
@@ -557,10 +553,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'S':   // highbyte, lower nibble decr
@@ -578,10 +572,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'E':   // lowbyte, upper nibble incr
@@ -596,10 +588,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
         
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'D':   // lowbyte, upper nibble decr
@@ -614,10 +604,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
         
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'R':   // lowest nibble incr
@@ -635,10 +623,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'F':   // lowest nibble decr
@@ -656,10 +642,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case 'Z':   // no sync word
@@ -673,10 +657,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case KMNU:  // modulation
@@ -689,10 +671,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case KBYE:  // modulation
@@ -705,10 +685,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case KUP:   // bandwidth
@@ -725,10 +703,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -747,10 +723,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -778,10 +752,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 	case KLEFT: // baud decr
@@ -809,10 +781,8 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -831,10 +801,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -853,10 +821,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -875,10 +841,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -897,10 +861,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -916,10 +878,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -935,10 +895,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -952,10 +910,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -969,10 +925,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -988,10 +942,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1007,10 +959,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1026,10 +976,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1045,10 +993,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1063,10 +1009,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1080,10 +1024,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1097,10 +1039,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        RFST = RFST_SCAL;
-        while (MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while (MARCSTATE != MARC_STATE_RX);
+        setRFCal();
+        setRFRx();
 
         break;
 
@@ -1117,12 +1057,12 @@ void poll_keyboard() {
         if (MARCSTATE == MARC_STATE_RX)
         {
             RFOFF;
-            RFTX;
+            setRFTx();
         }
         else
         {
             RFOFF;
-            RFRX;
+            setRFRx();
         }
 
         break;

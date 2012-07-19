@@ -61,17 +61,20 @@ extern u8 rfif;
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
 void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
 
-void setRFIdle(void);
-void setRFRx(void);
-void setRFTx(void);
-int waitRSSI(void);
-void RxMode(void);
-void IdleMode(void);
+// set semi-permanent states
+void RxMode(void);          // set defaults to return to RX and calls setRFRX()
+void TxMode(void);          // set defaults to return to TX and calls setRFTX()
+void IdleMode(void);        // set defaults to return to IDLE and calls setRFIdle()
 
-u8 transmit(__xdata u8*, u8 len);
-void appInitRf(void);   // in application.c
-void startRX(void);
-void stopRX(void);
+// set transient RF mode (like.  NOW!)
+void setRFRx(void);         // set RF mode to RX and wait until MARCSTATE shows it's there
+void setRFTx(void);         // set RF mode to TX and wait until MARCSTATE shows it's there
+void setRFIdle(void);       // set RF mode to IDLE and wait until MARCSTATE shows it's there
+void setRFCal(void);        // set RF mode to CAL and wait until MARCSTATE shows it's done (in IDLE)
+int waitRSSI(void);
+
+u8 transmit(__xdata u8*, u8 len);   // sends data out the radio using the current RF settings
+void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
 
 #endif
