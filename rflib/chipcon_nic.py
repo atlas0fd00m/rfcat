@@ -152,7 +152,7 @@ class FHSSNIC(USBDongle):
             try:
                 y, t = self.RFrecv()
                 print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-                capture.append(y)
+                capture.append((y,t))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -160,7 +160,7 @@ class FHSSNIC(USBDongle):
                 print "Please press <enter> to stop"
 
         sys.stdin.read(1)
-        return ''.join(capture)
+        return capture
 
     def FHSSxmit(self, data):
         self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data)+1, data))
