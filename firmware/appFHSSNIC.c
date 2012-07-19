@@ -37,11 +37,11 @@ int appHandleEP5();
 void PHY_set_channel(u16 chan)
 {
     // set mode IDLE
-    setRFIdle();
+    RFOFF;
     // set the channel
     CHANNR = chan;
     // if we want to transmit in this time slot, it needs to happen after a minimum delay
-    setRFRx();
+    RFRX;
 }
 
 

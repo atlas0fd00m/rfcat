@@ -62,15 +62,21 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler shou
 void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
 
 // set semi-permanent states
-void RxMode(void);          // set defaults to return to RX and calls setRFRX()
-void TxMode(void);          // set defaults to return to TX and calls setRFTX()
-void IdleMode(void);        // set defaults to return to IDLE and calls setRFIdle()
+void RxMode(void);          // set defaults to return to RX and calls RFRX
+void TxMode(void);          // set defaults to return to TX and calls RFTX
+void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 
 // set transient RF mode (like.  NOW!)
-void setRFRx(void);         // set RF mode to RX and wait until MARCSTATE shows it's there
-void setRFTx(void);         // set RF mode to TX and wait until MARCSTATE shows it's there
-void setRFIdle(void);       // set RF mode to IDLE and wait until MARCSTATE shows it's there
-void setRFCal(void);        // set RF mode to CAL and wait until MARCSTATE shows it's done (in IDLE)
+// set RF mode to RX and wait until MARCSTATE shows it's there
+#define RFTX RFST = RFST_STX; while ((MARCSTATE) != MARC_STATE_TX);
+// set RF mode to TX and wait until MARCSTATE shows it's there
+#define RFRX RFST = RFST_SRX; while ((MARCSTATE) != MARC_STATE_RX);
+// set RF mode to IDLE and wait until MARCSTATE shows it's there
+#define RFCAL RFST=RFST_SCAL; while ((MARCSTATE) != MARC_STATE_IDLE);
+// set RF mode to CAL and wait until MARCSTATE shows it's done (in IDLE)
+#define RFOFF RFST=RFST_SIDLE; while ((MARCSTATE) != MARC_STATE_IDLE);
+
+
 int waitRSSI(void);
 
 u8 transmit(__xdata u8*, u8 len);   // sends data out the radio using the current RF settings

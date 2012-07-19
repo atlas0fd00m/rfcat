@@ -92,32 +92,8 @@ void init_RF()
     IEN2 |= IEN2_RFIE;
 
     /* Put radio into idle state */
-    setRFIdle();
+    RFOFF;
 
-}
-
-void setRFRx(void)
-{
-    RFST = RFST_SRX;
-    while(MARCSTATE != MARC_STATE_RX);
-}
-
-void setRFTx(void)
-{
-    RFST = RFST_STX;
-    while(MARCSTATE != MARC_STATE_TX);
-}
-
-void setRFIdle(void)
-{
-    RFST = RFST_SIDLE;
-    while(MARCSTATE != MARC_STATE_IDLE);
-}
-
-void setRFCal(void)
-{
-    RFST = RFST_SCAL;
-    while (MARCSTATE != MARC_STATE_IDLE);
 }
 
 //************************** never used.. *****************************
@@ -358,7 +334,7 @@ void startRX(void)
     }
 #endif
 
-    setRFRx();
+    RFRX;
 
     RFIM |= RFIF_IRQ_DONE;
 }
@@ -367,11 +343,11 @@ void startRX(void)
 // enter RX mode    (this is significant!  don't do lightly or quickly!)
 void RxMode(void)
 {
-    if (rf_status != RF_STATE_RX)
+    if (rf_status != RFST_SRX)
     {
         MCSM1 &= 0xf0;
         MCSM1 |= 0x03;
-        rf_status = RF_STATE_RX;
+        rf_status = RFST_SRX;
 
         startRX();
     }
@@ -380,25 +356,25 @@ void RxMode(void)
 // enter TX mode
 void TxMode(void)
 {
-    if (rf_status != RF_STATE_TX)
+    if (rf_status != RFST_STX)
     {
-        rf_status = RF_STATE_TX;
-        setRFTx();
-
         MCSM1 &= 0xf0;
         MCSM1 |= 0x02;
+
+        rf_status = RFST_STX;
+        RFTX;
     }
 }
 
 // enter IDLE mode  (this is significant!  don't do lightly or quickly!)
 void IdleMode(void)
 {
-    if (rf_status == RF_STATE_RX)
+    if (rf_status != RFST_SIDLE)
     {
         {
             MCSM1 &= 0xf0;
             RFIM &= ~RFIF_IRQ_DONE;
-            setRFIdle();
+            RFOFF;
 
             DMAARM |= 0x81;                 // ABORT anything on DMA 0
             DMAIRQ &= ~1;
@@ -406,10 +382,19 @@ void IdleMode(void)
             S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
             RFIF &= ~RFIF_IRQ_DONE;
         }
-        rf_status = RF_STATE_IDLE;
+        rf_status = RFST_SIDLE;
         // FIXME: make this also adjust radio register settings for "return to" state?
     }
 }
+
+void resetRFSTATE(void)
+{
+    RFOFF;
+    RFST = rf_status;
+    while (rf_status != RFST_SIDLE && MARCSTATE == MARC_STATE_IDLE)
+        ;    
+}
+
 
 /* Repeater mode...
     Say whut? Mode that receives a packet and then sends it into the air again :)
@@ -526,10 +511,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         lastCode[1] = LCE_RF_RXOVF;
         LED = !LED;
 
-        RFST = RFST_SIDLE;
-        while(MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
-        while(MARCSTATE != MARC_STATE_RX);
+        resetRFSTATE();
+        //RFST = RFST_SIDLE;
+        //while(MARCSTATE != MARC_STATE_IDLE);
+        //RFST = RFST_SRX;
+        //while(MARCSTATE != MARC_STATE_RX);
 
         LED = !LED;
         RFIF &= ~RFIF_IRQ_RXOVF;
@@ -541,14 +527,14 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         lastCode[1] = LCE_RF_TXUNF;
         LED = !LED;
 
-        RFST = RFST_SIDLE;
-        while(MARCSTATE != MARC_STATE_IDLE);
-        RFST = RFST_SRX;
+        resetRFSTATE();
+        //RFST = RFST_SIDLE;
+        //while(MARCSTATE != MARC_STATE_IDLE);
+        //RFST = RFST_SRX;
+        //while(MARCSTATE != MARC_STATE_RX);
 
-        while(MARCSTATE != MARC_STATE_RX);
         LED = !LED;
 
-        //resetRf();
         RFIF &= ~RFIF_IRQ_TXUNF;
     }
 }
