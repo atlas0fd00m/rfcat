@@ -403,7 +403,7 @@ void immeLCDInitScreen(void)
 {
     SSN = LOW;
     erasescreen();
-    drawstr(0,0, "IMME SNIFF v0.1");
+    immeLCDInitialState();
     SSN = HIGH;
 }
 

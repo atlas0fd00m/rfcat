@@ -94,7 +94,13 @@ void appMainLoop(void)
     }
 }
 
-#ifndef IMME
+#ifdef IMME
+void immeLCDInitialState(void)
+    /* SSN=LOW already */
+{
+    drawstr(0,0, "IMME SNIFF v0.1");
+}
+#else   // not an IMME
 
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
  * main handler routine for the application as endpoint 0 is normally used for system stuff.
@@ -110,7 +116,6 @@ void appMainLoop(void)
 int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
-#ifndef IMME
     __xdata u8 *ptr = &ep5.OUTbuf[0];
 
     switch (ep5.OUTapp)
@@ -118,7 +123,6 @@ int appHandleEP5()
         default:
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
-#endif
 #endif
     return 0;
 }
@@ -157,7 +161,7 @@ void appHandleEP0OUT(void)
 
     // must be done with the buffer by now...
     ep0.flags &= ~EP_OUTBUF_WRITTEN;
-#endif
+#endif  // not VIRTUAL_COM
 }
 
 /* this function is the application handler for endpoint 0.  it is called for all VENDOR type    *
@@ -191,11 +195,11 @@ int appHandleEP0(USB_Setup_Header* pReq)
                 break;
         }
     }
-#endif
+#endif  // not VIRTUAL_COM
     return 0;
 }
 
-#endif //   IMME
+#endif //  not IMME
 
 /*************************************************************************************************
  *  here begins the initialization stuff... this shouldn't change much between firmwares or      *
