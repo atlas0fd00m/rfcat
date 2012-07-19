@@ -24,6 +24,21 @@ volatile __xdata DMA_DESC rfDMA;
 volatile __xdata u8 bRepeatMode = 0;
 
 /*************************************************************************************************
+ * RF helpers                                                                                    *
+ ************************************************************************************************/
+
+void setFreq(u32 freq)
+{
+    u32 num;
+
+    
+    num = freq * (0x10000 / 1000000.0) / PLATFORM_CLOCK_FREQ;
+    FREQ2 = num >> 16;
+    FREQ1 = (num>>8) & 0xff;
+    FREQ0 = num & 0xff;
+}
+
+/*************************************************************************************************
  * RF init stuff                                                                                 *
  ************************************************************************************************/
 void init_RF()
@@ -278,6 +293,8 @@ u8 transmit(__xdata u8* buf, u8 len)
     return 0;
 }
 
+
+// prepare for RF RX
 void startRX(void)
 {
     /* If DMA transfer, disable rxtx interrupt */
@@ -358,21 +375,25 @@ void stopRX(void)
 }
 
 
+// enter RX mode
 void RxMode(void)
 {
     if (rf_status != RF_STATE_RX)
     {
         rf_status = RF_STATE_RX;
         startRX();
+        // FIXME: make this also adjust radio register settings for "return to" state?
     }
 }
 
+// enter IDLE mode
 void IdleMode(void)
 {
     if (rf_status == RF_STATE_RX)
     {
         stopRX();
         rf_status = RF_STATE_IDLE;
+        // FIXME: make this also adjust radio register settings for "return to" state?
     }
 }
 
