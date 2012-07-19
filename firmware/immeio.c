@@ -506,8 +506,7 @@ void poll_keyboard() {
         // syncword - qawsedrfg
 	case 'Q':   // highest nibble incr
         LED_GREEN != LED_GREEN;
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC1 += 0x10;
@@ -523,8 +522,7 @@ void poll_keyboard() {
 
         break;
 	case 'A':   // highest nibble decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC1 -= 0x10;
@@ -539,8 +537,7 @@ void poll_keyboard() {
 
         break;
 	case 'W':   // highbyte, lower nibble incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if ((SYNC1 & 0xf) != 0xf)
@@ -558,8 +555,7 @@ void poll_keyboard() {
 
         break;
 	case 'S':   // highbyte, lower nibble decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC1&0xf)
@@ -577,8 +573,7 @@ void poll_keyboard() {
 
         break;
 	case 'E':   // lowbyte, upper nibble incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC0 += 0x10;
@@ -593,8 +588,7 @@ void poll_keyboard() {
 
         break;
 	case 'D':   // lowbyte, upper nibble decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC0 -= 0x10;
@@ -609,8 +603,7 @@ void poll_keyboard() {
 
         break;
 	case 'R':   // lowest nibble incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC0&0xf == 9)
@@ -628,8 +621,7 @@ void poll_keyboard() {
 
         break;
 	case 'F':   // lowest nibble decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC0&0xf == 0)
@@ -647,8 +639,7 @@ void poll_keyboard() {
 
         break;
 	case 'Z':   // no sync word
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x04;
 
@@ -662,8 +653,7 @@ void poll_keyboard() {
 
         break;
 	case KMNU:  // modulation
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         incModulation();
 
         immeLCDShowRFConfig();
@@ -676,8 +666,7 @@ void poll_keyboard() {
 
         break;
 	case KBYE:  // modulation
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         decModulation();
 
         immeLCDShowRFConfig();
@@ -690,8 +679,7 @@ void poll_keyboard() {
 
         break;
 	case KUP:   // bandwidth
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         tmp = MDMCFG4;
         tmp = (tmp + 0x10);
         if (tmp > 0xff)
@@ -709,8 +697,7 @@ void poll_keyboard() {
         break;
 
 	case KDWN:  // bandwidth
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         tmp = MDMCFG4;
         if (tmp < 0x10)
             tmp += 0x100;
@@ -729,8 +716,7 @@ void poll_keyboard() {
         break;
 
 	case KRIGHT:// baud incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         //
         //if (getBaud()>=2200)
         //    setBaud(getBaud()>>1);
@@ -757,8 +743,7 @@ void poll_keyboard() {
 
         break;
 	case KLEFT: // baud decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         //
         //if (getBaud() <=250000)
         //    setBaud(getBaud()<<1);
@@ -787,8 +772,7 @@ void poll_keyboard() {
         break;
 
 	case 'P': // freq incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         FREQ0 ++;
         if (FREQ0 == 0)
         {
@@ -807,8 +791,7 @@ void poll_keyboard() {
         break;
 
 	case KENTER: // freq decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         FREQ0 --;
         if (FREQ0 == 0xff)
         {
@@ -827,8 +810,7 @@ void poll_keyboard() {
         break;
 
 	case 'O': // freq incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         if (FREQ0 >= 0xf0)
         {
             FREQ1++;
@@ -847,8 +829,7 @@ void poll_keyboard() {
         break;
 
 	case ',': // freq decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
         if (FREQ0 <= 0x10)
         {
             if (FREQ1 == 0)
@@ -867,8 +848,7 @@ void poll_keyboard() {
         break;
 
 	case 'I': // freq incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ1++;
         if (FREQ1 == 0)
@@ -884,8 +864,7 @@ void poll_keyboard() {
         break;
 
 	case 'M': // freq decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         if (FREQ1 == 0)
             FREQ2--;
@@ -901,8 +880,7 @@ void poll_keyboard() {
         break;
 
 	case 'U': // freq incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2++;
 
@@ -916,8 +894,7 @@ void poll_keyboard() {
         break;
 
 	case 'N': // freq decr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2--;
 
@@ -931,8 +908,7 @@ void poll_keyboard() {
         break;
 
 	case 'L': // freq set 915
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2       = 0x23;
         FREQ1       = 0x31;//0x71;
@@ -948,8 +924,7 @@ void poll_keyboard() {
         break;
 
 	case 'K': // freq set 868
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2       = 0x21;
         FREQ1       = 0x62;//0x71;
@@ -965,8 +940,7 @@ void poll_keyboard() {
         break;
 
 	case 'J': // freq set 433
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2       = 0x10;
         FREQ1       = 0xa7;//0x71;
@@ -982,8 +956,7 @@ void poll_keyboard() {
         break;
 
 	case 'H': // freq set 315
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         FREQ2       = 0x0c;
         FREQ1       = 0x1d;//0x71;
@@ -1000,8 +973,7 @@ void poll_keyboard() {
 
 
 	case 'G': // channr incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         CHANNR = 0;
 
@@ -1015,8 +987,7 @@ void poll_keyboard() {
         break;
 
 	case 'T': // channr incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         CHANNR ++;
 
@@ -1030,8 +1001,7 @@ void poll_keyboard() {
         break;
 
 	case 'V': // channr incr
-        RFST = RFST_SIDLE;
-        while (MARCSTATE != MARC_STATE_IDLE);
+        setRFIdle();
 
         CHANNR --;
 
@@ -1056,12 +1026,12 @@ void poll_keyboard() {
     case KSPK:
         if (MARCSTATE == MARC_STATE_RX)
         {
-            RFOFF;
+            setRFIdle();
             setRFTx();
         }
         else
         {
-            RFOFF;
+            setRFIdle();
             setRFRx();
         }
 
