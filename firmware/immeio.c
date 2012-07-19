@@ -506,7 +506,7 @@ void poll_keyboard() {
         // syncword - qawsedrfg
 	case 'Q':   // highest nibble incr
         LED_GREEN != LED_GREEN;
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC1 += 0x10;
@@ -517,12 +517,12 @@ void poll_keyboard() {
         sleepMillis(50);
 
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'A':   // highest nibble decr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC1 -= 0x10;
@@ -532,12 +532,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'W':   // highbyte, lower nibble incr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if ((SYNC1 & 0xf) != 0xf)
@@ -550,12 +550,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'S':   // highbyte, lower nibble decr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC1&0xf)
@@ -568,12 +568,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'E':   // lowbyte, upper nibble incr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC0 += 0x10;
@@ -583,12 +583,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
         
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'D':   // lowbyte, upper nibble decr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         SYNC0 -= 0x10;
@@ -598,12 +598,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
         
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'R':   // lowest nibble incr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC0&0xf == 9)
@@ -616,12 +616,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'F':   // lowest nibble decr
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
         if (SYNC0&0xf == 0)
@@ -634,12 +634,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case 'Z':   // no sync word
-        setRFIdle();
+        RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x04;
 
@@ -648,12 +648,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case KMNU:  // modulation
-        setRFIdle();
+        RFOFF;
         incModulation();
 
         immeLCDShowRFConfig();
@@ -661,12 +661,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case KBYE:  // modulation
-        setRFIdle();
+        RFOFF;
         decModulation();
 
         immeLCDShowRFConfig();
@@ -674,12 +674,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case KUP:   // bandwidth
-        setRFIdle();
+        RFOFF;
         tmp = MDMCFG4;
         tmp = (tmp + 0x10);
         if (tmp > 0xff)
@@ -691,13 +691,13 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case KDWN:  // bandwidth
-        setRFIdle();
+        RFOFF;
         tmp = MDMCFG4;
         if (tmp < 0x10)
             tmp += 0x100;
@@ -710,13 +710,13 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case KRIGHT:// baud incr
-        setRFIdle();
+        RFOFF;
         //
         //if (getBaud()>=2200)
         //    setBaud(getBaud()>>1);
@@ -738,12 +738,12 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 	case KLEFT: // baud decr
-        setRFIdle();
+        RFOFF;
         //
         //if (getBaud() <=250000)
         //    setBaud(getBaud()<<1);
@@ -766,13 +766,13 @@ void poll_keyboard() {
         imme_state_counter = 0;
         sleepMillis(50);
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'P': // freq incr
-        setRFIdle();
+        RFOFF;
         FREQ0 ++;
         if (FREQ0 == 0)
         {
@@ -785,13 +785,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case KENTER: // freq decr
-        setRFIdle();
+        RFOFF;
         FREQ0 --;
         if (FREQ0 == 0xff)
         {
@@ -804,13 +804,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'O': // freq incr
-        setRFIdle();
+        RFOFF;
         if (FREQ0 >= 0xf0)
         {
             FREQ1++;
@@ -823,13 +823,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case ',': // freq decr
-        setRFIdle();
+        RFOFF;
         if (FREQ0 <= 0x10)
         {
             if (FREQ1 == 0)
@@ -842,13 +842,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'I': // freq incr
-        setRFIdle();
+        RFOFF;
 
         FREQ1++;
         if (FREQ1 == 0)
@@ -858,13 +858,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'M': // freq decr
-        setRFIdle();
+        RFOFF;
 
         if (FREQ1 == 0)
             FREQ2--;
@@ -874,13 +874,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'U': // freq incr
-        setRFIdle();
+        RFOFF;
 
         FREQ2++;
 
@@ -888,13 +888,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'N': // freq decr
-        setRFIdle();
+        RFOFF;
 
         FREQ2--;
 
@@ -902,13 +902,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'L': // freq set 915
-        setRFIdle();
+        RFOFF;
 
         FREQ2       = 0x23;
         FREQ1       = 0x31;//0x71;
@@ -918,13 +918,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'K': // freq set 868
-        setRFIdle();
+        RFOFF;
 
         FREQ2       = 0x21;
         FREQ1       = 0x62;//0x71;
@@ -934,13 +934,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'J': // freq set 433
-        setRFIdle();
+        RFOFF;
 
         FREQ2       = 0x10;
         FREQ1       = 0xa7;//0x71;
@@ -950,13 +950,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'H': // freq set 315
-        setRFIdle();
+        RFOFF;
 
         FREQ2       = 0x0c;
         FREQ1       = 0x1d;//0x71;
@@ -966,14 +966,14 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 
 	case 'G': // channr incr
-        setRFIdle();
+        RFOFF;
 
         CHANNR = 0;
 
@@ -981,13 +981,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'T': // channr incr
-        setRFIdle();
+        RFOFF;
 
         CHANNR ++;
 
@@ -995,13 +995,13 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
 	case 'V': // channr incr
-        setRFIdle();
+        RFOFF;
 
         CHANNR --;
 
@@ -1009,8 +1009,8 @@ void poll_keyboard() {
         imme_state = IMME_STATE_CONFIG_SCREEN;
         imme_state_counter = 0;
 
-        setRFCal();
-        setRFRx();
+        RFCAL;
+        RFRX;
 
         break;
 
@@ -1026,13 +1026,13 @@ void poll_keyboard() {
     case KSPK:
         if (MARCSTATE == MARC_STATE_RX)
         {
-            setRFIdle();
-            setRFTx();
+            RFOFF;
+            RFTX;
         }
         else
         {
-            setRFIdle();
-            setRFRx();
+            RFOFF;
+            RFRX;
         }
 
         break;

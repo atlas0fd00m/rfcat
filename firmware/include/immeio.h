@@ -22,11 +22,6 @@ void immeLCDInitialState(void);
 #define SPI_BAUD_M  170
 #define SPI_BAUD_E  16
 
-#define RFTX RFST = RFST_STX; while ((MARCSTATE) != MARC_STATE_TX);
-#define RFRX RFST = RFST_SRX; while ((MARCSTATE) != MARC_STATE_RX);
-#define RFRX RFST = RFST_SRX; while ((MARCSTATE) != MARC_STATE_RX);
-#define RFOFF RFST=RFST_SIDLE; while ((MARCSTATE) != MARC_STATE_IDLE);
-
 #define IMME_STATE_CONFIG_SCREEN 1
 #define IMME_STATE_SNIFF 0
 

@@ -50,7 +50,6 @@ void appMainInit(void)
     recvCnt = 0;
 
     RxMode();
-    //startRX();
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
