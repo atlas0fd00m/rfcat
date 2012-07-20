@@ -796,7 +796,7 @@ class USBDongle:
         return regs
 
     ######## RADIO METHODS #########
-    ### radio recv
+    ### radio state
     def getMARCSTATE(self, radiocfg=None):
         if radiocfg is None:
             self.getRadioConfig()
@@ -805,19 +805,31 @@ class USBDongle:
         mode = self.radiocfg.marcstate
         return (MODES[mode], mode)
 
+    ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
-        self.poke(X_RFST, "%c"%RFST_STX)
+        self.setRfMode(RF_STATE_TX)
 
     def setModeRX(self):
-        self.poke(X_RFST, "%c"%RFST_SRX)
+        self.setRfMode(RF_STATE_RX)
 
     def setModeIDLE(self):
+        self.setRfMode(RF_STATE_IDLE)
+
+
+    ### send raw state change to radio (doesn't update the return state for after RX/TX occurs)
+    def strobeModeTX(self):
+        self.poke(X_RFST, "%c"%RFST_STX)
+
+    def strobeModeRX(self):
+        self.poke(X_RFST, "%c"%RFST_SRX)
+
+    def strobeModeIDLE(self):
         self.poke(X_RFST, "%c"%RFST_SIDLE)
 
-    def setModeFSTXON(self):
+    def strobeModeFSTXON(self):
         self.poke(X_RFST, "%c"%RFST_SFSTXON)
 
-    def setModeCAL(self):
+    def strobeModeCAL(self):
         self.poke(X_RFST, "%c"%RFST_SCAL)
 
 
