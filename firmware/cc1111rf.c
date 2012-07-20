@@ -346,7 +346,7 @@ void RxMode(void)
     if (rf_status != RFST_SRX)
     {
         MCSM1 &= 0xf0;
-        MCSM1 |= 0x03;
+        MCSM1 |= 0x0f;
         rf_status = RFST_SRX;
 
         startRX();
@@ -359,7 +359,7 @@ void TxMode(void)
     if (rf_status != RFST_STX)
     {
         MCSM1 &= 0xf0;
-        MCSM1 |= 0x02;
+        MCSM1 |= 0x0a;
 
         rf_status = RFST_STX;
         RFTX;
