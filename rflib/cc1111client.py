@@ -508,6 +508,10 @@ class USBDongle:
                     elif ('No such device' in errstr):
                         self._threadGo = False
                         self.resetup(False)
+                    elif ('Input/output error' in errstr):  # USBerror 5
+                        self._threadGo = False
+                        self.resetup(False)
+
                     else:
                         if self._debug: print "Error in runEP5() (receiving): %s" % errstr
                         if self._debug>2: sys.excepthook(*sys.exc_info())
@@ -734,12 +738,12 @@ class USBDongle:
             
             try:
                 r = self.send(APP_SYSTEM, SYS_CMD_PING, buf, wait)
+                r,rt = r
+                istop = time.time()
+                print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
             except ChipconUsbTimeoutException, e:
                 r = None
-                pass #print e
-            r,rt = r
-            istop = time.time()
-            print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
+                print "Ping Failed."
             if r==None:
                 bad+=1
             else:
