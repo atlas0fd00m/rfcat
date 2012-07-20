@@ -424,10 +424,10 @@ void appMainLoop(void)
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
                 RFST = RFST_SRX;
-                sleepMillis(5);
+                sleepMillis(2);
 
                 /* read RSSI */
-                chan_table[processbuffer] = (RSSI ^ 0x80);
+                chan_table[processbuffer] = (RSSI);
             }
 
             /* end RX */
