@@ -15,14 +15,28 @@
 #define FHSS_STOP_HOPPING       0x24
 
 
-#define FHSS_STATE_NONHOPPING       0
-#define FHSS_STATE_DISCOVERY        1
-#define FHSS_STATE_SYNCHING         2
-#define FHSS_LAST_NONHOPPING_STATE  FHSS_STATE_SYNCHING
+#define MAC_STATE_NONHOPPING        0
+#define MAC_STATE_DISCOVERY         1
+#define MAC_STATE_SYNCHING          2
+#define MAC_LAST_NONHOPPING_STATE   MAC_STATE_SYNCHING
 
-#define FHSS_STATE_SYNCHED          3
-#define FHSS_STATE_SYNC_MASTER      4
-#define FHSS_STATE_SYNCINGMASTER    5
+#define MAC_STATE_SYNCHED           3
+#define MAC_STATE_SYNC_MASTER       4
+#define MAC_STATE_SYNCINGMASTER     5
+
+
+// spectrum analysis defines
+// application and command
+#define APP_SPECAN                  0x43
+#define SPECAN_QUEUE                0x1
+
+// FHSSNIC commands to start and stop SPECAN mode
+#define RFCAT_START_SPECAN          0x40
+#define RFCAT_STOP_SPECAN           0x41
+
+// MAC_STATEs for SPECAN
+#define MAC_STATE_PREP_SPECAN       0x40
+#define MAC_STATE_SPECAN            0x41
 
 
 // MAC layer defines
