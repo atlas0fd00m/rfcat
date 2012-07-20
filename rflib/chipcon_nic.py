@@ -14,6 +14,7 @@ NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3
 NIC_RFMODE =                    0x4
+NIC_SET_RECV_LARGE =            0x5
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -121,10 +122,20 @@ class FHSSNIC(USBDongle):
     def setRfMode(self, rfmode, parms=''):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
 
-    def RFxmit(self, data):
-        self.send(APP_NIC, NIC_XMIT, "%c%s" % (len(data), data))
+    # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
+    def RFxmit(self, data, repeat=0, offset=0):
+        # calculate wait time
+        waitlen = len(data)
+        waitlen += repeat * (len(data) - offset)
+        wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
+        self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
-    def RFrecv(self, timeout=100):
+    # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
+    def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
+        if not blocksize == None:
+            if blocksize > EP5OUT_BUFFER_SIZE: 
+                raise(Exception("Blocksize too large. Maximum %d") % EP5OUT_BUFFER_SIZE)
+            self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
         return self.recv(APP_NIC, NIC_RECV, timeout)
 
     def RFlisten(self):

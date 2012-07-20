@@ -7,5 +7,7 @@
 
 #define NIC_SET_ID              0x3
 #define NIC_RFMODE              0x4
+#define NIC_SET_RECV_LARGE      0x5
 
 #endif
+

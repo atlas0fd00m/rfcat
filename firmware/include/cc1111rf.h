@@ -4,8 +4,12 @@
 #include "cc1111.h"
 
 #define DMA_CFG_SIZE 8
-#define BUFFER_SIZE 256
+// BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
+#define BUFFER_SIZE 512
 #define BUFFER_AMOUNT 2
+
+#define PKTCTRL0_LENGTH_CONFIG_INF        (0x02)
+#define RF_MAX_TX_BLOCK                   (u16) 255
 
 #define RSSI_TIMEOUT_US 1500
 
@@ -47,11 +51,14 @@ typedef enum{NORMAL,RECV,XMIT} register_e;
 /* Rx buffers */
 extern volatile __xdata u8 rfRxCurrentBuffer;
 extern volatile __xdata u8 rfrxbuf[BUFFER_AMOUNT][BUFFER_SIZE];
-extern volatile __xdata u8 rfRxCounter[BUFFER_AMOUNT];
+extern volatile __xdata u16 rfRxCounter[BUFFER_AMOUNT];
 extern volatile __xdata u8 rfRxProcessed[BUFFER_AMOUNT];
+extern volatile __xdata u8 rfRxInfMode;
+extern volatile __xdata u16 rfRxTotalRXLen;
+extern volatile __xdata u16 rfRxLargeLen;
 /* Tx buffers */
-extern volatile __xdata u8 rftxbuf[BUFFER_SIZE];
-extern volatile __xdata u8 rfTxCounter;
+extern volatile __xdata u8 *rftxbuf;
+extern volatile __xdata u16 rfTxCounter;
 
 extern volatile xdata u16 rf_MAC_timer;
 extern volatile xdata u16 rf_tLastRecv;
@@ -79,8 +86,8 @@ void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 
 int waitRSSI(void);
 
-u8 transmit(__xdata u8*, u8 len);   // sends data out the radio using the current RF settings
+u8 transmit(__xdata u8*, u16 len, u16 repeat, u16 offset);   // sends data out the radio using the current RF settings
 void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
-
+void byte_shuffle(__xdata u8* buf, u16 len, u16 offset);
 #endif

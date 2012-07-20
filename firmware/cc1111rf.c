@@ -8,12 +8,22 @@
 /* Rx buffers */
 volatile __xdata u8 rfRxCurrentBuffer;
 volatile __xdata u8 rfrxbuf[BUFFER_AMOUNT][BUFFER_SIZE];
-volatile __xdata u8 rfRxCounter[BUFFER_AMOUNT];
+volatile __xdata u16 rfRxCounter[BUFFER_AMOUNT];
 volatile __xdata u8 rfRxProcessed[BUFFER_AMOUNT];
+volatile __xdata u8 rfRxInfMode = 0;
+volatile __xdata u16 rfRxTotalRXLen = 0;
+volatile __xdata u16 rfRxLargeLen = 0;
+
 
 /* Tx buffers */
-volatile __xdata u8 rftxbuf[BUFFER_SIZE];
-volatile __xdata u8 rfTxCounter = 0;
+volatile __xdata u8 *rftxbuf;
+volatile __xdata u16 rfTxCounter = 0;
+volatile __xdata u16 rfTxRepeatCounter = 0;
+volatile __xdata u16 rfTxBufferEnd = 0;
+volatile __xdata u16 rfTxRepeatLen = 0;
+volatile __xdata u16 rfTxRepeatOffset = 0;
+volatile __xdata u16 rfTxTotalTXLen = 0;
+volatile __xdata u8 rfTxInfMode = 0;
 
 u8 rfif;
 volatile __xdata u8 rf_status;
@@ -117,12 +127,9 @@ int waitRSSI()
 //***********************************************************************/
 /** FIXME: how can i fail thee?  let me count the ways... and put them into the contract...
  */
-u8 transmit(__xdata u8* buf, u8 len)
+u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 {
-    u8 *txbuf;
     __xdata u16 countdown;
-
-    txbuf = &rftxbuf[0];
 
     while (MARCSTATE == MARC_STATE_TX)
     {
@@ -131,6 +138,15 @@ u8 transmit(__xdata u8* buf, u8 len)
             usbProcessEvents();
 #endif
     }
+
+    // Set up repeat / large blocks
+    rfTxInfMode = 0;
+    rfTxRepeatCounter = repeat;
+    rfTxRepeatOffset = offset;
+    rfTxBufferEnd = len;
+    rfTxRepeatLen = len - offset;
+    // calculate total bytes to be transmitted including repeat
+    rfTxTotalTXLen = len + (rfTxRepeatLen * repeat);
 
     // If len is zero, assume first byte is the length
     // if we're in FIXED mode, skip the first byte
@@ -152,17 +168,29 @@ u8 transmit(__xdata u8* buf, u8 len)
         }
     } else
     {
-        // If len is nonzero, use that as the length, and make sure the copied buffer is setup appropriately
+        // If len is nonzero, use that as the length, and make sure the tx buffer is setup appropriately
         // if we're in FIXED mode, all is well
         // if we're in VARIABLE mode, must insert that length byte first.
         switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
         {
             case PKTCTRL0_LENGTH_CONFIG_VAR:
-                rftxbuf[0] = len;
-                txbuf++;
+                // shuffle buffer up 1 byte to make room for length
+                byte_shuffle(buf, len - 1, 1);
+                buf[0] = (u8) len;
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
-                // all good here
+                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
+                // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
+                // note that repeat length of 0xFF means 'forever'
+                if(repeat || len > RF_MAX_TX_BLOCK)
+                {
+                    // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
+                    // ISR will trigger exit once rfTxTotalTXLen < 256
+                    PKTLEN = (u8) (rfTxTotalTXLen % 256);
+                    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    rfTxInfMode = 1;
+                }
                 break;
             default:
                 break;
@@ -176,8 +204,8 @@ u8 transmit(__xdata u8* buf, u8 len)
     RFTXRXIE = 0;
 #endif
 
-    // Copy userdata to tx buffer //
-    memcpy(txbuf, buf, len);
+    // point tx buffer at userdata //
+    rftxbuf= buf;
 
     // Reset byte pointer //
     rfTxCounter = 0;
@@ -422,15 +450,41 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
+        // maintain infinite mode
+        if(rfRxInfMode)
+            if(rfRxTotalRXLen-- < 256)
+                PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
         rf_status = RF_STATE_RX;
         rfrxbuf[rfRxCurrentBuffer][rfRxCounter[rfRxCurrentBuffer]++] = RFD;
         if(rfRxCounter[rfRxCurrentBuffer] >= BUFFER_SIZE || rfRxCounter[rfRxCurrentBuffer] == 0)
         {
             rfRxCounter[rfRxCurrentBuffer] = BUFFER_SIZE-1;
         }
+      // restart infinite mode?
+      if(!rfRxTotalRXLen && rfRxInfMode)
+          {
+          rfRxTotalRXLen = rfRxLargeLen;
+          PKTLEN = (u8) (rfRxTotalRXLen % 256);
+          PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+          PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+          }
     }
     else if(MARCSTATE == MARC_STATE_TX)
     {   // Transmit Byte
+        // maintain infinite mode
+        if(rfTxInfMode)
+        {
+            if(rfTxCounter == rfTxBufferEnd)
+                if(rfTxRepeatCounter)
+                {
+                    if(rfTxRepeatCounter != 0xff)
+                        rfTxRepeatCounter--;
+                    rfTxCounter = rfTxRepeatOffset;
+                }
+            // radio to leave infinite mode?
+            if(rfTxTotalTXLen-- < 256)
+                PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+        }
         rf_status = RF_STATE_TX;
         RFD = rftxbuf[rfTxCounter++];
     }
@@ -538,3 +592,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         RFIF &= ~RFIF_IRQ_TXUNF;
     }
 }
+
+// move data within a buffer
+void byte_shuffle(__xdata u8* buf, u16 len, u16 offset)
+{
+    while(len--)
+        buf[len + offset] = buf[len];
+}
+

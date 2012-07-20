@@ -9,6 +9,8 @@ from chipcondefs import *
 EP_TIMEOUT_IDLE     = 400
 EP_TIMEOUT_ACTIVE   = 10
 
+USB_RX_WAIT         = 100
+USB_TX_WAIT         = 10000
 
 USB_BM_REQTYPE_TGTMASK          =0x1f
 USB_BM_REQTYPE_TGT_DEV          =0x00
@@ -68,6 +70,9 @@ DEBUG_CMD_INT                   = 0xf4
 
 EP5OUT_MAX_PACKET_SIZE          = 64
 EP5IN_MAX_PACKET_SIZE           = 64
+# EP5OUT_BUFFER_SIZE must match firmware/include/chipcon_usb.h definition
+EP5OUT_BUFFER_SIZE              = 516
+
 
 SYNCM_NONE                      = 0
 SYNCM_15_of_16                  = 1
@@ -83,6 +88,11 @@ RF_STATE_TX                     = 2
 RF_STATE_IDLE                   = 3
 
 RF_SUCCESS                      = 0
+
+RF_MAX_TX_BLOCK                 = 255
+# RF_MAX_BLOCK must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
+RF_MAX_RX_BLOCK                 = 512
+
 
 MODES = {}
 lcls = locals()
@@ -211,7 +221,7 @@ class USBDongle:
         self.recv_thread.setDaemon(True)
         self.recv_thread.start()
         self.resetup(copyDongle=copyDongle)
-        self.max_packet_size = 255
+        self.max_packet_size = RF_MAX_RX_BLOCK
 
     def cleanup(self):
         self._usberrorcnt = 0;
@@ -602,7 +612,7 @@ class USBDongle:
 
 
     ######## APPLICATION API ########
-    def recv(self, app, cmd=None, wait=100):
+    def recv(self, app, cmd=None, wait=USB_RX_WAIT):
         for x in xrange(wait+1):
             try:
                 b = self.recv_mbox.get(app)
@@ -662,7 +672,7 @@ class USBDongle:
                         #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],4
             return retval
 
-    def send(self, app, cmd, buf, wait=10000):
+    def send(self, app, cmd, buf, wait=USB_TX_WAIT):
         msg = "%c%c%s%s"%(app,cmd, struct.pack("<H",len(buf)),buf)
         self.xsema.acquire()
         self.xmit_queue.append(msg)
@@ -1048,10 +1058,13 @@ class USBDongle:
         self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
         self.setRFRegister(MDMCFG0, (radiocfg.mdmcfg0))
 
-    def makePktVLEN(self, maxlen=0xff, radiocfg=None):
+    def makePktVLEN(self, maxlen=RF_MAX_TX_BLOCK, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
+
+        if maxlen > RF_MAX_TX_BLOCK:
+            raise(Exception("Packet too large (%d bytes). Maximum variable length packet is %d bytes." % (maxlen, RF_MAX_TX_BLOCK)))
 
         radiocfg.pktctrl0 &= 0xfc
         radiocfg.pktctrl0 |= 1
@@ -1059,13 +1072,22 @@ class USBDongle:
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
         self.setRFRegister(PKTLEN, (radiocfg.pktlen))
 
-    def makePktFLEN(self, flen=0xff, radiocfg=None):
+
+    def makePktFLEN(self, flen=RF_MAX_TX_BLOCK, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        radiocfg.pktctrl0 &= 0xfc
-        radiocfg.pktlen = flen
+        if flen > EP5OUT_BUFFER_SIZE - 4:
+            raise(Exception("Packet too large (%d bytes). Maximum fixed length packet is %d bytes." % (flen, EP5OUT_BUFFER_SIZE - 6)))
+
+        self.radiocfg.pktctrl0 &= 0xfc
+        # if we're sending a large block, pktlen is dealt with by the firmware
+        # using 'infinite' mode
+        if flen > RF_MAX_TX_BLOCK:
+            self.radiocfg.pktlen = 0x00
+        else:
+            self.radiocfg.pktlen = flen
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
         self.setRFRegister(PKTLEN, (radiocfg.pktlen))
 
