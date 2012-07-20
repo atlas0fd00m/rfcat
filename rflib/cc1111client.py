@@ -887,9 +887,11 @@ class USBDongle:
 
         return bytedef
 
-    def setFreq(self, freq=902000000, mhz=24, radiocfg=None):
+    def setFreq(self, freq=902000000, mhz=24, radiocfg=None, applyConfig=True):        
         if radiocfg is None:
             radiocfg = self.radiocfg
+        else:
+            applyConfig = False
 
         freqmult = (0x10000 / 1000000.0) / mhz
         num = int(freq * freqmult)
@@ -897,7 +899,7 @@ class USBDongle:
         radiocfg.freq1 = (num>>8) & 0xff
         radiocfg.freq0 = num & 0xff
 
-        if radiocfg is None:
+        if applyConfig:
             self.setModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
             self.setModeRX()
