@@ -517,6 +517,14 @@ class USBDongle:
                         if self._debug>2: sys.excepthook(*sys.exc_info())
                     self._usberrorcnt += 1
                 pass
+            except AttributeError,e:
+                if "'NoneType' object has no attribute 'bInterfaceNumber'" in str(e):
+                    print "Error: dongle went away.  USB bus problems?"
+                    self._threadGo = False
+                    self.resetup(False)
+
+            except:
+                sys.excepthook(*sys.exc_info())
 
 
             #### parse, sort, and deliver the mail.
@@ -729,7 +737,7 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
-    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=3000):
+    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=1000):
         good=0
         bad=0
         start = time.time()
