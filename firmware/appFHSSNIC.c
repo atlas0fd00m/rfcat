@@ -19,13 +19,13 @@
 //#define DEBUG_HOPPING 1
 
 
-xdata MAC_DATA_t macdata;
-xdata u8 g_Channels[MAX_CHANNELS];
+__xdata MAC_DATA_t macdata;
+__xdata u8 g_Channels[MAX_CHANNELS];
 
-xdata u16 g_NIC_ID;
+__xdata u16 g_NIC_ID;
 
 
-xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN];
+__xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN];
 
 ////////// internal functions /////////
 void t2IntHandler(void) interrupt T2_VECTOR;
@@ -85,7 +85,7 @@ void MAC_sync(u16 CellID)
     //
     // do we want to check current state?  this should probably only be allowed from
     // NONHOPPING or DISCOVERY...
-    if (macdata.mac_state != FHSS_STATE_NONHOPPING && macdata.mac_state != FHSS_STATE_DISCOVERY)
+    if (macdata.mac_state != MAC_STATE_NONHOPPING && macdata.mac_state != MAC_STATE_DISCOVERY)
     {
         debug("FHSS state entering SYNCHING from wrong state");
         debughex(macdata.mac_state);
@@ -109,7 +109,7 @@ void MAC_sync(u16 CellID)
     }
 
     // set state =  SYNC
-    macdata.mac_state = FHSS_STATE_SYNCHING;
+    macdata.mac_state = MAC_STATE_SYNCHING;
 
     // store the main timer value for beginning of this phase.
     macdata.tLastStateChange = clock;
@@ -123,7 +123,7 @@ void MAC_sync(u16 CellID)
 void MAC_stop_sync()
 {
     // this only stops the hunt.  hopping is not re-enabled.  if you want that, use a different mode
-    macdata.mac_state = FHSS_STATE_NONHOPPING;
+    macdata.mac_state = MAC_STATE_NONHOPPING;
     macdata.tLastStateChange = clock;
 
 }
@@ -131,14 +131,14 @@ void MAC_stop_sync()
 void MAC_become_master()
 {
     // this will force our nic to become the master
-    macdata.mac_state = FHSS_STATE_SYNC_MASTER;
+    macdata.mac_state = MAC_STATE_SYNC_MASTER;
     macdata.tLastStateChange = clock;
 
 }
 
 void MAC_do_Master_scanny_thingy()
 {
-    macdata.mac_state = FHSS_STATE_SYNCINGMASTER;
+    macdata.mac_state = MAC_STATE_SYNCINGMASTER;
     macdata.synched_chans = 0;
     macdata.tLastStateChange = clock;
     begin_hopping(0);
@@ -234,7 +234,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
         // we need to transmit something indicating the channel we're on
         switch (macdata.mac_state)
         {
-            case FHSS_STATE_SYNCINGMASTER:
+            case MAC_STATE_SYNCINGMASTER:
                 sleepMillis(FHSS_TX_SLEEP_DELAY);
                 packet[0] = 28;
                 packet[1] = macdata.curChanIdx & 0xff;
@@ -269,8 +269,8 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                 macdata.synched_chans++;
                 break;
 
-            case FHSS_STATE_SYNCHED:
-            case FHSS_STATE_SYNC_MASTER:
+            case MAC_STATE_SYNCHED:
+            case MAC_STATE_SYNC_MASTER:
                 // if the queue is not empty, wait but then tx.
                 // FIXME: this currently sends only once per hop.  this may or may not be appropriate, but it's simple to implement.
                 if (g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
@@ -313,10 +313,11 @@ void init_FHSS(void)
 
     MAC_initChannels();
 
-    macdata.mac_state = FHSS_STATE_NONHOPPING;   // this is basic NIC functionality
+    macdata.mac_state = MAC_STATE_NONHOPPING;   // this is basic NIC functionality
 
 
     // Timer Setup:
+    // FIXME: MAKE THIS PART OF THE CLIENT CONFIGURATION?
 // FIXME: this should be defined so it works with 24/26mhz
     // setup TIMER 1
     // free running mode
@@ -404,10 +405,37 @@ void appMainInit(void)
 void appMainLoop(void)
 {
     xdata u8 processbuffer;
+    xdata u8 *chan_table = rftxbuf;
 
     switch  (macdata.mac_state)
     {
-        case FHSS_STATE_SYNCHING:
+        case MAC_STATE_PREP_SPECAN:
+            RFOFF;
+            PKTCTRL1 =  0xE5;       // highest PQT, address check, append_status
+            PKTCTRL0 =  0x04;       // crc enabled      ( we really don't want any packets coming our way :)
+            FSCTRL1 =   0x12;       // freq if
+            FSCTRL0 =   0x00;
+            MCSM0 =     0x00;       // no auto-cal....  hmmm...
+            AGCCTRL2 |= AGCCTRL2_MAX_DVGA_GAIN;     // disable 3 highest gain settings
+            macdata.mac_state = MAC_STATE_SPECAN;
+
+        case MAC_STATE_SPECAN:
+            for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
+                /* tune radio and start RX */
+                CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
+                RFST = RFST_SRX;
+                sleepMillis(5);
+
+                /* read RSSI */
+                chan_table[processbuffer] = (RSSI ^ 0x80);
+            }
+
+            /* end RX */
+            RFST = RFST_SIDLE;
+            txdata( APP_SPECAN, SPECAN_QUEUE, (u8)macdata.synched_chans, (xdata u8*)&chan_table[0] );
+            break;
+
+        case MAC_STATE_SYNCHING:
             // FIXME: need to compare part of the packet to desperatelySeeking;
             // FIXME: TIMEOUT??  do we just stay in SYNCHING forever1?!?
             if (rfif)
@@ -419,7 +447,7 @@ void appMainLoop(void)
                 {
                     // FIXME: do something with desperatelySeeking here.
                     // FIXME: OR... use protocol knowledge to dynamically generate a hopping pattern from this discovered cell
-                    macdata.mac_state = FHSS_STATE_SYNCHED;
+                    macdata.mac_state = MAC_STATE_SYNCHED;
                     begin_hopping((u8)(rf_tLastRecv & 0xff));       // synching happens within
                     // we've received a packet with the proper sync word and settings.  
                     debug("network packet(sync)");
@@ -447,9 +475,9 @@ void appMainLoop(void)
             IEN2 |= IEN2_RFIE;
             break;
 
-        case FHSS_STATE_DISCOVERY:
-            // check for timeout value.  if we cross timeout, we'll return to FHSS_STATE_NONHOPPING, 
-            // or FHSS_STATE_SYNC_MASTER.
+        case MAC_STATE_DISCOVERY:
+            // check for timeout value.  if we cross timeout, we'll return to MAC_STATE_NONHOPPING, 
+            // or MAC_STATE_SYNC_MASTER.
             if (rfif)
             {
                 lastCode[0] = 0xd;
@@ -484,17 +512,17 @@ void appMainLoop(void)
             IEN2 |= IEN2_RFIE;
             break;
 
-        case FHSS_STATE_SYNCINGMASTER:
+        case MAC_STATE_SYNCINGMASTER:
             // if we've done one loop, stop
             if (macdata.synched_chans >= macdata.NumChannelHops)
             {
-                macdata.mac_state = FHSS_STATE_SYNC_MASTER;
+                macdata.mac_state = MAC_STATE_SYNC_MASTER;
             }
             break;
         // perhaps we should just make this "default:"
-        case FHSS_STATE_SYNC_MASTER:
-        case FHSS_STATE_SYNCHED:
-        case FHSS_STATE_NONHOPPING:
+        case MAC_STATE_SYNC_MASTER:
+        case MAC_STATE_SYNCHED:
+        case MAC_STATE_NONHOPPING:
             // this is where we handle the RF packet
             if (rfif)
             {
@@ -549,18 +577,30 @@ int appHandleEP5()
 
             switch (ep5.OUTcmd)
             {
+                case RFCAT_START_SPECAN:
+                    // FIXME: need to consider tracking what mode we're in, and dropping back into that mode at the end.
+                    // FIXME: or perhaps FHSS/MAC stuff should be take care of in the client side.
+                    stop_hopping();
+                    macdata.mac_state = MAC_STATE_PREP_SPECAN;
+                    macdata.synched_chans = buf[0];
+                    txdata(ep5.OUTapp,ep5.OUTcmd, 1, buf);
+                    break;
+
+                case RFCAT_STOP_SPECAN:
+                    macdata.mac_state = MAC_STATE_NONHOPPING;
+                    txdata(ep5.OUTapp,ep5.OUTcmd, 1, buf);
+                    break;
+
                 case NIC_RFMODE:
                     switch (*buf++)
                     {
                         case RF_STATE_RX:
-
                             RxMode();
                             break;
                         case RF_STATE_IDLE:
                             IdleMode();
                             break;
                         case RF_STATE_TX:
-                            // ??  this should be just turning on CARRIER
                             TxMode();
                             break;
                     }
@@ -570,7 +610,7 @@ int appHandleEP5()
                 case NIC_XMIT:
                     // this needs to place buf data into the FHSS txMsgQueue    - really?
                     // certainly don't want to allow this function if we're HOPPING.  that would be baaaaaaaaad.
-                    if (macdata.mac_state != FHSS_STATE_NONHOPPING)
+                    if (macdata.mac_state != MAC_STATE_NONHOPPING)
                     {
                         debug("crap, please use FHSSxmit() instead!");
                         break;
@@ -661,19 +701,19 @@ int appHandleEP5()
                     // if macdata.mac_state <= 2, make sure T2 interrupt is ignored
                     switch (macdata.mac_state)
                     {
-                        case FHSS_STATE_NONHOPPING:
-                        case FHSS_STATE_DISCOVERY:
-                        case FHSS_STATE_SYNCHING:
+                        case MAC_STATE_NONHOPPING:
+                        case MAC_STATE_DISCOVERY:
+                        case MAC_STATE_SYNCHING:
                             
                             stop_hopping();
                             break;
 
-                        case FHSS_STATE_SYNCINGMASTER:
+                        case MAC_STATE_SYNCINGMASTER:
                             MAC_do_Master_scanny_thingy();
                             break;
 
-                        case FHSS_STATE_SYNCHED:
-                        case FHSS_STATE_SYNC_MASTER:
+                        case MAC_STATE_SYNCHED:
+                        case MAC_STATE_SYNC_MASTER:
                             begin_hopping(0);
                             break;
                     }
