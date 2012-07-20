@@ -23,7 +23,7 @@ import sys
 import time
 import numpy
 import threading
-import hedyattack as h
+import rflib
 import cPickle as pickle
 
 from PySide import QtCore, QtGui
@@ -31,7 +31,8 @@ from PySide.QtCore import Qt, QPointF, QLineF
 
 
 
-APP_SPECAN = 2
+APP_SPECAN   = 0x43
+SPECAN_QUEUE = 1
 
 class SpecanThread(threading.Thread):
     def __init__(self, data, low_frequency, high_frequency, freq_step, delay, new_frame_callback):
@@ -67,16 +68,14 @@ class SpecanThread(threading.Thread):
         else:
             while not self._stop:
                 try:
-                    rssi_values, timestamp = self._data.recv(APP_SPECAN,10000)
+                    rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
                     rssi_values = [ -ord(x) for x in rssi_values[4:] ]
-                    # since we are not accessing the dongle, we need some sort of delay
-                    #time.sleep(self._delay)
                     frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                     self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
                 except:
                     sys.excepthook(*sys.exc_info())
-            self._data.stopSpecAn()
+            self._data._stopSpecAn()
             
     def stop(self):
         self._stop = True
@@ -270,7 +269,7 @@ class Window(QtGui.QWidget):
         main_layout.addWidget(self.render_area, 0, 0)
         self.setLayout(main_layout)
         
-        self.setWindowTitle("Ubertooth Spectrum Analyzer")
+        self.setWindowTitle("RfCat Spectrum Analyzer (thanks Ubertooth!)")
 
     def sizeHint(self):
         return QtCore.QSize(480, 160)
@@ -278,12 +277,12 @@ class Window(QtGui.QWidget):
     def _open_data(self, data):
         if type(data) == str:
             if data == '-':
-                data = h.FHSS()
+                data = rflib.RfCat()
                 data._debug = 1
-                data.setBaseFreq(int(self._low_freq))
-                data.setChanSpacing(int(self._spacing))
-                data.setNumChans(int((self._high_freq-self._low_freq) / self._spacing))
-                data.startSpecAn()
+                freq = int(self._low_freq)
+                spc = int(self._spacing)
+                numChans = int((self._high_freq-self._low_freq) / self._spacing)
+                data._doSpecAn(freq, spc, numChans)
             else:
                 data = pickle.load(file(data,'rb'))
         if data is None:
