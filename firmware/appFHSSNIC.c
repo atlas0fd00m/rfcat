@@ -415,7 +415,7 @@ void appMainLoop(void)
             PKTCTRL0 =  0x04;       // crc enabled      ( we really don't want any packets coming our way :)
             FSCTRL1 =   0x12;       // freq if
             FSCTRL0 =   0x00;
-            MCSM0 =     0x00;       // no auto-cal....  hmmm...
+            MCSM0 =     0x10;       // autocal/no auto-cal....  hmmm...
             AGCCTRL2 |= AGCCTRL2_MAX_DVGA_GAIN;     // disable 3 highest gain settings
             macdata.mac_state = MAC_STATE_SPECAN;
 
