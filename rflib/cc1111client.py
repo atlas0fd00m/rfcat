@@ -518,11 +518,23 @@ class USBDongle:
                     elif ('No such device' in errstr):
                         self._threadGo = False
                         self.resetup(False)
+                    elif ('Input/output error' in errstr):  # USBerror 5
+                        self._threadGo = False
+                        self.resetup(False)
+
                     else:
                         if self._debug: print "Error in runEP5() (receiving): %s" % errstr
                         if self._debug>2: sys.excepthook(*sys.exc_info())
                     self._usberrorcnt += 1
                 pass
+            except AttributeError,e:
+                if "'NoneType' object has no attribute 'bInterfaceNumber'" in str(e):
+                    print "Error: dongle went away.  USB bus problems?"
+                    self._threadGo = False
+                    self.resetup(False)
+
+            except:
+                sys.excepthook(*sys.exc_info())
 
 
             #### parse, sort, and deliver the mail.
@@ -735,7 +747,7 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
-    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=3000):
+    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=1000):
         good=0
         bad=0
         start = time.time()
@@ -744,12 +756,12 @@ class USBDongle:
             
             try:
                 r = self.send(APP_SYSTEM, SYS_CMD_PING, buf, wait)
+                r,rt = r
+                istop = time.time()
+                print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
             except ChipconUsbTimeoutException, e:
                 r = None
-                pass #print e
-            r,rt = r
-            istop = time.time()
-            print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
+                print "Ping Failed."
             if r==None:
                 bad+=1
             else:
@@ -885,9 +897,11 @@ class USBDongle:
 
         return bytedef
 
-    def setFreq(self, freq=902000000, mhz=24, radiocfg=None):
+    def setFreq(self, freq=902000000, mhz=24, radiocfg=None, applyConfig=True):        
         if radiocfg is None:
             radiocfg = self.radiocfg
+        else:
+            applyConfig = False
 
         freqmult = (0x10000 / 1000000.0) / mhz
         num = int(freq * freqmult)
@@ -895,7 +909,7 @@ class USBDongle:
         radiocfg.freq1 = (num>>8) & 0xff
         radiocfg.freq0 = num & 0xff
 
-        if radiocfg is None:
+        if applyConfig:
             self.setModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
             self.setModeRX()
