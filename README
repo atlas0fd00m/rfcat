@@ -132,7 +132,7 @@ installation is simple:
 = USING RFCAT - NON-root MODE =
 if you have configured your system to allow non-root use:
 
-* type "rfcat"
+* type "rfcat -r"
     you should have now entered an interactive python shell, where tab-completion and other aids should make a very powerful experience
     i love the raw-byte handling and introspection of it all.
 

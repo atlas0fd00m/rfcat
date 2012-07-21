@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
     parser.add_argument('-i', '--index', default=0, type=int) 
+    parser.add_argument('-s', '--specan', default=False, action="store_true", help='start spectrum analyzer')
 
     ifo = parser.parse_args()
 

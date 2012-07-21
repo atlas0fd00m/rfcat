@@ -1,6 +1,9 @@
 #!/usr/bin/env ipython
 from chipcon_nic import *
 
+RFCAT_START_SPECAN  = 0x40
+RFCAT_STOP_SPECAN   = 0x41
+
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
@@ -32,6 +35,40 @@ class RfCat(FHSSNIC):
 
         sys.stdin.read(1)
         self.lowballRestore()
+
+    def specan(self, basefreq=902e6, inc=250e3, count=104):
+        self._doSpecAn(basefreq, inc, count)
+
+        import rflib.ccspecan as rfspecan
+        if not hasattr(self, "_qt_app") or self._qt_app is None:
+            self._qt_app = rfspecan.QtGui.QApplication([])
+        fhigh = basefreq + (inc*(count-1))
+        window = rfspecan.Window(self, basefreq, fhigh, inc, 0)
+        window.show()
+        self._qt_app.exec_()
+        
+    def _doSpecAn(self, basefreq, inc, count):
+        '''
+        store radio config and start sending spectrum analysis data
+        '''
+        if count>255:
+            raise Exception("sorry, only 255 samples per pass... (count)")
+        self.getRadioConfig()
+        self._specan_backup_radiocfg = self.radiocfg
+
+        self.setFreq(basefreq)
+        self.setMdmChanSpc(inc)
+
+        self.send(APP_NIC, RFCAT_START_SPECAN, "%c" % (count) )
+
+    def _stopSpecAn(self):
+        ''' 
+        stop sending rfdata and return radio to original config
+        '''
+        self.send(APP_NIC, RFCAT_STOP_SPECAN, '')
+        self.radiocfg = self._specan_backup_radiocfg
+        self.setRadioConfig()
+
 
     def rf_configure(*args, **k2args):
         pass
