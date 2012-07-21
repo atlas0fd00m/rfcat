@@ -69,7 +69,7 @@ class SpecanThread(threading.Thread):
             while not self._stop:
                 try:
                     rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
-                    rssi_values = [ ((ord(x)^0x80)/2)-88 for x in rssi_values[4:] ]
+                    rssi_values = [ ((ord(x)^0x80)/2)-88 for x in rssi_values ]
                     frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                     self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
