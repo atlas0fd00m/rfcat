@@ -247,7 +247,9 @@ u8 transmit(__xdata u8* buf, u8 len)
 #endif
         }
         if (!countdown)
+        {
             lastCode[1] = LCE_RFTX_NEVER_TX;
+        }
 
         // wait until we're safely *out* of TX mode (so we return with an available buffer)
         countdown = 1000;
@@ -261,8 +263,7 @@ u8 transmit(__xdata u8* buf, u8 len)
         if (!countdown)
         {
             lastCode[1] = LCE_RFTX_NEVER_LEAVE_TX;
-            // FIXME: should this be a "reset" function?
-            RFST = RFST_SRX;
+            resetRFSTATE();
         }
 
         LED = 0;
@@ -512,10 +513,6 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         LED = !LED;
 
         resetRFSTATE();
-        //RFST = RFST_SIDLE;
-        //while(MARCSTATE != MARC_STATE_IDLE);
-        //RFST = RFST_SRX;
-        //while(MARCSTATE != MARC_STATE_RX);
 
         LED = !LED;
         RFIF &= ~RFIF_IRQ_RXOVF;
@@ -528,10 +525,6 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         LED = !LED;
 
         resetRFSTATE();
-        //RFST = RFST_SIDLE;
-        //while(MARCSTATE != MARC_STATE_IDLE);
-        //RFST = RFST_SRX;
-        //while(MARCSTATE != MARC_STATE_RX);
 
         LED = !LED;
 
