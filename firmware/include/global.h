@@ -29,7 +29,6 @@ extern __xdata u32 clock;
 #define LC_USB_DATA_RESET_RESUME        0xa
 #define LC_USB_RESET                    0xb
 #define LC_USB_EP5OUT                   0xc
-
 #define LC_RF_VECTOR                    0x10
 #define LC_RFTXRX_VECTOR                0x11
 
@@ -40,7 +39,6 @@ extern __xdata u32 clock;
 #define LCE_USB_EP5_GOT_CRAP                    0x7
 #define LCE_USB_EP5_STALL                       0x8
 #define LCE_USB_DATA_LEFTOVER_FLAGS             0x9
-
 #define LCE_RF_RXOVF                            0x10
 #define LCE_RF_TXUNF                            0x11
 #define LCE_DROPPED_PACKET                      0x12

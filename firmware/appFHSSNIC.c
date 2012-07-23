@@ -778,7 +778,6 @@ void appHandleEP0OUT(void)
 
     // must be done with the buffer by now...
     ep0.flags &= ~EP_OUTBUF_WRITTEN;
-    USBCS0 |= USBCS0_DATA_END;
 #endif
 }
 
