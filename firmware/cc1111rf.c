@@ -253,7 +253,7 @@ u8 transmit(__xdata u8* buf, u8 len)
 
         // wait until we're safely *out* of TX mode (so we return with an available buffer)
         countdown = 1000;
-        while (MARCSTATE == MARC_STATE_TX && countdown--)
+        while (MARCSTATE == MARC_STATE_TX && --countdown)
         {
             LED = !LED;
 #ifndef IMME
