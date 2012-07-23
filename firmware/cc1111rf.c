@@ -38,6 +38,62 @@ void setFreq(u32 freq)
     FREQ0 = num & 0xff;
 }
 
+void resetRFSTATE(void)
+{
+    RFOFF;
+    RFST = rf_status;
+    while (rf_status != RFST_SIDLE && MARCSTATE == MARC_STATE_IDLE)
+        ;    
+}
+
+// enter RX mode    (this is significant!  don't do lightly or quickly!)
+void RxMode(void)
+{
+    if (rf_status != RFST_SRX)
+    {
+        MCSM1 &= 0xf0;
+        MCSM1 |= 0x0f;
+        rf_status = RFST_SRX;
+
+        startRX();
+    }
+}
+
+// enter TX mode
+void TxMode(void)
+{
+    if (rf_status != RFST_STX)
+    {
+        MCSM1 &= 0xf0;
+        MCSM1 |= 0x0a;
+
+        rf_status = RFST_STX;
+        RFTX;
+    }
+}
+
+// enter IDLE mode  (this is significant!  don't do lightly or quickly!)
+void IdleMode(void)
+{
+    if (rf_status != RFST_SIDLE)
+    {
+        {
+            MCSM1 &= 0xf0;
+            RFIM &= ~RFIF_IRQ_DONE;
+            RFOFF;
+
+            DMAARM |= 0x81;                 // ABORT anything on DMA 0
+            DMAIRQ &= ~1;
+
+            S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
+            RFIF &= ~RFIF_IRQ_DONE;
+        }
+        rf_status = RFST_SIDLE;
+        // FIXME: make this also adjust radio register settings for "return to" state?
+    }
+}
+
+
 /*************************************************************************************************
  * RF init stuff                                                                                 *
  ************************************************************************************************/
@@ -73,7 +129,7 @@ void init_RF()
     IP1 |= 1;
 
     // RF state
-    rf_status = RF_STATE_IDLE;
+    rf_status = RFST_SIDLE;
 
     /* Init DMA channel */
     DMA0CFGH = ((u16)(&rfDMA))>>8;
@@ -237,7 +293,7 @@ u8 transmit(__xdata u8* buf, u8 len)
         RFST = RFST_STX;
 
         // wait until we're safely in TX mode
-        countdown = 1000;
+        countdown = 60000;
         while (MARCSTATE != MARC_STATE_TX && --countdown)
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
@@ -252,7 +308,7 @@ u8 transmit(__xdata u8* buf, u8 len)
         }
 
         // wait until we're safely *out* of TX mode (so we return with an available buffer)
-        countdown = 1000;
+        countdown = 60000;
         while (MARCSTATE == MARC_STATE_TX && --countdown)
         {
             LED = !LED;
@@ -341,61 +397,6 @@ void startRX(void)
 }
 
 
-// enter RX mode    (this is significant!  don't do lightly or quickly!)
-void RxMode(void)
-{
-    if (rf_status != RFST_SRX)
-    {
-        MCSM1 &= 0xf0;
-        MCSM1 |= 0x0f;
-        rf_status = RFST_SRX;
-
-        startRX();
-    }
-}
-
-// enter TX mode
-void TxMode(void)
-{
-    if (rf_status != RFST_STX)
-    {
-        MCSM1 &= 0xf0;
-        MCSM1 |= 0x0a;
-
-        rf_status = RFST_STX;
-        RFTX;
-    }
-}
-
-// enter IDLE mode  (this is significant!  don't do lightly or quickly!)
-void IdleMode(void)
-{
-    if (rf_status != RFST_SIDLE)
-    {
-        {
-            MCSM1 &= 0xf0;
-            RFIM &= ~RFIF_IRQ_DONE;
-            RFOFF;
-
-            DMAARM |= 0x81;                 // ABORT anything on DMA 0
-            DMAIRQ &= ~1;
-
-            S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
-            RFIF &= ~RFIF_IRQ_DONE;
-        }
-        rf_status = RFST_SIDLE;
-        // FIXME: make this also adjust radio register settings for "return to" state?
-    }
-}
-
-void resetRFSTATE(void)
-{
-    RFOFF;
-    RFST = rf_status;
-    while (rf_status != RFST_SIDLE && MARCSTATE == MARC_STATE_IDLE)
-        ;    
-}
-
 
 /* Repeater mode...
     Say whut? Mode that receives a packet and then sends it into the air again :)
@@ -423,7 +424,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
-        rf_status = RF_STATE_RX;
+        rf_status = RFST_SRX;
         rfrxbuf[rfRxCurrentBuffer][rfRxCounter[rfRxCurrentBuffer]++] = RFD;
         if(rfRxCounter[rfRxCurrentBuffer] >= BUFFER_SIZE || rfRxCounter[rfRxCurrentBuffer] == 0)
         {
@@ -432,7 +433,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
     }
     else if(MARCSTATE == MARC_STATE_TX)
     {   // Transmit Byte
-        rf_status = RF_STATE_TX;
+        rf_status = RFST_STX;
         RFD = rftxbuf[rfTxCounter++];
     }
     RFTXRXIF = 0;
@@ -457,7 +458,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     if (RFIF & ( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT ))
     {
         // we want *all zee bytezen!*
-        if(rf_status == RF_STATE_TX)
+        if(rf_status == RFST_STX)
         {
             // rearm the DMA?  not sure this is a good thing.
             DMAARM |= 0x81;
