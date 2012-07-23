@@ -292,7 +292,8 @@ class USBDongle:
                     self._clear_buffers(False)
 
             except Exception, e:
-                if console: sys.stderr.write('.')
+                #if console: sys.stderr.write('.')
+                print >>sys.stderr,("Error in resetup():" + repr(e))
                 if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
                 time.sleep(1)
 
