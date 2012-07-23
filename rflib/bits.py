@@ -325,17 +325,16 @@ def reprBitArray(bitAry, width=194):
     # top line
     #FIXME: UGGGGLY and kinda broken.
     fraction = 1.0 * arylen/width
-    expand = [bitary[iint(x*fraction)] for x in xrange(width)]
+    expand = [bitAry[int(x*fraction)] for x in xrange(width)]
 
     for bindex in xrange(width):
-        aryidx = int((arylen * 1.0 * bindex / width ))
-        print aryidx, bindex, width, arylen
         bits = 0
+        if bindex>0:
+            bits += (expand[bindex-1]) << (2)
+        bits += (expand[bindex]) << (1)
+        if bindex < width-1:
+            bits += (expand[bindex+1])
 
-        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
-        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
-        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
-        print bin(bits)
         top.append( chars_top[ bits ] )
         mid.append( chars_mid[ bits ] )
         bot.append( chars_bot[ bits ] )
