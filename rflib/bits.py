@@ -274,9 +274,10 @@ def genBitArray(string, startbit, endbit):
 
     s = []
     for byte in binStr:
+        byte = ord(byte)
         for bitx in range(7, -1, -1):
             bit = (byte>>bitx) & 1
-            s.append(chr(0x30|bit))
+            s.append(bit)
 
     return (s, ent)
 
@@ -320,15 +321,24 @@ def reprBitArray(bitAry, width=194):
     mid = []
     bot = []
 
+    arylen = len(bitAry)
     # top line
+    #FIXME: UGGGGLY and kinda broken.
+    fraction = 1.0 * arylen/width
+    expand = [bitary[iint(x*fraction)] for x in xrange(width)]
+
     for bindex in xrange(width):
-        aryidx = int((1.0 * bindex / width) * len(bitAry))
+        aryidx = int((arylen * 1.0 * bindex / width ))
+        print aryidx, bindex, width, arylen
         bits = 0
-        for bitx in range(3):
-            bits += bitAry[aryidix + bitx]
-            top.append( chars_top[ bits ] )
-            mid.append( chars_mid[ bits ] )
-            bot.append( chars_bot[ bits ] )
+
+        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
+        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
+        bits += (bitAry[aryidx + (int((bitx*fraction)+.5))]) << (2-bitx)
+        print bin(bits)
+        top.append( chars_top[ bits ] )
+        mid.append( chars_mid[ bits ] )
+        bot.append( chars_bot[ bits ] )
 
     tops = "".join(top)
     mids = "".join(mid)
