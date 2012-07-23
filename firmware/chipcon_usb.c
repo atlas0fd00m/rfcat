@@ -847,7 +847,7 @@ int handleOUTEP5(void)
         //blink(300,200);
         blink_binary_baby_lsb(len, 16);
         //USBCSOL &= ~(USBCSOL_SEND_STALL | USBCSOL_SENT_STALL);
-        return -1;
+        return -2;
     }
 
     //  DMA Trigger
@@ -866,11 +866,13 @@ int handleOUTEP5(void)
         ep5.flags |= EP_OUTBUF_WRITTEN;                         // track that we've read into the OUTbuf
         ep5.OUTbytesleft = 0;
         USBINDEX = 5;
+        usb_data.event &= ~USBD_OIF_OUTEP5IF;       // this indicates that we have more processing to do.  clear so we can reset in the interrupt handler...
         USBCSOL &= ~USBCSOL_OUTPKT_RDY;
         return 1;                                               // this return value is what gets processOUTEP5 to kick
     }
 
     USBINDEX = 5;
+    usb_data.event &= ~USBD_OIF_OUTEP5IF;       // this indicates that we have more processing to do.  clear so we can reset in the interrupt handler...
     USBCSOL &= ~USBCSOL_OUTPKT_RDY;
     return 0;
 }
@@ -982,6 +984,7 @@ void processOUTEP5(void)
         {
             cb_ep5();
         }
+        ep5.flags &= ~EP_OUTBUF_WRITTEN; 
     }
 
 }
@@ -1065,11 +1068,14 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        if (handleOUTEP5() == 1)                   // handles the immediate read into ep5
+        switch (handleOUTEP5() == 1)                    // handles the immediate read into ep5
         {
-            processOUTEP5();                            // process the data read into ep5
+            case -1:                                    // we failed to send.  still waiting on our OUT_BUF.  still a message waiting in queue.
+                break;
+            case 1:
+                processOUTEP5();                            // process the data read into ep5
+            default:
         }
-        usb_data.event &= ~USBD_OIF_OUTEP5IF;
         
     }
 
