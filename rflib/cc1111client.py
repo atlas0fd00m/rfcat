@@ -857,12 +857,12 @@ class USBDongle:
             
         marcstate = self.radiocfg.marcstate
 
-        self.setModeIDLE()
+        self.strobeModeIDLE()
         self.poke(regaddr, chr(value))
         if (marcstate == MARC_STATE_RX):
-            self.setModeRX()
+            self.strobeModeRX()
         elif (marcstate == MARC_STATE_TX):
-            self.setModeTX()
+            self.strobeModeTX()
         # if other than these, we can stay in IDLE
 
     ### radio config
@@ -876,14 +876,16 @@ class USBDongle:
             bytedef = self.radiocfg.vsEmit()
 
         statestr, marcstate = self.getMARCSTATE()
-        self.setModeIDLE()
+        self.strobeModeIDLE()
 
         self.poke(0xdf00, bytedef)
 
         if (marcstate == MARC_STATE_RX):
-            self.setModeRX()
+            self.strobeModeRX()
         elif (marcstate == MARC_STATE_TX):
-            self.setModeTX()
+            self.strobeModeTX()
+    
+        self.getRadioConfig()
 
         return bytedef
 
@@ -900,9 +902,9 @@ class USBDongle:
         radiocfg.freq0 = num & 0xff
 
         if applyConfig:
-            self.setModeIDLE()
+            self.strobeModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
-            self.setModeRX()
+            self.strobeModeRX()
 
     def getFreq(self, mhz=24, radiocfg=None):
         freqmult = (0x10000 / 1000000.0) / mhz

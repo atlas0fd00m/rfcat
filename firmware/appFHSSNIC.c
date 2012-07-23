@@ -223,8 +223,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
         rf_MAC_timer = 0;
 #ifdef DEBUG_HOPPING
         debug("hop");
-        RFST = RFST_SIDLE;
-        while(MARCSTATE != MARC_STATE_IDLE);
+        RFOFF;
         RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
         LED = !LED;
         while(MARCSTATE != MARC_STATE_TX);
