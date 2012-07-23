@@ -771,7 +771,6 @@ int handleOUTEP5(void)
     // client is sending commands... or looking for information...  status... whatever...
     u16 len;
     xdata u8* ptr; 
-    USBINDEX = 5;
     if (ep5.flags & EP_OUTBUF_WRITTEN)                     // have we processed the last OUTbuf?  don't want to clobber it.
     {
         // // // // FIXME: forget the second memory buffering... rework this to use just the buffering in the usb controller // // // // 
@@ -782,6 +781,7 @@ int handleOUTEP5(void)
         return -1;
     }
 
+    USBINDEX = 5;
 
     // setup DMA
     len = USBCNTL;
