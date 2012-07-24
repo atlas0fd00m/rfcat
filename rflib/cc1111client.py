@@ -675,7 +675,7 @@ class USBDongle:
                         #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],4
             return retval
 
-    def send(self, app, cmd, buf, wait=10000):
+    def send(self, app, cmd, buf, wait=1000):
         msg = "%c%c%s%s"%(app,cmd, struct.pack("<H",len(buf)),buf)
         self.xsema.acquire()
         self.xmit_queue.append(msg)
@@ -1878,13 +1878,6 @@ class USBDongle:
         #rc.pa_table0  = 0x8e
         rc.pa_table0  = 0xc0
         self.setRadioConfig()
-
-    def testTX(self, data="XYZABCDEFGHIJKL"):
-        while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
-            time.sleep(.4)
-            print "transmitting %s" % repr(data)
-            self.RFxmit(data)
-        sys.stdin.read(1)
 
     def lowball(self, level=1, sync=0xaaaa, length=250, pqt=0, crc=False, fec=False, datawhite=False):
         '''

@@ -121,8 +121,8 @@ class FHSSNIC(USBDongle):
     def setRfMode(self, rfmode, parms=''):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
 
-    def RFxmit(self, data):
-        self.send(APP_NIC, NIC_XMIT, "%c%s" % (len(data), data))
+    def RFxmit(self, data, timeout=1000):
+        self.send(APP_NIC, NIC_XMIT, "%c%s" % (len(data), data), timeout)
 
     def RFrecv(self, timeout=100):
         return self.recv(APP_NIC, NIC_RECV, timeout)
@@ -342,6 +342,13 @@ u16 synched_chans           %x
         self._debug = oldebug
         self.lowballRestore()
         print "Exiting Discover mode..."
+
+    def testTX(self, data="XYZABCDEFGHIJKL"):
+        while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
+            time.sleep(.4)
+            print "transmitting %s" % repr(data)
+            self.RFxmit(data)
+        sys.stdin.read(1)
 
 
 def unittest(dongle):
