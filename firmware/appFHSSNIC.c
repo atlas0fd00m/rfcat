@@ -223,8 +223,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
         rf_MAC_timer = 0;
 #ifdef DEBUG_HOPPING
         debug("hop");
-        RFST = RFST_SIDLE;
-        while(MARCSTATE != MARC_STATE_IDLE);
+        RFOFF;
         RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
         LED = !LED;
         while(MARCSTATE != MARC_STATE_TX);
@@ -415,7 +414,7 @@ void appMainLoop(void)
             PKTCTRL0 =  0x04;       // crc enabled      ( we really don't want any packets coming our way :)
             FSCTRL1 =   0x12;       // freq if
             FSCTRL0 =   0x00;
-            MCSM0 =     0x00;       // no auto-cal....  hmmm...
+            MCSM0 =     0x10;       // autocal/no auto-cal....  hmmm...
             AGCCTRL2 |= AGCCTRL2_MAX_DVGA_GAIN;     // disable 3 highest gain settings
             macdata.mac_state = MAC_STATE_SPECAN;
 
@@ -424,10 +423,10 @@ void appMainLoop(void)
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
                 RFST = RFST_SRX;
-                sleepMillis(5);
+                sleepMillis(2);
 
                 /* read RSSI */
-                chan_table[processbuffer] = (RSSI ^ 0x80);
+                chan_table[processbuffer] = (RSSI);
             }
 
             /* end RX */
@@ -554,6 +553,14 @@ void appMainLoop(void)
     }
 }
 
+
+
+void appReturn(xdata u8 len, xdata u8* response)
+{
+    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
+    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
+}
+
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
  * main handler routine for the application as endpoint 0 is normally used for system stuff.
  *
@@ -583,12 +590,12 @@ int appHandleEP5()
                     stop_hopping();
                     macdata.mac_state = MAC_STATE_PREP_SPECAN;
                     macdata.synched_chans = buf[0];
-                    txdata(ep5.OUTapp,ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case RFCAT_STOP_SPECAN:
                     macdata.mac_state = MAC_STATE_NONHOPPING;
-                    txdata(ep5.OUTapp,ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case NIC_RFMODE:
@@ -604,7 +611,7 @@ int appHandleEP5()
                             TxMode();
                             break;
                     }
-                    txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,buf);
+                    appReturn(ep5.OUTlen,buf);
                     break;
 
                 case NIC_XMIT:
@@ -622,7 +629,7 @@ int appHandleEP5()
                     offset = *buf++;
                     offset += (*buf++) << 8;
                     transmit(buf, len, repeat, offset);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&len);
+                    appReturn( 1, (xdata u8*)&len);
                     break;
 
                 case NIC_SET_RECV_LARGE:
@@ -657,12 +664,12 @@ int appHandleEP5()
                     
                 case NIC_SET_ID:
                     MAC_set_NIC_ID(*buf);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case FHSS_XMIT:
                     MAC_tx(buf, ep5.OUTlen);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"\x00");
+                    appReturn( 1, (xdata u8*)"\x00");
                     break;
                     
                 case FHSS_SET_CHANNELS:
@@ -671,58 +678,58 @@ int appHandleEP5()
                     {
                         buf += 2;
                         memcpy(&g_Channels[0], buf, macdata.NumChannels);
-                        txdata(ep5.OUTapp, ep5.OUTcmd, 2, (u8*)&macdata.NumChannels);
+                        appReturn( 2, (u8*)&macdata.NumChannels);
                     } else {
-                        txdata(ep5.OUTapp, ep5.OUTcmd, 8, (xdata u8*)"NO DEAL");
+                        appReturn( 8, (xdata u8*)"NO DEAL");
                     }
                     break;
 
                 case FHSS_GET_CHANNELS:
-                    txdata(ep5.OUTapp, ep5.OUTcmd, macdata.NumChannels, &g_Channels[0]);
+                    appReturn( macdata.NumChannels, &g_Channels[0]);
                     break;
 
                 case FHSS_NEXT_CHANNEL:
                     MAC_set_chanidx(MAC_getNextChannel());
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, &g_Channels[macdata.curChanIdx]);
+                    appReturn( 1, &g_Channels[macdata.curChanIdx]);
                     break;
 
                 case FHSS_CHANGE_CHANNEL:
                     PHY_set_channel(*buf);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case FHSS_START_HOPPING:
                     begin_hopping(0);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case FHSS_STOP_HOPPING:
                     stop_hopping();
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 // FIXME: do we even need g_MAC_threshold anymore?
                 case FHSS_SET_MAC_THRESHOLD:
                     macdata.MAC_threshold = *buf;
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
 
                 case FHSS_GET_MAC_THRESHOLD:
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 4, (xdata u8*)&macdata.MAC_threshold);
+                    appReturn( 4, (xdata u8*)&macdata.MAC_threshold);
                     break;
 
                 case FHSS_SET_MAC_DATA:
                     memcpy((xdata u8*)&macdata, (xdata u8*)*buf, sizeof(macdata));
-                    txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(macdata), buf);
+                    appReturn( sizeof(macdata), buf);
                     break;
 
                 case FHSS_GET_MAC_DATA:
-                    txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(macdata), (xdata u8*)&macdata);
+                    appReturn( sizeof(macdata), (xdata u8*)&macdata);
                     break;
 
                 case FHSS_START_SYNC:
                     MAC_sync(*buf);
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
                     
                 case FHSS_SET_STATE:
@@ -751,15 +758,15 @@ int appHandleEP5()
                             break;
                     }
                     
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
                     
                 case FHSS_GET_STATE:
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&macdata.mac_state);
+                    appReturn( 1, (xdata u8*)&macdata.mac_state);
                     break;
                     
                 default:
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 1, buf);
+                    appReturn( 1, buf);
                     break;
             }
             break;
@@ -803,6 +810,7 @@ void appHandleEP0OUT(void)
 
     // must be done with the buffer by now...
     ep0.flags &= ~EP_OUTBUF_WRITTEN;
+    USBCS0 |= USBCS0_DATA_END;
 #endif
 }
 

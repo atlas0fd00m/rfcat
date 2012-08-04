@@ -354,6 +354,13 @@ u16 synched_chans           %x
         self.lowballRestore()
         print "Exiting Discover mode..."
 
+    def testTX(self, data="XYZABCDEFGHIJKL"):
+        while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
+            time.sleep(.4)
+            print "transmitting %s" % repr(data)
+            self.RFxmit(data)
+        sys.stdin.read(1)
+
 
 def unittest(dongle):
     import cc1111client
