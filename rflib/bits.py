@@ -13,13 +13,13 @@ def shiftString(string, bits):
 def findDword(byts, inverted=False):
         possDwords = []
         # find the preamble (if any)
-        bitoff = 0
         while True:
             sbyts = byts
             pidx = byts.find("\xaa\xaa")
             if pidx == -1:
                 pidx = byts.find("\x55\x55")
-                bitoff = 1
+                byts = shiftString(byts,1)
+
             if pidx == -1:
                 return possDwords
             
@@ -28,29 +28,30 @@ def findDword(byts, inverted=False):
             #print "sbyts: %s" % repr(sbyts)
             
             # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
-            while (sbyts[0] == ('\xaa', '\x55')[bitoff] and len(sbyts)>2):
+            while (sbyts[0] == '\xaa' and len(sbyts)>2):
                 sbyts = sbyts[1:]
             
             #print "sbyts: %s" % repr(sbyts)
             # now we look at the next 16 bits to narrow the possibilities to 8
             # at this point we have no hints at bit-alignment aside from 0xaa vs 0x55
             dwbits, = struct.unpack(">H", sbyts[:2])
+            #print "sbyts: %s" % repr(sbyts)
+            #print "dwbits: %s" % repr(dwbits)
             if len(sbyts)>=3:
                 bitcnt = 0
                 #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
                 #  bits2 =                      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
                 bits1, = struct.unpack(">H", sbyts[:2])
-                bits1 = bits1 | (ord(('\xaa','\x55')[bitoff]) << 16)
-                bits1 = bits1 | (ord(('\xaa','\x55')[bitoff]) << 24)
+                bits1 = bits1 | (ord('\xaa') << 16)
+                bits1 = bits1 | (ord('\xaa') << 24)
                 bits1 <<= 8
                 bits1 |= (ord(sbyts[2]) )
-                bits1 >>= bitoff            # now we should be aligned correctly
                 #print "bits: %x" % (bits1)
 
                 bit = (5 * 8) - 2  # bytes times bits/byte          #FIXME: MAGIC NUMBERS!?
                 while (bits1 & (3<<bit) == (2<<bit)):
                     bit -= 2
-                print "bit = %d" % bit
+                #print "bit = %d" % bit
                 bits1 >>= (bit-16)
                 #while (bits1 & 0x30000 != 0x20000): # now we align the end of the 101010 pattern with the beginning of the dword
                 #    bits1 >>= 2
@@ -274,9 +275,10 @@ def genBitArray(string, startbit, endbit):
 
     s = []
     for byte in binStr:
+        byte = ord(byte)
         for bitx in range(7, -1, -1):
             bit = (byte>>bitx) & 1
-            s.append(chr(0x30|bit))
+            s.append(bit)
 
     return (s, ent)
 
@@ -320,15 +322,23 @@ def reprBitArray(bitAry, width=194):
     mid = []
     bot = []
 
+    arylen = len(bitAry)
     # top line
+    #FIXME: UGGGGLY and kinda broken.
+    fraction = 1.0 * arylen/width
+    expand = [bitAry[int(x*fraction)] for x in xrange(width)]
+
     for bindex in xrange(width):
-        aryidx = int((1.0 * bindex / width) * len(bitAry))
         bits = 0
-        for bitx in range(3):
-            bits += bitAry[aryidix + bitx]
-            top.append( chars_top[ bits ] )
-            mid.append( chars_mid[ bits ] )
-            bot.append( chars_bot[ bits ] )
+        if bindex>0:
+            bits += (expand[bindex-1]) << (2)
+        bits += (expand[bindex]) << (1)
+        if bindex < width-1:
+            bits += (expand[bindex+1])
+
+        top.append( chars_top[ bits ] )
+        mid.append( chars_mid[ bits ] )
+        bot.append( chars_bot[ bits ] )
 
     tops = "".join(top)
     mids = "".join(mid)

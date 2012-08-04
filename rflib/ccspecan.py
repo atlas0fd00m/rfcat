@@ -57,7 +57,7 @@ class SpecanThread(threading.Thread):
         
         if type(self._data) == list:
             for rssi_values, timestamp in self._data:
-                rssi_values = [ -ord(x) for x in rssi_values[4:] ]
+                rssi_values = [ ((ord(x)^0x80)/2)-88 for x in rssi_values[4:] ]
                 # since we are not accessing the dongle, we need some sort of delay
                 time.sleep(self._delay)
                 frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
@@ -69,7 +69,7 @@ class SpecanThread(threading.Thread):
             while not self._stop:
                 try:
                     rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
-                    rssi_values = [ -ord(x) for x in rssi_values[4:] ]
+                    rssi_values = [ ((ord(x)^0x80)/2)-88 for x in rssi_values ]
                     frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                     self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
@@ -212,7 +212,7 @@ class RenderArea(QtGui.QWidget):
                 for dbm, point in dbm_labels:
                     painter.drawText(point, '%+.0f' % dbm)
                 for frequency, point in frequency_labels:
-                    painter.drawText(point, '%.0f' % (frequency / 1e6))
+                    painter.drawText(point, '%.02f' % (frequency / 1e6))
                     
             finally:
                 painter.end()
@@ -244,6 +244,7 @@ class RenderArea(QtGui.QWidget):
         delta = frequency_hz - self._low_frequency
         range = self._high_frequency - self._low_frequency
         normalized = delta / range
+        #print "freq: %s \nlow: %s \nhigh: %s \ndelta: %s \nrange: %s \nnormalized: %s" % (frequency_hz, self._low_frequency, self._high_frequency, delta, range, normalized)
         return normalized * self.width()
                              
     def _dbm_to_y(self, dbm):

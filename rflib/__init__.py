@@ -37,13 +37,15 @@ class RfCat(FHSSNIC):
         self.lowballRestore()
 
     def specan(self, basefreq=902e6, inc=250e3, count=104):
-        self._doSpecAn(basefreq, inc, count)
+        freq, delta = self._doSpecAn(basefreq, inc, count)
 
         import rflib.ccspecan as rfspecan
         if not hasattr(self, "_qt_app") or self._qt_app is None:
             self._qt_app = rfspecan.QtGui.QApplication([])
-        fhigh = basefreq + (inc*(count-1))
-        window = rfspecan.Window(self, basefreq, fhigh, inc, 0)
+
+        fhigh = freq + (delta*(count+1))
+
+        window = rfspecan.Window(self, freq, fhigh, delta, 0)
         window.show()
         self._qt_app.exec_()
         
@@ -59,7 +61,11 @@ class RfCat(FHSSNIC):
         self.setFreq(basefreq)
         self.setMdmChanSpc(inc)
 
+        freq, fbytes = self.getFreq()
+        delta = self.getMdmChanSpc()
+
         self.send(APP_NIC, RFCAT_START_SPECAN, "%c" % (count) )
+        return freq, delta
 
     def _stopSpecAn(self):
         ''' 

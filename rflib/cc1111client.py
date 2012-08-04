@@ -302,7 +302,8 @@ class USBDongle:
                     self._clear_buffers(False)
 
             except Exception, e:
-                if console: sys.stderr.write('.')
+                #if console: sys.stderr.write('.')
+                print >>sys.stderr,("Error in resetup():" + repr(e))
                 if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
                 time.sleep(1)
 
@@ -867,12 +868,12 @@ class USBDongle:
             
         marcstate = self.radiocfg.marcstate
 
-        self.setModeIDLE()
+        self.strobeModeIDLE()
         self.poke(regaddr, chr(value))
         if (marcstate == MARC_STATE_RX):
-            self.setModeRX()
+            self.strobeModeRX()
         elif (marcstate == MARC_STATE_TX):
-            self.setModeTX()
+            self.strobeModeTX()
         # if other than these, we can stay in IDLE
 
     ### radio config
@@ -886,14 +887,16 @@ class USBDongle:
             bytedef = self.radiocfg.vsEmit()
 
         statestr, marcstate = self.getMARCSTATE()
-        self.setModeIDLE()
+        self.strobeModeIDLE()
 
         self.poke(0xdf00, bytedef)
 
         if (marcstate == MARC_STATE_RX):
-            self.setModeRX()
+            self.strobeModeRX()
         elif (marcstate == MARC_STATE_TX):
-            self.setModeTX()
+            self.strobeModeTX()
+    
+        self.getRadioConfig()
 
         return bytedef
 
@@ -910,9 +913,9 @@ class USBDongle:
         radiocfg.freq0 = num & 0xff
 
         if applyConfig:
-            self.setModeIDLE()
+            self.strobeModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
-            self.setModeRX()
+            self.strobeModeRX()
 
     def getFreq(self, mhz=24, radiocfg=None):
         freqmult = (0x10000 / 1000000.0) / mhz
@@ -1095,13 +1098,13 @@ class USBDongle:
         if flen > EP5OUT_BUFFER_SIZE - 4:
             raise(Exception("Packet too large (%d bytes). Maximum fixed length packet is %d bytes." % (flen, EP5OUT_BUFFER_SIZE - 6)))
 
-        self.radiocfg.pktctrl0 &= 0xfc
+        radiocfg.pktctrl0 &= 0xfc
         # if we're sending a large block, pktlen is dealt with by the firmware
         # using 'infinite' mode
         if flen > RF_MAX_TX_BLOCK:
-            self.radiocfg.pktlen = 0x00
+            radiocfg.pktlen = 0x00
         else:
-            self.radiocfg.pktlen = flen
+            radiocfg.pktlen = flen
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
         self.setRFRegister(PKTLEN, (radiocfg.pktlen))
 
@@ -1897,13 +1900,6 @@ class USBDongle:
         #rc.pa_table0  = 0x8e
         rc.pa_table0  = 0xc0
         self.setRadioConfig()
-
-    def testTX(self, data="XYZABCDEFGHIJKL"):
-        while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
-            time.sleep(.4)
-            print "transmitting %s" % repr(data)
-            self.RFxmit(data)
-        sys.stdin.read(1)
 
     def lowball(self, level=1, sync=0xaaaa, length=250, pqt=0, crc=False, fec=False, datawhite=False):
         '''

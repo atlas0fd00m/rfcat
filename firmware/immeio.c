@@ -1027,12 +1027,12 @@ void poll_keyboard() {
         if (MARCSTATE == MARC_STATE_RX)
         {
             RFOFF;
-            RFTX;
+            TxMode();
         }
         else
         {
             RFOFF;
-            RFRX;
+            RxMode();
         }
 
         break;
