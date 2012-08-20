@@ -5,6 +5,22 @@ import usb
 import bits
 from chipcondefs import *
 
+# band limits in Hz
+FREQ_MIN_300  = 281000000
+FREQ_MAX_300  = 361000000
+FREQ_MIN_400  = 378000000
+FREQ_MAX_400  = 481000000
+FREQ_MIN_900  = 749000000
+FREQ_MAX_900  = 962000000
+
+# band transition points in Hz
+FREQ_EDGE_400 = 369000000
+FREQ_EDGE_900 = 615000000
+
+# VCO transition points in Hz
+FREQ_MID_300  = 318000000
+FREQ_MID_400  = 424000000
+FREQ_MID_900  = 848000000
 
 EP_TIMEOUT_IDLE     = 400
 EP_TIMEOUT_ACTIVE   = 10
@@ -912,9 +928,17 @@ class USBDongle:
         radiocfg.freq1 = (num>>8) & 0xff
         radiocfg.freq0 = num & 0xff
 
+        if (freq > FREQ_EDGE_900 and freq < FREQ_MID_900) or (freq > FREQ_EDGE_400 and freq < FREQ_MID_400) or (freq < FREQ_MID_300):
+            # select low VCO
+            radiocfg.fscal2 = 0x0A
+        else:
+            # select high VCO
+            radiocfg.fscal2 = 0x2A
+
         if applyConfig:
             self.strobeModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
+            self.poke(FSCAL2, struct.pack("B", self.radiocfg.fscal2))
             self.strobeModeRX()
 
     def getFreq(self, mhz=24, radiocfg=None):
