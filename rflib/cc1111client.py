@@ -1187,6 +1187,24 @@ class USBDongle:
 
         return (radiocfg.pktctrl1 >> 5) & 7
 
+    def setEnablePktAppendStatus(self, enable=True, radiocfg=None):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        radiocfg.pktctrl1 &= ~PKTCTRL1_APPEND_STATUS
+        radiocfg.pktctrl1 |= (enable<<2)
+        self.setRFRegister(PKTCTRL1, radiocfg.pktctrl1)
+
+    def getEnablePktAppendStatus(self, radiocfg=None):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+        
+        pktctrl1 = radiocfg.pktctrl1
+        append = (pktctrl1>>2) & 0x01
+        return append
+
     def setEnableMdmManchester(self, enable=True, radiocfg=None):
         if radiocfg == None:
             self.getRadioConfig()
