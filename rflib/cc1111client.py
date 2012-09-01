@@ -1503,6 +1503,23 @@ class USBDongle:
         radiocfg.mdmcfg2 |= syncmode
         self.setRFRegister(MDMCFG2, (radiocfg.mdmcfg2))
 
+    def getMdmNumPreamble(self, radiocfg=None):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+        
+        preamble= (radiocfg.mdmcfg1 & MFMCFG1_NUM_PREAMBLE)
+        return preamble
+
+    def setMdmNumPreamble(self, preamble=MFMCFG1_NUM_PREAMBLE_4, radiocfg=None):
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        radiocfg.mdmcfg1 &= ~MFMCFG1_NUM_PREAMBLE
+        radiocfg.mdmcfg1 |= preamble
+        self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
+
     def getBSLimit(self, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()
