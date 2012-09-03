@@ -633,6 +633,8 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_RECV_LARGE:
+                    // FIXME: simply make this normal, coincide with standard makePktLen(), keep packet length in rfRxLargeLen (rename it so it's not so special)
+                    
                     // configure large block receive (infinite mode)
                     // call with block size of 0 to switch off
                     rfRxLargeLen = *buf++;
