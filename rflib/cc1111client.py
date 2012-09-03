@@ -1000,10 +1000,10 @@ class USBDongle:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        if (mod) & 0x8f:
+        if (mod) & ~MDMCFG2_MOD_FORMAT:
             raise(Exception("Please use constants MOD_FORMAT_* to specify modulation and "))
 
-        radiocfg.mdmcfg2 &= 0x8f
+        radiocfg.mdmcfg2 &= ~MDMCFG2_MOD_FORMAT
         radiocfg.mdmcfg2 |= (mod)
 
         power= None
@@ -1024,7 +1024,7 @@ class USBDongle:
             radiocfg = self.radiocfg
         
         mdmcfg2 = radiocfg.mdmcfg2
-        mod = (mdmcfg2) & 0x70
+        mod = (mdmcfg2) & MDMCFG2_MOD_FORMAT
         return mod
 
     def printRadioConfig(self, mhz=24, radiocfg=None):
@@ -1093,7 +1093,7 @@ class USBDongle:
         #chanspc = 1000000.0 * mhz/pow(2,18) * (256 + chanspc_m) * pow(2, chanspc_e)
         #print "chanspc_e: %x   chanspc_m: %x   chanspc: %f hz" % (chanspc_e, chanspc_m, chanspc)
         
-        radiocfg.mdmcfg1 &= 0xfc            # clear out old exponent value
+        radiocfg.mdmcfg1 &= ~MDMCFG1_CHANSPC_E            # clear out old exponent value
         radiocfg.mdmcfg1 |= chanspc_e
         radiocfg.mdmcfg0 = chanspc_m
         self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
@@ -1107,7 +1107,7 @@ class USBDongle:
         if maxlen > RF_MAX_TX_BLOCK:
             raise(Exception("Packet too large (%d bytes). Maximum variable length packet is %d bytes." % (maxlen, RF_MAX_TX_BLOCK)))
 
-        radiocfg.pktctrl0 &= 0xfc
+        radiocfg.pktctrl0 &= ~PKTCTRL0_LENGTH_CONFIG
         radiocfg.pktctrl0 |= 1
         radiocfg.pktlen = maxlen
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
@@ -1122,7 +1122,7 @@ class USBDongle:
         if flen > EP5OUT_BUFFER_SIZE - 4:
             raise(Exception("Packet too large (%d bytes). Maximum fixed length packet is %d bytes." % (flen, EP5OUT_BUFFER_SIZE - 6)))
 
-        radiocfg.pktctrl0 &= 0xfc
+        radiocfg.pktctrl0 &= ~PKTCTRL0_LENGTH_CONFIG
         # if we're sending a large block, pktlen is dealt with by the firmware
         # using 'infinite' mode
         if flen > RF_MAX_TX_BLOCK:
@@ -1187,12 +1187,37 @@ class USBDongle:
 
         return (radiocfg.pktctrl1 >> 5) & 7
 
+    def setEnablePktAppendStatus(self, enable=True, radiocfg=None):
+        '''
+        enable append status bytes. two bytes will be appended to the payload of the packet, containing
+        RSSI and LQI values as well as CRC OK.
+        '''
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        radiocfg.pktctrl1 &= ~PKTCTRL1_APPEND_STATUS
+        radiocfg.pktctrl1 |= (enable<<2)
+        self.setRFRegister(PKTCTRL1, radiocfg.pktctrl1)
+
+    def getEnablePktAppendStatus(self, radiocfg=None):
+        '''
+        return append status bytes setting.
+        '''
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+        
+        pktctrl1 = radiocfg.pktctrl1
+        append = (pktctrl1>>2) & 0x01
+        return append
+
     def setEnableMdmManchester(self, enable=True, radiocfg=None):
         if radiocfg == None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        radiocfg.mdmcfg2 &= 0xf7
+        radiocfg.mdmcfg2 &= ~MDMCFG2_MANCHESTER_EN
         radiocfg.mdmcfg2 |= (enable<<3)
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
 
@@ -1364,7 +1389,7 @@ class USBDongle:
         bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
 
-        radiocfg.mdmcfg4 &= 0x0f
+        radiocfg.mdmcfg4 &= ~(MDMCFG4_CHANBW_E | MDMCFG4_CHANBW_M)
         radiocfg.mdmcfg4 |= ((chanbw_e<<6) | (chanbw_m<<4))
         self.setRFRegister(MDMCFG4, (radiocfg.mdmcfg4))
 
@@ -1402,7 +1427,7 @@ class USBDongle:
         if self._debug: print "drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate)
         
         radiocfg.mdmcfg3 = drate_m
-        radiocfg.mdmcfg4 &= 0xf0
+        radiocfg.mdmcfg4 &= ~MDMCFG4_DRATE_E
         radiocfg.mdmcfg4 |= drate_e
         self.setRFRegister(MDMCFG3, (radiocfg.mdmcfg3))
         self.setRFRegister(MDMCFG4, (radiocfg.mdmcfg4))
@@ -1454,7 +1479,7 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         dev_e = radiocfg.deviatn >> 4
-        dev_m = radiocfg.deviatn & 0x7 
+        dev_m = radiocfg.deviatn & DEVIATN_DEVIATION_M
         dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
         return dev
 
@@ -1474,18 +1499,45 @@ class USBDongle:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
-        return radiocfg.mdmcfg2&0x07
+        return radiocfg.mdmcfg2 & MDMCFG2_SYNC_MODE
 
     def setMdmSyncMode(self, syncmode=SYNCM_15_of_16, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        radiocfg.mdmcfg2 &= 0xf8
+        radiocfg.mdmcfg2 &= ~MDMCFG2_SYNC_MODE
         radiocfg.mdmcfg2 |= syncmode
         self.setRFRegister(MDMCFG2, (radiocfg.mdmcfg2))
 
+    def getMdmNumPreamble(self, radiocfg=None):
+        '''
+        get the minimum number of preamble bits to be transmitted. note this is a flag, not a count
+        so the return value must be interpeted - e.g. 0x30 == 0x03 << 4 == MFMCFG1_NUM_PREAMBLE_6 == 6 bytes
+        '''
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+        
+        preamble= (radiocfg.mdmcfg1 & MFMCFG1_NUM_PREAMBLE)
+        return preamble
+
+    def setMdmNumPreamble(self, preamble=MFMCFG1_NUM_PREAMBLE_4, radiocfg=None):
+        '''
+        set the minimum number of preamble bits to be transmitted (default: MFMCFG1_NUM_PREAMBLE_4)
+        '''
+        if radiocfg == None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        radiocfg.mdmcfg1 &= ~MFMCFG1_NUM_PREAMBLE
+        radiocfg.mdmcfg1 |= preamble
+        self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
+
     def getBSLimit(self, radiocfg=None):
+        '''
+        get the saturation point for the data rate offset compensation algorithm
+        '''
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
@@ -1493,6 +1545,9 @@ class USBDongle:
         return radiocfg.bscfg&BSCFG_BS_LIMIT
 
     def setBSLimit(self, bslimit, radiocfg=None):
+        '''
+        set the saturation point for the data rate offset compensation algorithm
+        '''
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
