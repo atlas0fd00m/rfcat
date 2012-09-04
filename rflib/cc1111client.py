@@ -1156,8 +1156,7 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         dwEnable = (0,1)[enable]<<6
-        dwMask = ~(1<<6)
-        radiocfg.pktctrl0 &= dwMask
+        radiocfg.pktctrl0 &= ~PKTCTRL0_WHITE_DATA
         radiocfg.pktctrl0 |= dwEnable
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
 
@@ -1236,8 +1235,7 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         fecEnable = (0,1)[enable]<<7
-        fecMask = ~(1<<7)
-        radiocfg.mdmcfg1 &= fecMask
+        radiocfg.mdmcfg1 &= ~MFMCFG1_FEC_EN
         radiocfg.mdmcfg1 |= fecEnable
         self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
 
@@ -1256,8 +1254,7 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         dcfEnable = (0,1)[enable]<<7
-        dcfMask = ~(1<<7)
-        radiocfg.mdmcfg2 &= dcfMask
+        radiocfg.mdmcfg2 &= ~MDMCFG2_DEM_DCFILT_OFF
         radiocfg.mdmcfg2 |= dcfEnable
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
 
