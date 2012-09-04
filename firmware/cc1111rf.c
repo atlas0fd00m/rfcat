@@ -231,7 +231,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         {
             case PKTCTRL0_LENGTH_CONFIG_VAR:
                 // shuffle buffer up 1 byte to make room for length
-                byte_shuffle(buf, len - 1, 1);
+                byte_shuffle(buf, len, 1);
                 buf[0] = (u8) len;
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
@@ -450,6 +450,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 {   // dormant, in favor of DMA transfers (ifdef RFDMA)
     lastCode[0] = LC_RFTXRX_VECTOR;
 
+    RFTXRXIF = 0;
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
         // maintain infinite mode
@@ -490,7 +491,6 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         rf_status = RFST_STX;
         RFD = rftxbuf[rfTxCounter++];
     }
-    RFTXRXIF = 0;
 }
 
 void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigger on rf events
