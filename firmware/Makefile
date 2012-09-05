@@ -6,11 +6,11 @@ LFLAGS=--xram-loc 0xF000
 apps2531 = global.rel
 apps2531d3 = global.reld3
 
-apps1111 = cc1111rf.rel global.rel
-apps1111c = cc1111rf.relc global.relc
-apps1111d = cc1111rf.reld global.reld
-apps1111i = cc1111rf.reli global.reli
-appsid = cc1111rf.relid global.relid
+apps1111 = cc1111rf.rel global.rel cc1111_aes.rel
+apps1111c = cc1111rf.relc global.relc cc1111_aes.relc
+apps1111d = cc1111rf.reld global.reld cc1111_aes.reld
+apps1111i = cc1111rf.reli global.reli cc1111_aes.reli
+appsid = cc1111rf.relid global.relid cc1111_aes.relid
 
 libsvcom = cc1111_vcom.rel cc1111_vcomdesc.rel chipcon_usbdebug.rel #chipcon_usb.rel
 libsvcomc = cc1111_vcom.relc cc1111_vcomdesc.relc chipcon_usbdebug.relc #chipcon_usb.rel
