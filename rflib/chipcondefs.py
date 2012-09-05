@@ -1401,6 +1401,41 @@ _X_SFRBF                       = 0xDFBF
 _X_SFRC3                       = 0xDFC3
 _X_SFRC8                       = 0xDFC8
 
+# AES co-processor
+# defines for specifying desired crypto operations.
+# AES_CRYPTO is in two halves: 
+#    upper 4 bits mirror CC1111 mode (ENCCS_MODE_CBC etc.)
+#    lower 4 bits are switches
+# AES_CRYPTO[7:4]     ENCCS_MODE...
+# AES_CRYPTO[3]       OUTBOUND 0 == OFF, 1 == ON
+# AES_CRYPTO[2]       OUTBOUND 0 == Decrypt, 1 == Encrypt
+# AES_CRYPTO[1]       INBOUND  0 == OFF, 1 == ON
+# AES_CRYPTO[0]       INBOUND  0 == Decrypt, 1 == Encrypt
+# bitfields
+AES_CRYPTO_MODE           = 0xF0
+AES_CRYPTO_OUT            = 0x0C
+AES_CRYPTO_OUT_ENABLE     = 0x08
+AES_CRYPTO_OUT_ON         = (0x01 << 3)
+AES_CRYPTO_OUT_OFF        = (0x00 << 3)
+AES_CRYPTO_OUT_TYPE       = 0x04
+AES_CRYPTO_OUT_DECRYPT    = (0x00 << 2)
+AES_CRYPTO_OUT_ENCRYPT    = (0x01 << 2)
+AES_CRYPTO_IN             = 0x03
+AES_CRYPTO_IN_ENABLE      = 0x02
+AES_CRYPTO_IN_ON         = (0x01 << 1)
+AES_CRYPTO_IN_OFF        = (0x00 << 1)
+AES_CRYPTO_IN_TYPE        = 0x01
+AES_CRYPTO_IN_DECRYPT     = (0x00 << 0)
+AES_CRYPTO_IN_ENCRYPT     = (0x01 << 0)
+AES_CRYPTO_NONE           = 0x00
+AES_CRYPTO_DEFAULT        = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT)
+# flags
+AES_DISABLE               = 0x00
+AES_ENABLE                = 0x01
+AES_DECRYPT               = 0x00
+AES_ENCRYPT               = 0x01
+
+
 
 ADCCON1S = {}
 ADCCON2S = {}

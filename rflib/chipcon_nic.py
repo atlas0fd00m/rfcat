@@ -15,6 +15,11 @@ NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3
 NIC_RFMODE =                    0x4
 NIC_SET_RECV_LARGE =            0x5
+NIC_SET_AES_MODE =              0x6
+NIC_GET_AES_MODE =              0x7
+NIC_SET_AES_IV =                0x8
+NIC_SET_AES_KEY =               0x9
+
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -121,6 +126,72 @@ class FHSSNIC(USBDongle):
 
     def setRfMode(self, rfmode, parms=''):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
+
+    def setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
+        '''
+        set AES crypto co-processor mode.
+        crypto operations on inbound and outbound RF packets are independently supported
+        as is the type of operation. normally this would be ENCRYPT on outbound and DECRYPT
+        on inbound.
+        aesmode is a bitfield. the upper half mirrors the CC1111 standard modes (CBC, ECB etc.),
+        and the lower half flags whether to encrypt or not on inbound/outbound as well as which
+        operation to perform:
+
+          aesmode[7:4]     ENCCS_MODE...
+          aesmode[3]       OUTBOUND 0 == OFF, 1 == ON
+          aesmode[2]       OUTBOUND 0 == Decrypt, 1 == Encrypt
+          aesmode[1]       INBOUND  0 == OFF, 1 == ON
+          aesmode[0]       INBOUND  0 == Decrypt, 1 == Encrypt
+
+        the following are defined in chipcondefs.
+
+        valid CC1111 modes are:
+
+          ENCCS_MODE_CBC
+          ENCCS_MODE_CBCMAC
+          ENCCS_MODE_CFB
+          ENCCS_MODE_CTR
+          ENCCS_MODE_ECB
+          ENCCS_MODE_OFB
+
+        valid AES operational modes are:
+
+          AES_CRYPTO_IN_ON
+          AES_CRYPTO_IN_OFF
+          AES_CRYPTO_IN_ENCRYPT
+          AES_CRYPTO_IN_DECRYPT
+          AES_CRYPTO_OUT_ON
+          AES_CRYPTO_OUT_OFF
+          AES_CRYPTO_OUT_ENCRYPT
+          AES_CRYPTO_OUT_DECRYPT
+
+        aesmode is made up of the appropriate combination of the above.
+        default is CBC mode, crypto enabled IN and OUT:
+
+          (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT)
+
+        '''
+        return self.send(APP_NIC, NIC_SET_AES_MODE, "%c"%aesmode)
+
+    def getAESmode(self):
+        '''
+        get the currently set AES co-processor mode
+        '''
+        return self.send(APP_NIC, NIC_GET_AES_MODE, "")
+
+    def setAESiv(self, iv= '\0'*16):
+        '''
+        set the AES IV. this will persist until the next reboot, but it should be noted that some modes
+        update the IV automatically with each operation, so care must be taken with the higher level 
+        protocol to ensure lost packets etc. do not cause synchronisation problems. IV must be 128 bits.
+        '''
+        return self.send(APP_NIC, NIC_SET_AES_IV, iv)
+
+    def setAESkey(self, key= '\0'*16):
+        '''
+        set the AES key. this will persist until the next reboot. key must be 128 bits.
+        '''
+        return self.send(APP_NIC, NIC_SET_AES_KEY, key)
 
     # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
     def RFxmit(self, data, repeat=0, offset=0):

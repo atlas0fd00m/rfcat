@@ -1,4 +1,5 @@
 #include "cc1111rf.h"
+#include "cc1111_aes.h"
 #include "global.h"
 #include "FHSS.h"
 #include "nic.h"
@@ -661,7 +662,25 @@ int appHandleEP5()
                     txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)&rfRxLargeLen);
                     break;
 
-                    
+                case NIC_SET_AES_MODE:
+                    rfAESMode= *buf;
+                    appReturn( 1, buf);
+                    break;
+
+                case NIC_GET_AES_MODE:
+                    appReturn( 1, (xdata u8*) &rfAESMode);
+                    break;
+
+                case NIC_SET_AES_IV:
+                    setAES(buf, ENCCS_CMD_LDIV);
+                    appReturn( 16, buf);
+                    break;
+
+                case NIC_SET_AES_KEY:
+                    setAES(buf, ENCCS_CMD_LDKEY);
+                    appReturn( 16, buf);
+                    break;
+
                 case NIC_SET_ID:
                     MAC_set_NIC_ID(*buf);
                     appReturn( 1, buf);

@@ -1,4 +1,5 @@
 #include "cc1111rf.h"
+#include "cc1111_aes.h"
 #include "global.h"
 
 #include <string.h>
@@ -24,6 +25,11 @@ volatile __xdata u16 rfTxRepeatLen = 0;
 volatile __xdata u16 rfTxRepeatOffset = 0;
 volatile __xdata u16 rfTxTotalTXLen = 0;
 volatile __xdata u8 rfTxInfMode = 0;
+
+// AES
+volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
+// to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
+//volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
 
 u8 rfif;
 volatile __xdata u8 rf_status;
@@ -186,6 +192,7 @@ int waitRSSI()
 u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 {
     __xdata u16 countdown;
+    __xdata u8 encoffset= 0;
 
     while (MARCSTATE == MARC_STATE_TX)
     {
@@ -259,6 +266,25 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 #else
     RFTXRXIE = 0;
 #endif
+
+    // CRYPTO if required //
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
+            encoffset= 1;
+        // pad and set new length
+        len= padAES(buf + encoffset, len);
+        // do the encrypt or decrypt
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(buf + encoffset, buf + encoffset, len);
+        else
+            decAES(buf + encoffset, buf + encoffset, len);
+        // packet length may have changed due to padding so reset
+        if(encoffset)
+            buf[0] = (u8) len;
+        else
+            PKTLEN = (u8) len;
+    }
 
     // point tx buffer at userdata //
     rftxbuf= buf;
@@ -495,6 +521,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
 void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigger on rf events
 {
+    u8 encoffset= 0;
     // which events trigger this interrupt is determined by RFIM (set in init_RF())
     // note: S1CON should be cleared before handling the RFIF flags.
     lastCode[0] = LC_RF_VECTOR;
@@ -526,6 +553,16 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
             {
                 // EXPECTED RESULT - RX complete.
                 //
+                /* CRYPTO if required */
+                if(rfAESMode & AES_CRYPTO_IN_ENABLE)
+                {
+                    if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
+                        encoffset= 1;
+                    if((rfAESMode & AES_CRYPTO_IN_TYPE) == AES_CRYPTO_IN_ENCRYPT)
+                        encAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset);
+                    else
+                        decAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset);
+                }
                 /* Clear processed buffer */
                 /* Switch current buffer */
                 rfRxCurrentBuffer ^= 1;
