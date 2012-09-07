@@ -201,6 +201,8 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             usbProcessEvents();
 #endif
     }
+    // Leave LED in a known state (off)
+    LED = 0;
 
     // Set up repeat / large blocks
     rfTxInfMode = 0;
@@ -356,6 +358,8 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             usbProcessEvents(); 
 #endif
         }
+        // LED on - we're transmitting
+        LED = 1;
         if (!countdown)
         {
             lastCode[1] = LCE_RFTX_NEVER_TX;
@@ -376,6 +380,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             resetRFSTATE();
         }
 
+        // LED off - we're done
         LED = 0;
 
         return 1;
@@ -475,10 +480,15 @@ void RepeaterStop()
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
 {   // dormant, in favor of DMA transfers (ifdef RFDMA)
     lastCode[0] = LC_RFTXRX_VECTOR;
+        
 
+    // Clear interrupt - this must be done *BEFORE* reading RFD
     RFTXRXIF = 0;
+
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
+        // LED on - we're receiving
+        LED = 1;
         // maintain infinite mode
         if(rfRxInfMode)
             if(rfRxTotalRXLen-- < 256)
@@ -591,6 +601,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 rfRxCounter[rfRxCurrentBuffer] = 0;
                 LED = !LED;
             }
+            // LED off - we're done receiving
+            LED= 0;
         }
         RFIF &= ~(RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT);        // OVF needs to be handled next...
     }
