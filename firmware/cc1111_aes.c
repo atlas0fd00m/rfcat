@@ -60,16 +60,21 @@ void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command)
             break;
     }
     for(bufp= 0 ; bufp < len ; bufp += blocklen)
-        {
+    {
         // wait for co-processor to be ready
         while(!(ENCCS & ENCCS_RDY))
             ;
-        ENCCS = (rfAESMode & AES_CRYPTO_MODE) | command | ENCCS_ST;
+        // CBC-MAC is special - do last block as CBC to generate the final MAC
+        // (note that all preceding blocks will be output '\0' filled)
+        if((rfAESMode & ENCCS_MODE_CBCMAC) && bufp == len - 16)
+            ENCCS = ENCCS_MODE_CBC | command | ENCCS_ST;
+        else
+            ENCCS = (rfAESMode & AES_CRYPTO_MODE) | command | ENCCS_ST;
         sendAESblock(inbuf + bufp, blocklen);
         // wait for crypto operation
         sleepMicros(40);
         getAESblock(outbuf + bufp, blocklen);
-        }
+    }
     // wait for co-processor to finish
     while(!(ENCCS & ENCCS_RDY))
         ;
