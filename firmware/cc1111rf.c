@@ -35,7 +35,9 @@ u8 rfif;
 volatile __xdata u8 rf_status;
 volatile xdata u16 rf_MAC_timer;
 volatile xdata u16 rf_tLastRecv;
+#ifdef RFDMA
 volatile __xdata DMA_DESC rfDMA;
+#endif
 
 volatile __xdata u8 bRepeatMode = 0;
 
@@ -98,8 +100,10 @@ void IdleMode(void)
             RFIM &= ~RFIF_IRQ_DONE;
             RFOFF;
 
-            DMAARM |= 0x81;                 // ABORT anything on DMA 0
+#ifdef RFDMA
+            DMAARM |= (0x80 | DMAARM0);                 // ABORT anything on DMA 0
             DMAIRQ &= ~1;
+#endif
 
             S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
             RFIF &= ~RFIF_IRQ_DONE;
@@ -147,9 +151,11 @@ void init_RF()
     // RF state
     rf_status = RFST_SIDLE;
 
+#ifdef RFDMA
     /* Init DMA channel */
     DMA0CFGH = ((u16)(&rfDMA))>>8;
     DMA0CFGL = ((u16)(&rfDMA))&0xff;
+#endif
 
     /* clear buffers */
     memset(rfrxbuf,0,(BUFFER_AMOUNT * BUFFER_SIZE));
@@ -551,8 +557,10 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         // we want *all zee bytezen!*
         if(rf_status == RFST_STX)
         {
+#ifdef RFDMA
             // rearm the DMA?  not sure this is a good thing.
-            DMAARM |= 0x81;
+            DMAARM |= (0x80 | DMAARM0);
+#endif
             rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT );
         }
         else
