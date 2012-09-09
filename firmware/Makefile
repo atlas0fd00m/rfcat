@@ -17,11 +17,11 @@ libsvcomc = cc1111_vcom.relc cc1111_vcomdesc.relc chipcon_usbdebug.relc #chipcon
 libsvcomd = cc1111_vcom.reld cc1111_vcomdesc.reld chipcon_usbdebug.reld #chipcon_usb.rel
 libsvcomi = cc1111_vcom.reli cc1111_vcomdesc.reli chipcon_usbdebug.reli #chipcon_usb.rel
 
-libsusb  = chipcon_usb.rel chipcon_usbdebug.rel
-libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc
-libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3
-libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld
-libsusbi  = immeusb.reli immeusbdebug.reli
+libsusb  = chipcon_usb.rel chipcon_usbdebug.rel chipcon_dma.rel
+libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc chipcon_dma.relc
+libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3 chipcon_dma.reld3
+libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld chipcon_dma.reld
+libsusbi  = immeusb.reli immeusbdebug.reli chipcon_dma.reli
 
 libsimme  = $(appsi) immeio.reli immekeys.reli immefont.reli   #  immedisplay.rel immeterm.rel
 libsimmed  = $(appsid) immeio.relid immekeys.relid immefont.relid   #  immedisplay.rel immeterm.rel

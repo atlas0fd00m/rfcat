@@ -2,6 +2,19 @@
 #define CHIPCON_DMA_H
 
 #include "types.h"
+#include "cc1111.h"
+
+// define number of required DMA channels here
+// RF
+// USB
+#define DMA_CHANNELS    2
+
+// prototypes
+
+void initDMA(void);
+u8 getDMA(void);
+
+// defines
 
 typedef union
 {
@@ -36,7 +49,8 @@ typedef struct DMA_DESC_S {
 #define DMA_LEN_HIGH_VLEN_PLUS_2   (3 << 5)
 #define DMA_LEN_HIGH_VLEN_PLUS_3   (4 << 5)
 #define DMA_LEN_HIGH_MASK      (0x1f)
-
+extern xdata DMA_DESC dma_configs[DMA_CHANNELS];
+ 
 #define DMA_CFG0_WORDSIZE_8        (0 << 7)
 #define DMA_CFG0_WORDSIZE_16       (1 << 7)
 #define DMA_CFG0_TMODE_MASK        (3 << 5)

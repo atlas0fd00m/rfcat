@@ -983,6 +983,7 @@ void main (void)
     initUSB();
     init_RF();
     appMainInit();
+    initDMA();
 
     usb_up();
 
