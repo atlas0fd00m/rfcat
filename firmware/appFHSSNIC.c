@@ -1,5 +1,6 @@
 #include "cc1111rf.h"
 #include "cc1111_aes.h"
+#include "chipcon_dma.h"
 #include "global.h"
 #include "FHSS.h"
 #include "nic.h"
@@ -672,12 +673,12 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_AES_IV:
-                    setAES(buf, ENCCS_CMD_LDIV);
+                    setAES(buf, ENCCS_CMD_LDIV, (rfAESMode & AES_CRYPTO_MODE));
                     appReturn( 16, buf);
                     break;
 
                 case NIC_SET_AES_KEY:
-                    setAES(buf, ENCCS_CMD_LDKEY);
+                    setAES(buf, ENCCS_CMD_LDKEY, (rfAESMode & AES_CRYPTO_MODE));
                     appReturn( 16, buf);
                     break;
 
