@@ -284,9 +284,9 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         len= padAES(buf + encoffset, len);
         // do the encrypt or decrypt
         if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
-            encAES(buf + encoffset, buf + encoffset, len);
+            encAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
         else
-            decAES(buf + encoffset, buf + encoffset, len);
+            decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
         // packet length may have changed due to padding so reset
         if(encoffset)
             buf[0] = (u8) len;
@@ -577,9 +577,9 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                     if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
                         encoffset= 1;
                     if((rfAESMode & AES_CRYPTO_IN_TYPE) == AES_CRYPTO_IN_ENCRYPT)
-                        encAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset);
+                        encAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset, (rfAESMode & AES_CRYPTO_MODE));
                     else
-                        decAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset);
+                        decAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset, (rfAESMode & AES_CRYPTO_MODE));
                 }
                 /* Clear processed buffer */
                 /* Switch current buffer */

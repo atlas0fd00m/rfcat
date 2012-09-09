@@ -1,20 +1,22 @@
 #include "cc1110-ext.h"
 #include "cc1111_aes.h"
 #include "cc1111rf.h"
-#include "global.h"
 
 /*************************************************************************************************
  * AES helpers                                                                                   *
  ************************************************************************************************/
 
 // set the AES 128 bit key or IV
-void setAES(__xdata u8* buf, u8 command)
+void setAES(__xdata u8* buf, u8 command, u8 mode)
 {
     // wait for co-processor to be ready
     while(!(ENCCS & ENCCS_RDY))
         ;
-    ENCCS = (rfAESMode & AES_CRYPTO_MODE) | command | ENCCS_ST;
+
+    // start co-processor
+    ENCCS = mode | command | ENCCS_ST;
     sendAESblock(buf, 16);
+
     // wait for co-processor to finish
     while(!(ENCCS & ENCCS_RDY))
         ;
@@ -31,24 +33,24 @@ u16 padAES(__xdata u8* buf, u16 len)
 }
 
 // encrypt a buffer
-void encAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len)
+void encAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 mode)
 {
-    doAES(inbuf, outbuf, len, ENCCS_CMD_ENC);
+    doAES(inbuf, outbuf, len, ENCCS_CMD_ENC, mode);
 }
 
 // decrypt a buffer
-void decAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len)
+void decAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 mode)
 {
-    doAES(inbuf, outbuf, len, ENCCS_CMD_DEC);
+    doAES(inbuf, outbuf, len, ENCCS_CMD_DEC, mode);
 }
 
 // process a buffer
-void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command)
+void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command, u8 mode)
 {
     u16 bufp;
     u8 blocklen;
 
-    switch(rfAESMode & ENCCS_MODE)
+    switch(mode)
     {
         case ENCCS_MODE_CBC:
         case ENCCS_MODE_CBCMAC:
@@ -64,12 +66,16 @@ void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command)
         // wait for co-processor to be ready
         while(!(ENCCS & ENCCS_RDY))
             ;
+
+        // start co-processor
         // CBC-MAC is special - do last block as CBC to generate the final MAC
         // (note that all preceding blocks will be output '\0' filled)
-        if((rfAESMode & ENCCS_MODE_CBCMAC) && bufp == len - 16)
+        if((mode & ENCCS_MODE_CBCMAC) && bufp == len - 16)
             ENCCS = ENCCS_MODE_CBC | command | ENCCS_ST;
         else
-            ENCCS = (rfAESMode & AES_CRYPTO_MODE) | command | ENCCS_ST;
+            ENCCS = mode | command | ENCCS_ST;
+
+        // send & receive data
         sendAESblock(inbuf + bufp, blocklen);
         // wait for crypto operation
         sleepMicros(40);
