@@ -120,11 +120,13 @@ your build environment:
 
 
 = INSTALLING - CLIENT-SIDE =
+Dependencies:  python-usb and libusb
+
 install rfcat onto your system.  on most linux systems, this will place rfcat and rfcat_server in /usr/local/bin/ and rflib into /usr/*/lib/python2.x/dist-packages
 installation is simple:
 
 * cd into the rfcat directory (created by unpacking the tarball or by hg clone)
-* sudo python setup.py
+* sudo python setup.py install
 * i highly recommend installing "ipython" (for deb/ubuntu folk: apt-get install ipython)
 
 
@@ -132,7 +134,7 @@ installation is simple:
 = USING RFCAT - NON-root MODE =
 if you have configured your system to allow non-root use:
 
-* type "rfcat -r"
+* type "rfcat -r"   (if your system is not configured to allow non-root use, prepend "sudo" or you must run as root)
     you should have now entered an interactive python shell, where tab-completion and other aids should make a very powerful experience
     i love the raw-byte handling and introspection of it all.
 
