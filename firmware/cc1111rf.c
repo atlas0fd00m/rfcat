@@ -4,8 +4,6 @@
 
 #include <string.h>
 
-// #define RFDMA
-
 /* Rx buffers */
 volatile __xdata u8 rfRxCurrentBuffer;
 volatile __xdata u8 rfrxbuf[BUFFER_AMOUNT][BUFFER_SIZE];

@@ -6,6 +6,37 @@
  * AES helpers                                                                                   *
  ************************************************************************************************/
 
+xdata DMA_DESC *aesdmai, *aesdmao;
+data u8 aesdmachani, aesdmaarmi, aesdmachano, aesdmaarmo;
+
+// initialise DMA
+void initAES(void)
+{
+    // input to crypto co-processor
+    // note that to save code memory we don't bother setting anything to 0
+    // as it's initialised to 0 anyway
+    aesdmachani= getDMA();                    // allocate a DMA channel
+    aesdmaarmi= (DMAARM0 << aesdmachani);     // pre-calculate arming bit
+    aesdmai= &dma_configs[aesdmachani];       // point our DMA descriptor at allocated channel descriptor
+    aesdmai->destAddrH = 0xdf;                // ENCDI == 0xdfb1 - AES Input SFR
+    aesdmai->destAddrL = 0xb1;
+    aesdmai->lenL = 16;                       // always 128 bit operations
+    aesdmai->trig = DMA_CFG0_TRIGGER_ENC_DW;  // trigger when co-processor requests data
+    aesdmai->srcInc = 1;
+    aesdmai->priority = 1;
+
+    // output from crypto co-processor
+    aesdmachano= getDMA();
+    aesdmaarmo= (DMAARM0 << aesdmachano);
+    aesdmao= &dma_configs[aesdmachano];
+    aesdmao->srcAddrH = 0xdf;                 // ENCDO == 0xdfb2 - AES Output SFR
+    aesdmao->srcAddrL = 0xb2;
+    aesdmao->lenL = 16;
+    aesdmao->trig = DMA_CFG0_TRIGGER_DNC_UP;  // trigger when co-processor signals upload ready
+    aesdmao->destInc = 1;
+    aesdmao->priority = 1;
+}
+
 // set the AES 128 bit key or IV
 void setAES(__xdata u8* buf, u8 command, u8 mode)
 {
@@ -13,9 +44,14 @@ void setAES(__xdata u8* buf, u8 command, u8 mode)
     while(!(ENCCS & ENCCS_RDY))
         ;
 
+    // prepare DMA for transfer
+    aesdmai->srcAddrH = (u8) ((u16) buf >> 8);
+    aesdmai->srcAddrL = (u8) ((u16) buf & 0xff);
+    DMAARM |= aesdmaarmi;
+    NOP();
+
     // start co-processor
     ENCCS = mode | command | ENCCS_ST;
-    sendAESblock(buf, 16);
 
     // wait for co-processor to finish
     while(!(ENCCS & ENCCS_RDY))
@@ -48,24 +84,20 @@ void decAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 mode)
 void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command, u8 mode)
 {
     u16 bufp;
-    u8 blocklen;
 
-    switch(mode)
+    // wait for co-processor to be ready
+    while(!(ENCCS & ENCCS_RDY))
+        ;
+
+    for(bufp= 0 ; bufp < len ; bufp += 16)
     {
-        case ENCCS_MODE_CBC:
-        case ENCCS_MODE_CBCMAC:
-        case ENCCS_MODE_ECB:
-            blocklen= 16;
-            break;
-        default:
-            blocklen= 4;
-            break;
-    }
-    for(bufp= 0 ; bufp < len ; bufp += blocklen)
-    {
-        // wait for co-processor to be ready
-        while(!(ENCCS & ENCCS_RDY))
-            ;
+        // prepare DMA for transfer
+        aesdmai->srcAddrH = (u8) ((u16) (inbuf + bufp) >> 8);
+        aesdmai->srcAddrL = (u8) ((u16) (inbuf + bufp) & 0xff);
+        aesdmao->destAddrH = (u8) ((u16) (outbuf + bufp) >> 8);
+        aesdmao->destAddrL = (u8) ((u16) (outbuf + bufp) & 0xff);
+        DMAARM |= (aesdmaarmi | aesdmaarmo);
+        NOP(); NOP();
 
         // start co-processor
         // CBC-MAC is special - do last block as CBC to generate the final MAC
@@ -75,28 +107,9 @@ void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command, u8 mode)
         else
             ENCCS = mode | command | ENCCS_ST;
 
-        // send & receive data
-        sendAESblock(inbuf + bufp, blocklen);
-        // wait for crypto operation
-        sleepMicros(40);
-        getAESblock(outbuf + bufp, blocklen);
+        // wait for co-processor to finish
+        while(!(ENCCS & ENCCS_RDY))
+            ;
     }
-    // wait for co-processor to finish
-    while(!(ENCCS & ENCCS_RDY))
-        ;
-}
-
-// write data to the co-processor
-void sendAESblock(__xdata u8* buf, u8 len)
-{
-    while(len--)
-        ENCDI= *(buf++);
-}
-
-// read data from the co-processor
-void getAESblock(__xdata u8* buf, u8 len)
-{
-    while(len--)
-        *(buf++)= ENCDO;
 }
 

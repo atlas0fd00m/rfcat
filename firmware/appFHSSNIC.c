@@ -981,10 +981,11 @@ void initBoard(void)
 void main (void)
 {
     initBoard();
+    initDMA();  // do this early so peripherals that use DMA can allocate channels correctly
+    initAES();
     initUSB();
     init_RF();
     appMainInit();
-    initDMA();
 
     usb_up();
 

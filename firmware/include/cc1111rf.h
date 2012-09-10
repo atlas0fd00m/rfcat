@@ -3,6 +3,9 @@
 
 #include "cc1111.h"
 
+// use DMA for RF?
+//#define RFDMA
+
 #define DMA_CFG_SIZE 8
 // BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
 #define BUFFER_SIZE 512
