@@ -1,4 +1,6 @@
 #include "cc1111rf.h"
+#include "cc1111_aes.h"
+#include "chipcon_dma.h"
 #include "global.h"
 #include "nic.h"
 
@@ -78,7 +80,7 @@ void appMainLoop(void)
         testPacket[11] = 0x31;
         testPacket[12] = 0x31;
 
-        transmit(testPacket, 13);
+        transmit(testPacket, 13, 0, 0);
         //blink(400,400);
         REALLYFASTBLINK();
 #ifndef VIRTUAL_COM
@@ -240,6 +242,8 @@ void initBoard(void)
 void main (void)
 {
     initBoard();
+    initDMA();  // do this early so peripherals that use DMA can allocate channels correctly
+    initAES();
     initUSB();
     blink(300,300);
 

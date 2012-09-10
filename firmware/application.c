@@ -1,4 +1,6 @@
 #include "cc1111rf.h"
+#include "cc1111_aes.h"
+#include "chipcon_dma.h"
 #include "global.h"
 #include "nic.h"
 
@@ -246,6 +248,8 @@ void initBoard(void)
 void main (void)
 {
     initBoard();
+    initDMA();  // do this early so peripherals that use DMA can allocate channels correctly
+    initAES();
     initUSB();
     init_RF();
     appMainInit();

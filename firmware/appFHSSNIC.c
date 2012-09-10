@@ -288,7 +288,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                     }
                 }
         }
-#endif
+#endif // DEBUG_HOPPING
     }
 }
 
@@ -356,7 +356,7 @@ void init_FHSS(void)
     // 300ms at 24mhz
     //T2PR = 0xdc;        
     //T2CTL |= T2CTL_TIP_128;  // 64, 128, 256, 1024
-#else
+#else // IMME
     // 100ms at 26mhz
     //T2PR = 0x9f;        
     //T2CTL |= T2CTL_TIP_64;  // 64, 128, 256, 1024
@@ -376,7 +376,7 @@ void init_FHSS(void)
     // 300ms at 26mhz
     //T2PR = 0xee;        
     //T2CTL |= T2CTL_TIP_128;  // 64, 128, 256, 1024
-#endif
+#endif // IMME
     T2CTL |= T2CTL_TIG;
 
 
@@ -524,6 +524,7 @@ void appMainLoop(void)
         case MAC_STATE_SYNC_MASTER:
         case MAC_STATE_SYNCHED:
         case MAC_STATE_NONHOPPING:
+        default:
             // this is where we handle the RF packet
             if (rfif)
             {
@@ -784,7 +785,7 @@ int appHandleEP5()
                 case FHSS_GET_STATE:
                     appReturn( 1, (xdata u8*)&macdata.mac_state);
                     break;
-                    
+           
                 default:
                     appReturn( 1, buf);
                     break;
@@ -792,7 +793,7 @@ int appHandleEP5()
             break;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
-#endif
+#endif // VIRTUAL_COM
     return 0;
 }
 
@@ -831,7 +832,7 @@ void appHandleEP0OUT(void)
     // must be done with the buffer by now...
     ep0.flags &= ~EP_OUTBUF_WRITTEN;
     USBCS0 |= USBCS0_DATA_END;
-#endif
+#endif // VIRTUAL_COM
 }
 
 /* this function is the application handler for endpoint 0.  it is called for all VENDOR type    *
@@ -874,7 +875,7 @@ int appHandleEP0(USB_Setup_Header* pReq)
                 WDCTL = 0x83;   // Watchdog ENABLE, Watchdog mode, 2ms until reset
         }
     }
-#endif
+#endif // VIRTUAL_COM
     return 0;
 }
 
@@ -963,7 +964,7 @@ static void appInitRf(void)
     //TEST1       = 0x31;
     //TEST0       = 0x09;
     //PA_TABLE0   = 0x83;
-#endif
+#endif //RADIO_EU
 
 }
 
@@ -993,6 +994,7 @@ void main (void)
     EA = 1;
     waitForUSBsetup();
 
+    // tell the world we're ready
     REALLYFASTBLINK();
 
     while (1)

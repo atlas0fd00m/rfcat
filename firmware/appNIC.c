@@ -105,7 +105,7 @@ int appHandleEP5()
         switch (ep5.OUTcmd)
         {
             case NIC_XMIT:
-                transmit(ptr, ep5.OUTlen-1);
+                transmit(ptr, ep5.OUTlen-1, 0, 0);
                 { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
                 txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"0");
                 break;
