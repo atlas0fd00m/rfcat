@@ -287,9 +287,21 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
         // packet length may have changed due to padding so reset
         if(encoffset)
-            buf[0] = (u8) len;
+        {
+            // if we are in CBC-MAC mode, only transmit the MAC or we will send
+            // part of our plaintext (as we are encrypting in-place)!
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                buf[0] = 16;
+            else
+                buf[0] = (u8) len;
+        }
         else
-            PKTLEN = (u8) len;
+            {
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                PKTLEN = 16;
+            else
+                PKTLEN = (u8) len;
+            }
     }
 
     // point tx buffer at userdata //
