@@ -3,11 +3,17 @@
 
 #include "types.h"
 #include "cc1111.h"
+#include "cc1111rf.h"
 
 // define number of required DMA channels here
-// RF
+// RF (maybe)
 // USB
-#define DMA_CHANNELS    2
+// AES x 2
+#ifdef RFDMA
+#define DMA_CHANNELS    4
+#else
+#define DMA_CHANNELS    3
+#endif
 
 // prototypes
 
@@ -58,5 +64,8 @@ extern xdata DMA_DESC dma_configs[DMA_CHANNELS];
 #define DMA_CFG0_TMODE_BLOCK       (1 << 5)
 #define DMA_CFG0_TMODE_REPEATED_SINGLE (2 << 5)
 #define DMA_CFG0_TMODE_REPEATED_BLOCK  (3 << 5)
+#define DMA_CFG0_TRIGGER_ENC_DW	    29
+#define DMA_CFG0_TRIGGER_DNC_UP	    30
+
 
 #endif
