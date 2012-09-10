@@ -55,6 +55,38 @@ extern __xdata u32 clock;
 // Checks
 #define IS_XOSC_STABLE()    (SLEEP & SLEEP_XOSC_S)
 
+// AES
+// defines for specifying desired crypto operations.
+// AES_CRYPTO is in two halves: 
+//    upper 4 bits mirror CC1111 mode (ENCCS_MODE_CBC etc.)
+//    lower 4 bits are switches
+// AES_CRYPTO[7:4]     ENCCS_MODE...
+// AES_CRYPTO[3]       OUTBOUND 0 == OFF, 1 == ON
+// AES_CRYPTO[2]       OUTBOUND 0 == Decrypt, 1 == Encrypt
+// AES_CRYPTO[1]       INBOUND  0 == OFF, 1 == ON
+// AES_CRYPTO[0]       INBOUND  0 == Decrypt, 1 == Encrypt
+// bitfields
+#define AES_CRYPTO_MODE          0xF0
+#define AES_CRYPTO_OUT           0x0C
+#define AES_CRYPTO_OUT_ENABLE    0x08
+#define AES_CRYPTO_OUT_ON        (0x01 << 3)
+#define AES_CRYPTO_OUT_OFF       (0x00 << 3)
+#define AES_CRYPTO_OUT_TYPE      0x04
+#define AES_CRYPTO_OUT_DECRYPT   (0x00 << 2)
+#define AES_CRYPTO_OUT_ENCRYPT   (0x01 << 2)
+#define AES_CRYPTO_IN            0x03
+#define AES_CRYPTO_IN_ENABLE     0x02
+#define AES_CRYPTO_IN_ON         (0x01 << 1)
+#define AES_CRYPTO_IN_OFF        (0x00 << 1)
+#define AES_CRYPTO_IN_TYPE       0x01
+#define AES_CRYPTO_IN_DECRYPT    (0x00 << 0)
+#define AES_CRYPTO_IN_ENCRYPT    (0x01 << 0)
+#define AES_CRYPTO_NONE          0x00
+// flags
+#define AES_DISABLE              0x00
+#define AES_ENABLE               0x01
+#define AES_DECRYPT              0x00
+#define AES_ENCRYPT              0x01
 
 /* board-specific defines */
 #ifdef IMME

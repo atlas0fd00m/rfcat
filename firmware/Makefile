@@ -6,22 +6,22 @@ LFLAGS=--xram-loc 0xF000
 apps2531 = global.rel
 apps2531d3 = global.reld3
 
-apps1111 = cc1111rf.rel global.rel
-apps1111c = cc1111rf.relc global.relc
-apps1111d = cc1111rf.reld global.reld
-apps1111i = cc1111rf.reli global.reli
-appsid = cc1111rf.relid global.relid
+apps1111 = cc1111rf.rel global.rel cc1111_aes.rel
+apps1111c = cc1111rf.relc global.relc cc1111_aes.relc
+apps1111d = cc1111rf.reld global.reld cc1111_aes.reld
+apps1111i = cc1111rf.reli global.reli cc1111_aes.reli
+appsid = cc1111rf.relid global.relid cc1111_aes.relid
 
 libsvcom = cc1111_vcom.rel cc1111_vcomdesc.rel chipcon_usbdebug.rel #chipcon_usb.rel
 libsvcomc = cc1111_vcom.relc cc1111_vcomdesc.relc chipcon_usbdebug.relc #chipcon_usb.rel
 libsvcomd = cc1111_vcom.reld cc1111_vcomdesc.reld chipcon_usbdebug.reld #chipcon_usb.rel
 libsvcomi = cc1111_vcom.reli cc1111_vcomdesc.reli chipcon_usbdebug.reli #chipcon_usb.rel
 
-libsusb  = chipcon_usb.rel chipcon_usbdebug.rel
-libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc
-libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3
-libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld
-libsusbi  = immeusb.reli immeusbdebug.reli
+libsusb  = chipcon_usb.rel chipcon_usbdebug.rel chipcon_dma.rel
+libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc chipcon_dma.relc
+libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3 chipcon_dma.reld3
+libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld chipcon_dma.reld
+libsusbi  = immeusb.reli immeusbdebug.reli chipcon_dma.reli
 
 libsimme  = $(appsi) immeio.reli immekeys.reli immefont.reli   #  immedisplay.rel immeterm.rel
 libsimmed  = $(appsid) immeio.relid immekeys.relid immefont.relid   #  immedisplay.rel immeterm.rel

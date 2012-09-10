@@ -9,5 +9,10 @@
 #define NIC_RFMODE              0x4
 #define NIC_SET_RECV_LARGE      0x5
 
+#define NIC_SET_AES_MODE        0x6
+#define NIC_GET_AES_MODE        0x7
+#define NIC_SET_AES_IV          0x8
+#define NIC_SET_AES_KEY         0x9
+
 #endif
 

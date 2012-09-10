@@ -1,5 +1,6 @@
 #include "global.h"
 #include "cc1111usb.h"
+#include "chipcon_dma.h"
 
 
 /*************************************************************************************************
@@ -34,7 +35,8 @@ xdata u16  ep0len;
 xdata u16  ep0value;
 
 //xdata dmacfg_t usbdma;
-xdata DMA_DESC usbdma;
+xdata DMA_DESC *usbdma;
+data u8 usbdmachan, usbdmaarm;
 //xdata u8 usbdmar[8];
 
 __xdata void (*cb_ep0outdone)(void);
@@ -105,20 +107,20 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
 
 
 
-        DMAARM |= 0x80 + DMAARM1;
-        usbdma.srcAddrH = ((u16)dataptr)>>8;
-        usbdma.srcAddrL = ((u16)dataptr)&0xff;
-        usbdma.destAddrH = 0xde;     //USBF5 == 0xde2a
-        usbdma.destAddrL = 0x2a;
-        usbdma.lenL = loop;
-        usbdma.lenH = 0;
-        usbdma.srcInc = 1;
-        usbdma.destInc = 0;
-        DMAARM |= DMAARM1;
-        DMAREQ |= DMAARM1;
+        DMAARM |= 0x80 + usbdmaarm;
+        usbdma->srcAddrH = ((u16)dataptr)>>8;
+        usbdma->srcAddrL = ((u16)dataptr)&0xff;
+        usbdma->destAddrH = 0xde;     //USBF5 == 0xde2a
+        usbdma->destAddrL = 0x2a;
+        usbdma->lenL = loop;
+        usbdma->lenH = 0;
+        usbdma->srcInc = 1;
+        usbdma->destInc = 0;
+        DMAARM |= usbdmaarm;
+        DMAREQ |= usbdmaarm;
 
-        while (!(DMAIRQ & DMAARM1));
-        DMAIRQ &= ~DMAARM1;
+        while (!(DMAIRQ & usbdmaarm));
+        DMAIRQ &= ~usbdmaarm;
         
         USBINDEX=5;
         USBCSIL |= USBCSIL_INPKT_RDY;
@@ -172,16 +174,18 @@ void usb_init(void)
 
 
     // usb dma
-    DMA1CFGH = ((u16)(&usbdma))>>8;
-    DMA1CFGL = ((u16)(&usbdma))&0xff;
-    usbdma.vlen = 0;
-    usbdma.wordSize = 0;
-    usbdma.lenH = 0;
-    usbdma.tMode = 1;
-    usbdma.trig = 0;
-    usbdma.irqMask = 1;
-    usbdma.m8 = 0;
-    usbdma.priority = 1;
+    // these are now set in initDMA()
+    //DMA1CFGH = ((u16)(&usbdma))>>8;
+    //DMA1CFGL = ((u16)(&usbdma))&0xff;
+// anything that is static 0 doesn't need to be explicitly set as dma configs start all 0
+//    usbdma->vlen = 0;
+//    usbdma->wordSize = 0;
+    usbdma->lenH = 0;
+    usbdma->tMode = 1;
+//    usbdma->trig = 0;
+    usbdma->irqMask = 1;
+//    usbdma->m8 = 0;
+    usbdma->priority = 1;
     // when used, the following must be set before triggering:
     // usbdma.srcaddr
     // usbdma.dstaddr
@@ -242,6 +246,9 @@ void usb_init(void)
  *************************************************************************************************/
 void initUSB(void)
 {
+    usbdmachan= getDMA();               // allocate a DMA channel
+    usbdmaarm= (DMAARM0 << usbdmachan); // pre-calculate arming bit
+    usbdma= &dma_configs[usbdmachan];   // point our DMA descriptor at allocated channel descriptor
     lastCode[0] = LC_USB_INITUSB;
     USB_ENABLE();                       // enable our usb controller
     usb_init();                         // setup the usb controller settings
@@ -816,22 +823,22 @@ int handleOUTEP5(void)
         //ep5.flags |= EP_OUTBUF_CONTINUED;
     }
 
-    while ((DMAIRQ & DMAARM1))
+    while ((DMAIRQ & usbdmaarm))
         blink(20,20);
 
     // points our destination at the next free point in our buffer
     ptr = &ep5.OUTbuf[0] + ep5.OUTlen;
 
     // config and arm DMA 
-    DMAARM |= 0x80 + DMAARM1;
-    usbdma.srcAddrH = 0xde;     //USBF5 == 0xde2a
-    usbdma.srcAddrL = 0x2a;
-    usbdma.destAddrH = ((u16)ptr)>>8;
-    usbdma.destAddrL = ((u16)ptr)&0xff;
-    usbdma.srcInc = 0;
-    usbdma.destInc = 1;
-    usbdma.lenL = USBCNTL;
-    usbdma.lenH = USBCNTH;  // should always be zero, but what if we move to a HS chip someday?
+    DMAARM |= 0x80 + usbdmaarm;
+    usbdma->srcAddrH = 0xde;     //USBF5 == 0xde2a
+    usbdma->srcAddrL = 0x2a;
+    usbdma->destAddrH = ((u16)ptr)>>8;
+    usbdma->destAddrL = ((u16)ptr)&0xff;
+    usbdma->srcInc = 0;
+    usbdma->destInc = 1;
+    usbdma->lenL = USBCNTL;
+    usbdma->lenH = USBCNTH;  // should always be zero, but what if we move to a HS chip someday?
 
     // doublecheck that overall length is not going to go over our buffer size (no buffer overflows please!)
     if (len + ep5.OUTlen > EP5OUT_BUFFER_SIZE)
@@ -851,14 +858,14 @@ int handleOUTEP5(void)
     }
 
     //  DMA Trigger
-    DMAARM |= DMAARM1;
-    DMAREQ |= DMAARM1;
+    DMAARM |= usbdmaarm;
+    DMAREQ |= usbdmaarm;
 
     // update out OUTlen.  this is vital for determining when we're done
     ep5.OUTlen += len;
 
-    while (!(DMAIRQ & DMAARM1));
-    DMAIRQ &= ~DMAARM1;
+    while (!(DMAIRQ & usbdmaarm));
+    DMAIRQ &= ~usbdmaarm;
 
 
     if (ep5.OUTlen >= ep5.OUTbytesleft)
@@ -1285,9 +1292,9 @@ __code u8 USBDESCBEGIN [] = {
                10,                      // bLength
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
-              '0', 0,
-              '0', 0,
-              '0', 0,
+              '2', 0,
+              '6', 0,
+              '9', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
