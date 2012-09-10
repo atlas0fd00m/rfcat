@@ -1,9 +1,8 @@
 #include "cc1111rf.h"
+#include "cc1111_aes.h"
 #include "global.h"
 
 #include <string.h>
-
-// #define RFDMA
 
 /* Rx buffers */
 volatile __xdata u8 rfRxCurrentBuffer;
@@ -25,11 +24,18 @@ volatile __xdata u16 rfTxRepeatOffset = 0;
 volatile __xdata u16 rfTxTotalTXLen = 0;
 volatile __xdata u8 rfTxInfMode = 0;
 
+// AES
+volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
+// to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
+//volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
+
 u8 rfif;
 volatile __xdata u8 rf_status;
 volatile xdata u16 rf_MAC_timer;
 volatile xdata u16 rf_tLastRecv;
+#ifdef RFDMA
 volatile __xdata DMA_DESC rfDMA;
+#endif
 
 volatile __xdata u8 bRepeatMode = 0;
 
@@ -92,8 +98,10 @@ void IdleMode(void)
             RFIM &= ~RFIF_IRQ_DONE;
             RFOFF;
 
-            DMAARM |= 0x81;                 // ABORT anything on DMA 0
+#ifdef RFDMA
+            DMAARM |= (0x80 | DMAARM0);                 // ABORT anything on DMA 0
             DMAIRQ &= ~1;
+#endif
 
             S1CON &= ~(S1CON_RFIF_0|S1CON_RFIF_1);  // clear RFIF interrupts
             RFIF &= ~RFIF_IRQ_DONE;
@@ -141,9 +149,11 @@ void init_RF()
     // RF state
     rf_status = RFST_SIDLE;
 
+#ifdef RFDMA
     /* Init DMA channel */
     DMA0CFGH = ((u16)(&rfDMA))>>8;
     DMA0CFGL = ((u16)(&rfDMA))&0xff;
+#endif
 
     /* clear buffers */
     memset(rfrxbuf,0,(BUFFER_AMOUNT * BUFFER_SIZE));
@@ -186,6 +196,7 @@ int waitRSSI()
 u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 {
     __xdata u16 countdown;
+    __xdata u8 encoffset= 0;
 
     while (MARCSTATE == MARC_STATE_TX)
     {
@@ -194,6 +205,8 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             usbProcessEvents();
 #endif
     }
+    // Leave LED in a known state (off)
+    LED = 0;
 
     // Set up repeat / large blocks
     rfTxInfMode = 0;
@@ -231,7 +244,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         {
             case PKTCTRL0_LENGTH_CONFIG_VAR:
                 // shuffle buffer up 1 byte to make room for length
-                byte_shuffle(buf, len - 1, 1);
+                byte_shuffle(buf, len, 1);
                 buf[0] = (u8) len;
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
@@ -259,6 +272,37 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 #else
     RFTXRXIE = 0;
 #endif
+
+    // CRYPTO if required //
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
+            encoffset= 1;
+        // pad and set new length
+        len= padAES(buf + encoffset, len);
+        // do the encrypt or decrypt
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
+        else
+            decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
+        // packet length may have changed due to padding so reset
+        if(encoffset)
+        {
+            // if we are in CBC-MAC mode, only transmit the MAC or we will send
+            // part of our plaintext (as we are encrypting in-place)!
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                buf[0] = 16;
+            else
+                buf[0] = (u8) len;
+        }
+        else
+        {
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                PKTLEN = 16;
+            else
+                PKTLEN = (u8) len;
+        }
+    }
 
     // point tx buffer at userdata //
     rftxbuf= buf;
@@ -330,6 +374,8 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             usbProcessEvents(); 
 #endif
         }
+        // LED on - we're transmitting
+        LED = 1;
         if (!countdown)
         {
             lastCode[1] = LCE_RFTX_NEVER_TX;
@@ -350,6 +396,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             resetRFSTATE();
         }
 
+        // LED off - we're done
         LED = 0;
 
         return 1;
@@ -449,9 +496,15 @@ void RepeaterStop()
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
 {   // dormant, in favor of DMA transfers (ifdef RFDMA)
     lastCode[0] = LC_RFTXRX_VECTOR;
+        
+
+    // Clear interrupt - this must be done *BEFORE* reading RFD
+    RFTXRXIF = 0;
 
     if(MARCSTATE == MARC_STATE_RX)
     {   // Receive Byte
+        // LED on - we're receiving
+        LED = 1;
         // maintain infinite mode
         if(rfRxInfMode)
             if(rfRxTotalRXLen-- < 256)
@@ -490,11 +543,11 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         rf_status = RFST_STX;
         RFD = rftxbuf[rfTxCounter++];
     }
-    RFTXRXIF = 0;
 }
 
 void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigger on rf events
 {
+    u8 encoffset= 0;
     // which events trigger this interrupt is determined by RFIM (set in init_RF())
     // note: S1CON should be cleared before handling the RFIF flags.
     lastCode[0] = LC_RF_VECTOR;
@@ -514,8 +567,10 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         // we want *all zee bytezen!*
         if(rf_status == RFST_STX)
         {
+#ifdef RFDMA
             // rearm the DMA?  not sure this is a good thing.
-            DMAARM |= 0x81;
+            DMAARM |= (0x80 | DMAARM0);
+#endif
             rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT );
         }
         else
@@ -526,6 +581,16 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
             {
                 // EXPECTED RESULT - RX complete.
                 //
+                /* CRYPTO if required */
+                if(rfAESMode & AES_CRYPTO_IN_ENABLE)
+                {
+                    if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
+                        encoffset= 1;
+                    if((rfAESMode & AES_CRYPTO_IN_TYPE) == AES_CRYPTO_IN_ENCRYPT)
+                        encAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset, (rfAESMode & AES_CRYPTO_MODE));
+                    else
+                        decAES(&rfrxbuf[rfRxCurrentBuffer][encoffset], &rfrxbuf[rfRxCurrentBuffer][encoffset], rfRxCounter[rfRxCurrentBuffer] - encoffset, (rfAESMode & AES_CRYPTO_MODE));
+                }
                 /* Clear processed buffer */
                 /* Switch current buffer */
                 rfRxCurrentBuffer ^= 1;
@@ -554,6 +619,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 rfRxCounter[rfRxCurrentBuffer] = 0;
                 LED = !LED;
             }
+            // LED off - we're done receiving
+            LED= 0;
         }
         RFIF &= ~(RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT);        // OVF needs to be handled next...
     }

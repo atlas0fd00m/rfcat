@@ -3,6 +3,9 @@
 
 #include "cc1111.h"
 
+// use DMA for RF?
+//#define RFDMA
+
 #define DMA_CFG_SIZE 8
 // BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
 #define BUFFER_SIZE 512
@@ -62,6 +65,9 @@ extern volatile __xdata u16 rfTxCounter;
 
 extern volatile xdata u16 rf_MAC_timer;
 extern volatile xdata u16 rf_tLastRecv;
+
+// AES
+extern volatile __xdata u8 rfAESMode;
 
 extern u8 rfif;
 
