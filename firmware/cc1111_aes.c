@@ -101,7 +101,12 @@ void doAES(__xdata u8* inbuf, __xdata u8* outbuf, u16 len, u8 command, u8 mode)
 
         // start co-processor
         // CBC-MAC is special - do last block as CBC to generate the final MAC
-        // (note that all preceding blocks will be output '\0' filled)
+        // (note that all preceding blocks do not generate any output, so only
+        // the first output block is significant. care should also be taken not
+        // to transmit any other blocks as they may contain original plaintext
+        // e.g. if encryption is being done in-place).
+        // for clarity: the output of CBC-MAC will always only be the initial
+        // 128 bits of the output buffer, regardless of message length.
         if((mode & ENCCS_MODE_CBCMAC) && bufp == len - 16)
             ENCCS = ENCCS_MODE_CBC | command | ENCCS_ST;
         else
