@@ -296,12 +296,12 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
                 buf[0] = (u8) len;
         }
         else
-            {
+        {
             if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
                 PKTLEN = 16;
             else
                 PKTLEN = (u8) len;
-            }
+        }
     }
 
     // point tx buffer at userdata //
