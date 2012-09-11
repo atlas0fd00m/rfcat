@@ -1,0 +1,13 @@
+ok, simple stuff:
+
+Q: why do i get this when i start rfcat:  Error in resetup():USBError(110, 'Operation timed out')
+A: try starting rfcat *before* plugging in the dongle
+
+Q: why does it not work!
+A: check dependencies (pyusb, libusb)
+A: see question above
+A: try a different usb port.  especially usb3 ports just bomb out.  not sure why yet.
+A: debian likes to break things.  email me if you are trying this on debian.
+
+
+
