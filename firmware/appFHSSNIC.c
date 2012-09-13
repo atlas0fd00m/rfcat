@@ -610,6 +610,7 @@ int appHandleEP5()
                             RxMode();
                             break;
                         case RF_STATE_IDLE:
+                            LED = 0;
                             IdleMode();
                             break;
                         case RF_STATE_TX:
