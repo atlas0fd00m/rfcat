@@ -117,7 +117,9 @@ class RfCat(FHSSNIC):
 
 def cleanupInteractiveAtExit():
     try:
-        d.setModeIDLE()
+        #if d.getDebugCodes():
+        #    d.setModeIDLE()
+        pass
     except:
         pass
 
