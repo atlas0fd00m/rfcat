@@ -406,7 +406,7 @@ void appMainInit(void)
 void appMainLoop(void)
 {
     xdata u8 processbuffer;
-    xdata u8 *chan_table = rftxbuf;
+    xdata u8 *chan_table;
 
     switch  (macdata.mac_state)
     {
@@ -419,6 +419,8 @@ void appMainLoop(void)
             MCSM0 =     0x10;       // autocal/no auto-cal....  hmmm...
             AGCCTRL2 |= AGCCTRL2_MAX_DVGA_GAIN;     // disable 3 highest gain settings
             macdata.mac_state = MAC_STATE_SPECAN;
+            
+            chan_table = rfrxbuf[0];
 
         case MAC_STATE_SPECAN:
             for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
