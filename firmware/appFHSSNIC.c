@@ -398,7 +398,8 @@ void appMainInit(void)
 
     init_FHSS();
 
-    RxMode();
+    //RxMode();
+    
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
