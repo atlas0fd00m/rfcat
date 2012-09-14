@@ -64,7 +64,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq);
 // * usb_data.usbstatus  - usb state overall...  (IDLE, SUSPEND, RESUME, RESET)
 // * ep#iobuf.ep_status  - endpoint status
 
-void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for application use
+int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for application use
     // gonna try this direct this time, and ignore all the "state tracking" for the endpoint.
     // wish me luck!  this could horribly crash and burn.
 {
@@ -78,13 +78,23 @@ void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for 
         // don't know why since this bit is cleared in the USB ISR.
         loop = TXDATA_MAX_WAIT;
         //while (ep5.flags & EP_INBUF_WRITTEN && loop>0)                 // has last msg been recvd?
+        LED = 1;    //FIXME: DEBUG
         while (USBCSIL & USBCSIL_INPKT_RDY) // && loop>0)                 // has last msg been recvd?
         {
             //REALLYFASTBLINK();
             lastCode[1] = LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN;
             loop--;
         }
-            
+        LED = 0;    //FIXME: DEBUG
+        
+        // if USB is still not ready... fail.  this should only happen when the USB is disconnected anyway <crosses fingers>
+        if (!loop)
+        {
+            blink(500, 500);
+            return -1;
+        }
+        
+        // first time through, we send the header.    
         if (firsttime==1)
         {                                                                   // first time through only please
             firsttime=0;
@@ -1292,9 +1302,9 @@ __code u8 USBDESCBEGIN [] = {
                10,                      // bLength
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
-              '2', 0,
+              '0', 0,
+              '4', 0,
               '6', 0,
-              '9', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
