@@ -1119,7 +1119,9 @@ class USBDongle:
             radiocfg = self.radiocfg
         output = []
 
-        output.append( "== Frequency Configuration ==")
+        output.append( "== Hardware ==")
+        output.append( self.reprHardwareConfig())
+        output.append( "\n== Frequency Configuration ==")
         output.append( self.reprFreqConfig(mhz, radiocfg))
         output.append( "\n== Modem Configuration ==")
         output.append( self.reprModemConfig(mhz, radiocfg))
@@ -1135,6 +1137,13 @@ class USBDongle:
         output.append( self.reprClientState())
         return "\n".join(output)
 
+    def reprHardwareConfig(self):
+        output= []
+
+        hardware= self.getBuildInfo()
+        output.append("Dongle:              %s" % hardware.split(' ')[0])
+        output.append("Firmware rev:        %s" % hardware.split('r')[1])
+        return "\n".join(output)
 
     def reprMdmModulation(self, radiocfg=None):
         mod = self.getMdmModulation(radiocfg)
