@@ -620,7 +620,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 LED = !LED;
             }
             // LED off - we're done receiving
-            LED= 0;
+            LED = 0;
         }
         RFIF &= ~(RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT);        // OVF needs to be handled next...
     }

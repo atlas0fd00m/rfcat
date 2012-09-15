@@ -288,7 +288,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                     }
                 }
         }
-#endif // DEBUG_HOPPING
+#endif
     }
 }
 
@@ -356,7 +356,7 @@ void init_FHSS(void)
     // 300ms at 24mhz
     //T2PR = 0xdc;        
     //T2CTL |= T2CTL_TIP_128;  // 64, 128, 256, 1024
-#else // IMME
+#else
     // 100ms at 26mhz
     //T2PR = 0x9f;        
     //T2CTL |= T2CTL_TIP_64;  // 64, 128, 256, 1024
@@ -376,7 +376,7 @@ void init_FHSS(void)
     // 300ms at 26mhz
     //T2PR = 0xee;        
     //T2CTL |= T2CTL_TIP_128;  // 64, 128, 256, 1024
-#endif // IMME
+#endif
     T2CTL |= T2CTL_TIG;
 
 
@@ -398,7 +398,8 @@ void appMainInit(void)
 
     init_FHSS();
 
-    RxMode();
+    //RxMode();
+    
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
@@ -406,7 +407,7 @@ void appMainInit(void)
 void appMainLoop(void)
 {
     xdata u8 processbuffer;
-    xdata u8 *chan_table = rftxbuf;
+    xdata u8 *chan_table;
 
     switch  (macdata.mac_state)
     {
@@ -419,6 +420,8 @@ void appMainLoop(void)
             MCSM0 =     0x10;       // autocal/no auto-cal....  hmmm...
             AGCCTRL2 |= AGCCTRL2_MAX_DVGA_GAIN;     // disable 3 highest gain settings
             macdata.mac_state = MAC_STATE_SPECAN;
+            
+            chan_table = rfrxbuf[0];
 
         case MAC_STATE_SPECAN:
             for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
@@ -524,7 +527,6 @@ void appMainLoop(void)
         case MAC_STATE_SYNC_MASTER:
         case MAC_STATE_SYNCHED:
         case MAC_STATE_NONHOPPING:
-        default:
             // this is where we handle the RF packet
             if (rfif)
             {
@@ -608,6 +610,7 @@ int appHandleEP5()
                             RxMode();
                             break;
                         case RF_STATE_IDLE:
+                            LED = 0;
                             IdleMode();
                             break;
                         case RF_STATE_TX:
@@ -636,6 +639,8 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_RECV_LARGE:
+                    // FIXME: simply make this normal, coincide with standard makePktLen(), keep packet length in rfRxLargeLen (rename it so it's not so special)
+                    
                     // configure large block receive (infinite mode)
                     // call with block size of 0 to switch off
                     rfRxLargeLen = *buf++;
@@ -785,7 +790,7 @@ int appHandleEP5()
                 case FHSS_GET_STATE:
                     appReturn( 1, (xdata u8*)&macdata.mac_state);
                     break;
-           
+                    
                 default:
                     appReturn( 1, buf);
                     break;
@@ -793,7 +798,7 @@ int appHandleEP5()
             break;
     }
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this allows the OUTbuf to be rewritten... it's saved until now.
-#endif // VIRTUAL_COM
+#endif
     return 0;
 }
 
@@ -832,7 +837,7 @@ void appHandleEP0OUT(void)
     // must be done with the buffer by now...
     ep0.flags &= ~EP_OUTBUF_WRITTEN;
     USBCS0 |= USBCS0_DATA_END;
-#endif // VIRTUAL_COM
+#endif
 }
 
 /* this function is the application handler for endpoint 0.  it is called for all VENDOR type    *
@@ -875,7 +880,7 @@ int appHandleEP0(USB_Setup_Header* pReq)
                 WDCTL = 0x83;   // Watchdog ENABLE, Watchdog mode, 2ms until reset
         }
     }
-#endif // VIRTUAL_COM
+#endif
     return 0;
 }
 
@@ -964,7 +969,7 @@ static void appInitRf(void)
     //TEST1       = 0x31;
     //TEST0       = 0x09;
     //PA_TABLE0   = 0x83;
-#endif //RADIO_EU
+#endif
 
 }
 
@@ -994,7 +999,6 @@ void main (void)
     EA = 1;
     waitForUSBsetup();
 
-    // tell the world we're ready
     REALLYFASTBLINK();
 
     while (1)

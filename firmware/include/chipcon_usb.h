@@ -177,7 +177,7 @@
 #define USBD_OIF_OUTEP4IF       (u16)0x2000
 #define USBD_OIF_OUTEP5IF       (u16)0x4000
 
-#define TXDATA_MAX_WAIT         30
+#define TXDATA_MAX_WAIT         10000
 
 
 
@@ -311,8 +311,7 @@ extern xdata u16  ep0value;
 
 // provided by cc1111usb.c
 void clock_init(void);
-void txdataold(u8 app, u8 cmd, u16 len, u8* dataptr);
-void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr);
+int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr);
 int setup_send_ep0(u8* payload, u16 length);
 int setup_sendx_ep0(xdata u8* payload, u16 length);
 u16 usb_recv_ep0OUT();

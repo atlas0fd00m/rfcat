@@ -220,6 +220,31 @@ for lcl in lcls.keys():
         LCS[lcl] = lcls[lcl]
         LCS[lcls[lcl]] = lcl
 
+MARC_STATE_MAPPINGS = [
+    (0, 'MARC_STATE_SLEEP', RFST_SIDLE),
+    (1, 'MARC_STATE_IDLE', RFST_SIDLE),
+    (3, 'MARC_STATE_VCOON_MC', RFST_SIDLE),
+    (4, 'MARC_STATE_REGON_MC', RFST_SIDLE),
+    (5, 'MARC_STATE_MANCAL', RFST_SCAL),
+    (6, 'MARC_STATE_VCOON', RFST_SIDLE),
+    (7, 'MARC_STATE_REGON', RFST_SIDLE),
+    (8, 'MARC_STATE_STARTCAL', RFST_SCAL),
+    (9, 'MARC_STATE_BWBOOST', RFST_SIDLE),
+    (10, 'MARC_STATE_FS_LOCK', RFST_SIDLE),
+    (11, 'MARC_STATE_IFADCON', RFST_SIDLE),
+    (12, 'MARC_STATE_ENDCAL', RFST_SCAL),
+    (13, 'MARC_STATE_RX', RFST_SRX),
+    (14, 'MARC_STATE_RX_END', RFST_SIDLE ),     # FIXME: this should actually be the config setting in register
+    (15, 'MARC_STATE_RX_RST', RFST_SIDLE),
+    (16, 'MARC_STATE_TXRX_SWITCH', RFST_SIDLE),
+    (17, 'MARC_STATE_RX_OVERFLOW', RFST_SIDLE),
+    (18, 'MARC_STATE_FSTXON', RFST_SFSTXON),
+    (19, 'MARC_STATE_TX', RFST_STX),
+    (20, 'MARC_STATE_TX_END', RFST_STX),        # FIXME: this should actually be the config setting in register
+    (21, 'MARC_STATE_RXTX_SWITCH', RFST_SIDLE),
+    (22, 'MARC_STATE_TX_UNDERFLOW', RFST_SIDLE) # FIXME: this should actually be the config setting in register
+]
+
 def keystop():
     return len(select.select([sys.stdin],[],[],0)[0])
 
@@ -850,37 +875,74 @@ class USBDongle:
             self.getRadioConfig()
             radiocfg=self.radiocfg
 
-        mode = self.radiocfg.marcstate
+        mode = radiocfg.marcstate
         return (MODES[mode], mode)
 
     ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
+        '''
+        BOTH: set radio to TX state
+        AND:  set radio to return to TX state when done with other states
+        '''
         self.setRfMode(RF_STATE_TX)
 
     def setModeRX(self):
+        '''
+        BOTH: set radio to RX state
+        AND:  set radio to return to RX state when done with other states
+        '''
         self.setRfMode(RF_STATE_RX)
 
     def setModeIDLE(self):
+        '''
+        BOTH: set radio to IDLE state
+        AND:  set radio to return to IDLE state when done with other states
+        '''
         self.setRfMode(RF_STATE_IDLE)
 
 
     ### send raw state change to radio (doesn't update the return state for after RX/TX occurs)
     def strobeModeTX(self):
+        '''
+        set radio to TX state (transient)
+        '''
         self.poke(X_RFST, "%c"%RFST_STX)
 
     def strobeModeRX(self):
+        '''
+        set radio to RX state (transient)
+        '''
         self.poke(X_RFST, "%c"%RFST_SRX)
 
     def strobeModeIDLE(self):
+        '''
+        set radio to IDLE state (transient)
+        '''
         self.poke(X_RFST, "%c"%RFST_SIDLE)
 
     def strobeModeFSTXON(self):
+        '''
+        set radio to FSTXON state (transient)
+        '''
         self.poke(X_RFST, "%c"%RFST_SFSTXON)
 
     def strobeModeCAL(self):
+        '''
+        set radio to CAL state (will return to whichever state is configured (via setMode* functions)
+        '''
         self.poke(X_RFST, "%c"%RFST_SCAL)
+        
+    def strobeModeReturn(self, marcstate=None):
+        """
+        attempts to return the the correct mode after configuring some radio register(s).
+        it uses the marcstate provided (or self.radiocfg.marcstate if none are provided) to determine how to strobe the radio.
+        """
+        if marcstate is None:
+            marcstate = self.radiocfg.marcstate
+        self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
 
-
+        
+        
     def setRFRegister(self, regaddr, value, suppress=False):
         '''
         set the radio register 'regaddr' to 'value' (first setting RF state to IDLE, then returning to RX/TX)
@@ -892,13 +954,16 @@ class USBDongle:
             return
             
         marcstate = self.radiocfg.marcstate
-
-        self.strobeModeIDLE()
+        if marcstate != MARC_STATE_IDLE:
+            self.strobeModeIDLE()
+            
         self.poke(regaddr, chr(value))
-        if (marcstate == MARC_STATE_RX):
-            self.strobeModeRX()
-        elif (marcstate == MARC_STATE_TX):
-            self.strobeModeTX()
+        
+        self.strobeModeReturn(marcstate)
+        #if (marcstate == MARC_STATE_RX):
+            #self.strobeModeRX()
+        #elif (marcstate == MARC_STATE_TX):
+            #self.strobeModeTX()
         # if other than these, we can stay in IDLE
 
     ### radio config
@@ -912,14 +977,16 @@ class USBDongle:
             bytedef = self.radiocfg.vsEmit()
 
         statestr, marcstate = self.getMARCSTATE()
-        self.strobeModeIDLE()
+        if marcstate != MARC_STATE_IDLE:
+            self.strobeModeIDLE()
 
         self.poke(0xdf00, bytedef)
 
-        if (marcstate == MARC_STATE_RX):
-            self.strobeModeRX()
-        elif (marcstate == MARC_STATE_TX):
-            self.strobeModeTX()
+        self.strobeModeReturn(marcstate)
+        #if (marcstate == MARC_STATE_RX):
+            #self.strobeModeRX()
+        #elif (marcstate == MARC_STATE_TX):
+            #self.strobeModeTX()
     
         self.getRadioConfig()
 
@@ -945,10 +1012,17 @@ class USBDongle:
             radiocfg.fscal2 = 0x2A
 
         if applyConfig:
-            self.strobeModeIDLE()
+            marcstate = radiocfg.marcstate
+            if marcstate != MARC_STATE_IDLE:
+                self.strobeModeIDLE()
             self.poke(FREQ2, struct.pack("3B", self.radiocfg.freq2, self.radiocfg.freq1, self.radiocfg.freq0))
             self.poke(FSCAL2, struct.pack("B", self.radiocfg.fscal2))
-            self.strobeModeRX()
+            
+            self.strobeModeReturn(marcstate)
+            #if (radiocfg.marcstate == MARC_STATE_RX):
+                #self.strobeModeRX()
+            #elif (radiocfg.marcstate == MARC_STATE_TX):
+                #self.strobeModeTX()
 
     def getFreq(self, mhz=24, radiocfg=None):
         freqmult = (0x10000 / 1000000.0) / mhz
