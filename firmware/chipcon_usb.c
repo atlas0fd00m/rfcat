@@ -53,9 +53,9 @@ __code u8 buildname[] = {
 #ifdef DONSDONGLES
     'D','O','N','S','D','O','N','G','L','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #elif defined CHRONOSDONGLE
-    'C','H','R','O','N','O','S',' ',ASCII_LONG(BUILD_VERSION),'\x00',
+    'C','H','R','O','N','O','S',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #else
-    'I','M','M','E',' ',ASCII_LONG(BUILD_VERSION),'\x00',
+    'I','M','M','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #endif
 };
 
