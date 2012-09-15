@@ -115,11 +115,22 @@ class RfCat(FHSSNIC):
             except ChipconUsbTimeoutException:
                 pass
 
+def cleanupInteractiveAtExit():
+    try:
+        if d.getDebugCodes():
+           d.setModeIDLE()
+        pass
+    except:
+        pass
 
 def interactive(idx=0, DongleClass=RfCat, intro=''):
+    global d
     import rflib.chipcon_nic as rfnic
+    import atexit
 
     d = DongleClass(idx=idx)
+    d.setModeRX()       # this puts the dongle into receive mode
+    atexit.register(cleanupInteractiveAtExit)
 
     gbls = globals()
     lcls = locals()
