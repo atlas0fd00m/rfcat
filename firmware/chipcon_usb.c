@@ -48,13 +48,14 @@ __code u8 sdccver[] = {
     'S','D','C','C','v',
     LE_WORD(SDCC)
 };
+// BUILD_VERSION is passed in -D from Makefile
 __code u8 buildname[] = {
 #ifdef DONSDONGLES
-    "DONSDONGLE\x00",
+    'D','O','N','S','D','O','N','G','L','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #elif defined CHRONOSDONGLE
-    "CHRONOS   \x00",
+    'C','H','R','O','N','O','S',' ',ASCII_LONG(BUILD_VERSION),'\x00',
 #else
-    "IMME      \x00",
+    'I','M','M','E',' ',ASCII_LONG(BUILD_VERSION),'\x00',
 #endif
 };
 
@@ -1303,8 +1304,8 @@ __code u8 USBDESCBEGIN [] = {
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
               '0', 0,
-              '4', 0,
-              '6', 0,
+              '0', 0,
+              '8', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff

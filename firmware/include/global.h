@@ -132,6 +132,7 @@ void p0IntHandler(void) interrupt P0INT_VECTOR;
 #define blink( on_cycles, off_cycles)  {LED=1; sleepMillis(on_cycles); LED=0; sleepMillis(off_cycles);}
 #define BLOCK()     { while (1) { REALLYFASTBLINK() ; usbProcessEvents(); }  }
 #define LE_WORD(x) ((x)&0xFF),((u8) (((u16) (x))>>8))
+#define ASCII_LONG(x) '0' + x / 1000 % 10,'0' + x / 100 % 10, '0' + x / 10 % 10, '0' + x % 10
 
 /* function declarations */
 void sleepMillis(int ms);
