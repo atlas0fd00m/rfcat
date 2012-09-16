@@ -1,5 +1,5 @@
 CC=sdcc
-CFLAGS=-Iinclude -DBUILD_VERSION=`hg log -r tip --template '{rev}'`
+CFLAGS=-Iinclude -DBUILD_VERSION=`hg parent --template '{rev}'`
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
 
