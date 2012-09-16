@@ -4,6 +4,7 @@ import usb
 
 import bits
 from chipcondefs import *
+from rflib_version import *
 
 # band limits in Hz
 FREQ_MIN_300  = 281000000
@@ -1121,6 +1122,8 @@ class USBDongle:
 
         output.append( "== Hardware ==")
         output.append( self.reprHardwareConfig())
+        output.append( "\n== Software ==")
+        output.append( self.reprSoftwareConfig())
         output.append( "\n== Frequency Configuration ==")
         output.append( self.reprFreqConfig(mhz, radiocfg))
         output.append( "\n== Modem Configuration ==")
@@ -1142,7 +1145,16 @@ class USBDongle:
 
         hardware= self.getBuildInfo()
         output.append("Dongle:              %s" % hardware.split(' ')[0])
-        output.append("Firmware rev:        %s" % hardware.split('r')[1])
+        try:
+            output.append("Firmware rev:        %s" % hardware.split('r')[1])
+        except:
+            output.append("Firmware rev:        Not found! Update needed!")
+        return "\n".join(output)
+
+    def reprSoftwareConfig(self):
+        output= []
+
+        output.append("rflib rev:           %s" % RFLIB_VERSION)
         return "\n".join(output)
 
     def reprMdmModulation(self, radiocfg=None):

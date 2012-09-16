@@ -8,6 +8,10 @@ pkgdata = {}
 scripts = ['rfcat', 'rfcat_server',
         ]
 
+os.system('echo -n "RFLIB_VERSION=" > rflib/rflib_version.py')
+os.system('hg parent --template "{rev}" >> rflib/rflib_version.py')
+os.system('echo >> rflib/rflib_version.py')
+
 setup  (name        = 'rfcat',
         version     = '1.0',
         description = "the swiss army knife of subGHz",
