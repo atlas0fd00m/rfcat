@@ -381,9 +381,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             lastCode[1] = LCE_RFTX_NEVER_TX;
         }
 
-        // wait until we're safely *out* of TX mode (so we return with an available buffer)
-        countdown = 60000;
-        while (MARCSTATE == MARC_STATE_TX && --countdown)
+        while (MARCSTATE == MARC_STATE_TX)
         {
             LED = !LED;
 #ifndef IMME
