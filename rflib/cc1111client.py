@@ -68,6 +68,7 @@ SYS_CMD_STATUS                  = 0x83
 SYS_CMD_POKE_REG                = 0x84
 SYS_CMD_GET_CLOCK               = 0x85
 SYS_CMD_BUILDTYPE               = 0x86
+SYS_CMD_BOOTLOADER              = 0x87
 SYS_CMD_RESET                   = 0x8f
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
@@ -821,6 +822,16 @@ class USBDongle:
         stop = time.time()
         return (good,bad,stop-start)
 
+    def bootloader(self):
+        '''
+        switch to bootloader mode. based on Fergus Noble's CC-Bootloader (https://github.com/fnoble/CC-Bootloader)
+        this allows the firmware to be updated via USB instead of goodfet/ccdebugger
+        '''
+        try:
+            r = self.send(APP_SYSTEM, SYS_CMD_BOOTLOADER, "")
+        except ChipconUsbTimeoutException:
+            pass
+        
     def RESET(self):
         try:
             r = self.send(APP_SYSTEM, SYS_CMD_RESET, "RESET_NOW\x00")

@@ -1,6 +1,7 @@
 #include "global.h"
 #include "cc1111usb.h"
 #include "chipcon_dma.h"
+#include "bootloader.h"
 
 
 /*************************************************************************************************
@@ -982,6 +983,10 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(buildname), (xdata u8*)&buildname[0]);
                 break;
 
+            case CMD_BOOTLOADER:
+                run_bootloader();
+                break;
+
             case CMD_RESET:
                 if (strncmp(ptr, "RESET_NOW", 9))
                     break;   //didn't match the signature.  must have been an accident.
@@ -1304,8 +1309,8 @@ __code u8 USBDESCBEGIN [] = {
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
               '0', 0,
-              '1', 0,
-              '0', 0,
+              '6', 0,
+              '7', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff

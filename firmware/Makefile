@@ -1,3 +1,7 @@
+# set BOOTLOADER_SIZE to match your bootloader
+BOOTLOADER_SIZE = 0x1400
+LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
+
 CC=sdcc
 CFLAGS=-Iinclude -DBUILD_VERSION=`hg parent --template '{rev}'`
 CFLAGSold=--no-pack-iram $(CF)
@@ -17,7 +21,7 @@ libsvcomc = cc1111_vcom.relc cc1111_vcomdesc.relc chipcon_usbdebug.relc chipcon_
 libsvcomd = cc1111_vcom.reld cc1111_vcomdesc.reld chipcon_usbdebug.reld chipcon_dma.reld #chipcon_usb.rel
 libsvcomi = cc1111_vcom.reli cc1111_vcomdesc.reli chipcon_usbdebug.reli chipcon_dma.reli #chipcon_usb.rel
 
-libsusb  = chipcon_usb.rel chipcon_usbdebug.rel chipcon_dma.rel
+libsusb  = chipcon_usb.rel chipcon_usbdebug.rel chipcon_dma.rel bootloader.rel
 libsusbc  = chipcon_usb.rc chipcon_usbdebug.relc chipcon_dma.relc
 libsusbd3 = chipcon_usb.rd3 chipcon_usbdebug.reld3 chipcon_dma.reld3
 libsusbd  = chipcon_usb.rd chipcon_usbdebug.reld chipcon_dma.reld
@@ -65,9 +69,14 @@ chipcon_usb.rd : chipcon_usb.c
 
 
 # firmware build targets
+
 RfCatChronos.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/RfCatChronos.hex
+
+RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
 
 RfCatDons.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
@@ -171,6 +180,11 @@ installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc flash bins/RfCatDons.hex
 	goodfet.cc info
 
+installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
+	bootload.py /dev/RFCAT_BL erase_all
+	bootload.py /dev/RFCAT_BL download bins/RfCatDonsBootloader.hex
+	bootload.py /dev/RFCAT_BL run
+
 installchronosfhssnicfw: chronosFHSS.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/chronosFHSS.hex
@@ -254,6 +268,11 @@ installtestrecvfw: testrecvapplication.hex
 installtestxmitfw: testxmitapplication.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/testxmit.hex
+	goodfet.cc info
+
+installdonsbootloader: 
+	goodfet.cc erase
+	goodfet.cc flash CCBootloader/CCBootloader-rfcat-donsdongle.hex
 	goodfet.cc info
 
 testgoodfet:
