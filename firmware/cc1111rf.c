@@ -388,11 +388,6 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             usbProcessEvents();
 #endif
         }
-        if (!countdown)
-        {
-            lastCode[1] = LCE_RFTX_NEVER_LEAVE_TX;
-            resetRFSTATE();
-        }
 
         // LED off - we're done
         LED = 0;
