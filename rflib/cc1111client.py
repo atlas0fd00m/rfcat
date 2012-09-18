@@ -1160,6 +1160,12 @@ class USBDongle:
             output.append("Firmware rev:        %s" % hardware.split('r')[1])
         except:
             output.append("Firmware rev:        Not found! Update needed!")
+        # see if we have a bootloader by loooking for it's recognition semaphores
+        # in SFR I2SCLKF0 & I2SCLKF1
+        if(self.peek(0xDF46,1) == '\xF0' and self.peek(0xDF47,1) == '\x0D'):
+            output.append("Bootloader:          CC-Bootloader")
+        else:
+            output.append("Bootloader:          Not installed")
         return "\n".join(output)
 
     def reprSoftwareConfig(self):

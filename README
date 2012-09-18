@@ -119,10 +119,8 @@ your build environment:
 
 = INSTALLING WITH BOOTLOADER = *** experimental (branch rfidiot) ***
 
-Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, a hex file is provided in the CCBootloader
-sub-directory in firmware. The original project can be found here: https://github.com/fnoble/CC-Bootloader
-
-Currently only tested with EMK/DONS dongles. I will do a Chronos version as soon as I get a chance.
+Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, a hex file is provided in 
+the CCBootloader sub-directory in firmware. The original project can be found here: https://github.com/fnoble/CC-Bootloader
 
 To install:
 
@@ -134,22 +132,34 @@ We need a permanent symlink to the USB serial device that will communicate with 
 
   reboot or run 'sudo udevadm control --reload-rules'
 
-To prepare your dongle for the first time, you'll need to hook up your goodfet as described above and do:
+To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
 
-* install 'bootload.py' from CC-Bootloader somewhere on your execution path
+* (install 'bootload.py' from CC-Bootloader somewhere on your execution path)
+
 * cd firmware
-* make installdonsbootloader
 
-Now you have the bootloader installed, you can install new versions of rfcat over the USB with no goodfet...
+for EMK/DONSDONGLE
+  * make installdonsbootloader
+
+for CHRONOS:
+  * make installchronosbootloader
+
+Now you have the bootloader installed, you can install new versions of rfcat over the USB with no debugger...
 
 If you have just installed the bootloader, the dongle should be in bootloader mode, indicated by a solid LED. If you
-are re-flashing the dongle, you can put it into bootloader mode either by holding down the button as you plug it
-into USB or by issuing the command 'd.bootloader()' to rfcat in interactive mode ('rfcat -r').
+are re-flashing the dongle, you can put it into bootloader mode either by holding down the EMK/DONS button as you plug 
+it into USB (on the CHRONOS jumper P2_2/DC to GROUND), or by issuing the command 'd.bootloader()' to rfcat in interactive 
+mode ('rfcat -r').
 
 Once you have a solid LED, you can do the following:
 
 * cd firmware
-* make installRfCatDonsDongleCCBootloader 
+
+for EMK/DONSDONGLE:
+  * make installRfCatDonsDongleCCBootloader 
+
+for CHRONOS:
+  * make installRfCatChronosDongleCCBootloader
 
 The new version will be installed, and bootloader exited.
 
