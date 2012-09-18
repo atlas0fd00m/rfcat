@@ -48,8 +48,11 @@ extern __xdata u32 clock;
 #define LCE_RFTX_NEVER_LEAVE_TX                 0x14
 
 // USB activities
-#define USB_ENABLE_PIN              P1_0
-//#define USB_ENABLE_PIN              P1_1
+#ifdef CHRONOSDONGLE
+    #define USB_ENABLE_PIN              P1_1
+#else
+    #define USB_ENABLE_PIN              P1_0
+#endif
 #define NOP()                       __asm; nop; __endasm;
 
 // Checks
