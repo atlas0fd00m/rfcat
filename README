@@ -117,10 +117,13 @@ your build environment:
 * "make clean installRfCatDonsDongle" will clean, build, and install the RfCat (appFHSSNIC.c) firmware for a cc1111emk.
 * "make clean installimmesnifffw" will clean, build, and install the RfSniff firmware for the IMME girls toy from girltech 
 
-= INSTALLING WITH BOOTLOADER = *** experimental (branch rfidiot) ***
+= INSTALLING WITH BOOTLOADER = 
 
 Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, a hex file is provided in 
-the CCBootloader sub-directory in firmware. The original project can be found here: https://github.com/fnoble/CC-Bootloader
+the CCBootloader sub-directory in firmware. 
+
+Source can be found here: https://github.com/AdamLaurie/CC-Bootloader
+which is branched from here: https://github.com/fnoble/CC-Bootloader
 
 To install:
 

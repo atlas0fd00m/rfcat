@@ -984,6 +984,9 @@ void processOUTEP5(void)
                 break;
 
             case CMD_BOOTLOADER:
+                // acknowledge first since we won't be coming back!
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
+                sleepMillis(200);
                 run_bootloader();
                 break;
 
@@ -1309,8 +1312,8 @@ __code u8 USBDESCBEGIN [] = {
                USB_DESC_STRING,         // bDescriptorType
               '0', 0,
               '1', 0,
-              '4', 0,
               '5', 0,
+              '8', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff

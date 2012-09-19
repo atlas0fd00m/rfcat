@@ -17,4 +17,6 @@ A: this appears to be a bug between the CC1111 and some USB3 ports.  try a diffe
 Q: why does my device sometimes not show up in RfCat?
 A: see answer to the question above.
 
+Q: why does my dongle still go into bootloader mode even though i've installed RfCat?
+A: if you still have your debugger attached you may be grounding the hardware bootloader request line. detach your debugger!
 
