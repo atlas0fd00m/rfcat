@@ -183,7 +183,7 @@ installRfCatChronosDongle: RfCatChronos.hex
 installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
 	bootload.py /dev/RFCAT_BL erase_all
 	bootload.py /dev/RFCAT_BL download bins/RfCatChronosCCBootloader.hex
-	bootload.py /dev/RFCAT_BL run
+	bootload.py /dev/RFCAT_BL verify bins/RfCatChronosCCBootloader.hex && bootload.py /dev/RFCAT_BL run
 
 installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc erase
@@ -194,7 +194,7 @@ installRfCatDonsDongle: RfCatDons.hex
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL erase_all
 	bootload.py /dev/RFCAT_BL download bins/RfCatDonsCCBootloader.hex
-	bootload.py /dev/RFCAT_BL run
+	bootload.py /dev/RFCAT_BL verify bins/RfCatDonsCCBootloader.hex && bootload.py /dev/RFCAT_BL run
 
 installchronosfhssnicfw: chronosFHSS.hex
 	goodfet.cc erase
