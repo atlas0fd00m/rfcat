@@ -127,11 +127,13 @@ which is branched from here: https://github.com/fnoble/CC-Bootloader
 
 To install:
 
-We need a permanent symlink to the USB serial device that will communicate with the bootloader when required:
+We need permanent symlinks to the USB serial devices that will communicate with the CHRONOS and/or DONSDONGLE bootloader 
+when required:
 
-  edit /etc/udev/rules.d/20-rfcat.rules and add a line:
+  edit /etc/udev/rules.d/20-rfcat.rules and add the lines:
 
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="fffe" ATTRS{idProduct}=="000a" SYMLINK+="RFCAT_BL"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D"
 
   reboot or run 'sudo udevadm control --reload-rules'
 
