@@ -306,12 +306,13 @@ class USBDongle:
 
         for bus in usb.busses():
             for dev in bus.devices:
-                if dev.idProduct == 0x4715:
-                    if self._debug: print >>sys.stderr,(dev)
-                    do = dev.open()
-                    iSN = do.getDescriptor(1,0,50)[16]
-                    devnum = dev.devnum
-                    dongles.append((devnum, dev, do))
+                # OpenMoko assigned or Legacy TI
+                if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or dev.idProduct == 0x6048)):
+                        if self._debug: print >>sys.stderr,(dev)
+                        do = dev.open()
+                        iSN = do.getDescriptor(1,0,50)[16]
+                        devnum = dev.devnum
+                        dongles.append((devnum, dev, do))
 
         dongles.sort()
         if len(dongles) == 0:
