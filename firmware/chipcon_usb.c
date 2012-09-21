@@ -63,14 +63,14 @@ __code u8 buildname[] = {
 // USB endpoint
 #ifdef DONSDONGLES
     #define ID_VENDOR      0x1D50
-    #define ID_PRODUCT     0x6047
+    #define ID_PRODUCT     0x6048
     #define MANU_LEN       12
     #define MANUFACTURER   'R',0,'f',0,'C',0,'a',0,'t',0
     #define PROD_LEN       24
     #define PRODUCT_NAME   'D',0,'o',0,'n',0,'s',0,' ',0,'D',0,'o',0,'n',0,'g',0,'l',0,'e',0
 #elif defined CHRONOSDONGLE
     #define ID_VENDOR      0x1D50
-    #define ID_PRODUCT     0x6048
+    #define ID_PRODUCT     0x6047
     #define MANU_LEN       12
     #define MANUFACTURER   'R',0,'f',0,'C',0,'a',0,'t',0
     #define PROD_LEN       30
@@ -1304,7 +1304,7 @@ __code u8 USBDESCBEGIN [] = {
               '0', 0,
               '1', 0,
               '9', 0,
-              '3', 0,
+              '8', 0,
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff
