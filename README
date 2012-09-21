@@ -28,9 +28,11 @@ first things first.  using rfcat requires that you either use the python client 
 
 allowing non-root dongle access:
 
-  create a file in /etc/udev/rules.d called 20-rfcat.rules with the following line in it:
+  create a file in /etc/udev/rules.d called 20-rfcat.rules with the following lines in it:
 
     SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0666"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6047" MODE:="0666"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6048" MODE:="0666"
 
   reboot or run 'sudo udevadm control --reload-rules'
 
