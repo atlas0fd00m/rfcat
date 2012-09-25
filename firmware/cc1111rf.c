@@ -231,6 +231,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
                 buf++;  // skip sending the length byte
+                PKTLEN= len;
                 break;
             default:
                 break;
@@ -260,6 +261,8 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
                     PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
                     rfTxInfMode = 1;
                 }
+                else
+                    PKTLEN= len;
                 break;
             default:
                 break;
