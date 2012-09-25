@@ -29,6 +29,7 @@ first things first.  using rfcat requires that you either use the python client 
 allowing non-root dongle access:
 
   create a file in /etc/udev/rules.d called 20-rfcat.rules with the following lines in it:
+  (note, we've included this file for your convenience within this repo.  you may simply copy it to /etc/udev/rules.d/)
 
     SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0666"
     SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6047" MODE:="0666"
@@ -36,7 +37,7 @@ allowing non-root dongle access:
 
   reboot or run 'sudo udevadm control --reload-rules'
 
-this tool is created, maintained, and used primarily on linux.  make and sdcc must be installed.
+this tool is created, maintained, and used primarily on linux.  make and sdcc must be installed for creating new firmware and some of the helper functions we provide through make.
 
 supported dongles:
 * cc1111emk (aka DONSDONGLES)
@@ -133,6 +134,7 @@ We need permanent symlinks to the USB serial devices that will communicate with 
 when required:
 
   edit /etc/udev/rules.d/20-rfcat.rules and add the lines:
+  (note, we've included this file for your convenience within this repo.  you may simply copy it to /etc/udev/rules.d/)
 
     SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C"
     SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D"
