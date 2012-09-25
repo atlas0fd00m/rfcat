@@ -5,7 +5,7 @@ from distutils.core import setup, Extension
 packages = ['rflib', 'vstruct', 'vstruct.defs']
 mods = []
 pkgdata = {}
-scripts = ['rfcat', 'rfcat_server',
+scripts = ['rfcat', 'rfcat_server', 'CC-Bootloader/bootload.py',
         ]
 
 os.system('echo -n "RFLIB_VERSION=" > rflib/rflib_version.py')
