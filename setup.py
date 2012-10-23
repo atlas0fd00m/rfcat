@@ -8,9 +8,9 @@ pkgdata = {}
 scripts = ['rfcat', 'rfcat_server', 'CC-Bootloader/bootload.py',
         ]
 
-os.system('echo -n "RFLIB_VERSION=" > rflib/rflib_version.py')
-os.system('hg parent --template "{rev}" >> rflib/rflib_version.py')
-os.system('echo >> rflib/rflib_version.py')
+# store the HG revision in an rflib python file
+REV = int(os.popen('hg parent --template "{rev}"').readline())
+file('rflib/rflib_version.py', 'wb').write( "RFLIB_VERSION=%d" % REV)
 
 setup  (name        = 'rfcat',
         version     = '1.0',
