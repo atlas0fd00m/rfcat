@@ -3,7 +3,7 @@ BOOTLOADER_SIZE = 0x1400
 LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
 
 CC=sdcc
-CFLAGS=-Iinclude -DBUILD_VERSION=`hg parent --template '{rev}'`
+CFLAGS=-Iinclude -DBUILD_VERSION=`./revision.sh`
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
 
@@ -70,6 +70,7 @@ chipcon_usb.rd : chipcon_usb.c
 
 # firmware build targets
 
+## primary RfCat build targets ##
 RfCatChronos.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/RfCatChronos.hex
@@ -78,14 +79,30 @@ RfCatChronosCCBootloader.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/RfCatChronosCCBootloader.hex
 
-RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
-	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
-	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
-
 RfCatDons.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
 	packihx <appFHSSNIC.ihx >bins/RfCatDons.hex
 
+RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
+
+immeSniff.hex: appSniff.c $(libsimme) $(apps1111i)
+	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) $(apps1111) -DIMME
+	packihx <appSniff.ihx >bins/immeSniff.hex
+
+
+## vanilla build targets ##
+chronosapplication.hex: application.c $(libsusbc) $(apps1111c)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DCC1111
+	packihx <application.ihx >bins/application.hex
+
+donsapplication.hex: application.c $(libsusbd) $(apps1111d)
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DDONSDONGLES
+	packihx <application.ihx >bins/application.hex
+
+
+## legacy and test / play build targets ##
 chronosFHSS.hex: appFHSSNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appFHSSNIC.ihx >bins/chronosFHSS.hex
@@ -102,10 +119,6 @@ donsSniff.hex: appSniff.c $(libsusbd) $(apps1111d)
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appSniff.ihx >bins/donsSniff.hex
 
-immeSniff.hex: appSniff.c $(libsimme) $(apps1111i)
-	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsi) $(apps1111) -DIMME
-	packihx <appSniff.ihx >bins/immeSniff.hex
-
 chronosNIC.hex: appNIC.c $(libsusbc) $(apps1111c)
 	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) -DCHRONOSDONGLE
 	packihx <appNIC.ihx >bins/chronosNIC.hex
@@ -121,14 +134,6 @@ immeGame1.hex: imme-blackhat-game1.c $(libsimme) $(apps1111i)
 immeGame2.hex: imme-blackhat-game2.c $(libsimme) $(apps1111i)
 	sdcc $(CFLAGS) $(LFLAGS) imme-blackhat-game2.c $(libsi) $(apps1111) -DIMME
 	packihx <imme-blackhat-game2.ihx >bins/immeGame2.hex
-
-chronosapplication.hex: application.c $(libsusbc) $(apps1111c)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DCHRONOSDONGLE -DCC1111
-	packihx <application.ihx >bins/application.hex
-
-donsapplication.hex: application.c $(libsusbd) $(apps1111d)
-	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) -DDONSDONGLES
-	packihx <application.ihx >bins/application.hex
 
 cc2531.hex: appCC2531.c $(libsusbd3) $(apps2531d3)
 	sdcc $(CFLAGS) $(LFLAGS) appCC2531.c $(libsusb) $(apps2531) -DCC2531
@@ -174,6 +179,8 @@ testrecvapplication.hex: appNetworkTest.c $(libsvcomc) $(apps1111c)
 
 
 # installer targets (depend on the firmware build targets above and require a goodfet)
+
+## primary installer targets ##
 installRfCatChronosDongle: RfCatChronos.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/RfCatChronos.hex
@@ -196,6 +203,14 @@ installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
 
+installimmesnifffw: immeSniff.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/immeSniff.hex
+	goodfet.cc verify bins/immeSniff.hex
+	goodfet.cc info
+
+
+## legacy and test / play install targets ##
 installchronosfhssnicfw: chronosFHSS.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/chronosFHSS.hex
@@ -230,12 +245,6 @@ installdonssnifffw: donsSniff.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/donsSniff.hex
 	goodfet.cc verify bins/donsSniff.hex
-	goodfet.cc info
-
-installimmesnifffw: immeSniff.hex
-	goodfet.cc erase
-	goodfet.cc flash bins/immeSniff.hex
-	goodfet.cc verify bins/immeSniff.hex
 	goodfet.cc info
 
 installimmegame1: immeGame1.hex
