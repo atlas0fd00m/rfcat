@@ -197,6 +197,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 {
     __xdata u16 countdown;
     __xdata u8 encoffset= 0;
+    __xdata u8 original_pktlen= PKTLEN;
 
     while (MARCSTATE == MARC_STATE_TX)
     {
@@ -394,6 +395,9 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 
         // LED off - we're done
         LED = 0;
+
+        // reset PKTLEN as we may have messed with it
+        PKTLEN = original_pktlen;
 
         return 1;
     }

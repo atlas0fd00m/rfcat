@@ -3,7 +3,7 @@ BOOTLOADER_SIZE = 0x1400
 LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
 
 CC=sdcc
-CFLAGS=-Iinclude -DBUILD_VERSION=`./revision.sh`
+CFLAGS=-Iinclude -DBUILD_VERSION=`../revision.sh`
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
 
