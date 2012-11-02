@@ -236,8 +236,8 @@ MARC_STATE_MAPPINGS = [
     (11, 'MARC_STATE_IFADCON', RFST_SIDLE),
     (12, 'MARC_STATE_ENDCAL', RFST_SCAL),
     (13, 'MARC_STATE_RX', RFST_SRX),
-    (14, 'MARC_STATE_RX_END', RFST_SIDLE ),     # FIXME: this should actually be the config setting in register
-    (15, 'MARC_STATE_RX_RST', RFST_SIDLE),
+    (14, 'MARC_STATE_RX_END', RFST_SRX ),     # FIXME: this should actually be the config setting in register
+    (15, 'MARC_STATE_RX_RST', RFST_SRX),
     (16, 'MARC_STATE_TXRX_SWITCH', RFST_SIDLE),
     (17, 'MARC_STATE_RX_OVERFLOW', RFST_SIDLE),
     (18, 'MARC_STATE_FSTXON', RFST_SFSTXON),
@@ -952,6 +952,7 @@ class USBDongle:
         """
         if marcstate is None:
             marcstate = self.radiocfg.marcstate
+        if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
         self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
 
         
