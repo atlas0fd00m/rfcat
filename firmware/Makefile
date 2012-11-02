@@ -17,8 +17,9 @@ libsimme =
 libsidongle  = $(libsimme) immeusb.rel immeusbdebug.rel chipcon_dma.rel
 
 
+all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader
+	make clean immeSniff
 
-all: 	RfCatChronos
 donfw: 	RfCatDons
 immefw: immeSniff
 testrecv: testrecvapplication.hex
@@ -61,7 +62,7 @@ RfCatDons.hex: $(libsusbd) $(apps1111d)
 	packihx <appFHSSNIC.ihx >bins/RfCatDons.hex
 
 RfCatDonsCCBootloader.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE
-RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusbd) $(apps1111d)
+RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatDonsCCBootloader.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
@@ -76,7 +77,7 @@ immeSniff.hex: $(libsimme) $(appsimme)
 
 ## vanilla build targets ##
 chronosapplication.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
-chronosapplication.hex: $(libsusbc) $(apps1111c)
+chronosapplication.hex: $(libsusb) $(apps1111)
 	@printf "\n\n==chronosapplication.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <application.ihx >bins/application.hex
@@ -114,7 +115,7 @@ donsSniff.hex: $(libsusb) $(apps1111)
 	packihx <appSniff.ihx >bins/donsSniff.hex
 
 chronosNIC.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
-chronosNIC.hex: appNIC.c $(libsusbc) $(apps1111c)
+chronosNIC.hex: appNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==chronosNIC.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appNIC.ihx >bins/chronosNIC.hex
