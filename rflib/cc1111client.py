@@ -364,6 +364,7 @@ class USBDongle:
                 self.setup(console, copyDongle)
                 if copyDongle is None:
                     self._clear_buffers(False)
+                self.ping(3, wait=10, silent=True)
 
             except Exception, e:
                 #if console: sys.stderr.write('.')
@@ -848,7 +849,7 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
-    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=DEFAULT_USB_TIMEOUT):
+    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=DEFAULT_USB_TIMEOUT, silent=False):
         good=0
         bad=0
         start = time.time()
@@ -859,10 +860,12 @@ class USBDongle:
                 r = self.send(APP_SYSTEM, SYS_CMD_PING, buf, wait)
                 r,rt = r
                 istop = time.time()
-                print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
+                if not silent:
+                    print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
             except ChipconUsbTimeoutException, e:
                 r = None
-                print "Ping Failed.",e
+                if not silent:
+                    print "Ping Failed.",e
             if r==None:
                 bad+=1
             else:
