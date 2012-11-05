@@ -6,6 +6,8 @@ import bits
 from chipcondefs import *
 from rflib_version import *
 
+DEFAULT_USB_TIMEOUT = 1000
+
 # band limits in Hz
 FREQ_MIN_300  = 281000000
 FREQ_MAX_300  = 361000000
@@ -266,12 +268,18 @@ class USBDongle:
         self.idx = idx
         self.cleanup()
         self._debug = debug
-        self._threadGo = False
+        self._threadGo = threading.Event()
         self._recv_time = 0
         self.radiocfg = RadioConfig()
-        self.recv_thread = threading.Thread(target=self.runEP5)
+
+        self.recv_thread = threading.Thread(target=self.runEP5_recv)
         self.recv_thread.setDaemon(True)
         self.recv_thread.start()
+
+        self.send_thread = threading.Thread(target=self.runEP5_send)
+        self.send_thread.setDaemon(True)
+        self.send_thread.start()
+
         self.resetup(copyDongle=copyDongle)
         self.max_packet_size = RF_MAX_RX_BLOCK
 
@@ -279,7 +287,10 @@ class USBDongle:
         self._usberrorcnt = 0;
         self.recv_queue = ''
         self.recv_mbox  = {}
+        self.recv_event = threading.Event()
+        self.xmit_event = threading.Event()
         self.xmit_queue = []
+        self.xmit_event.clear()
         self.trash = []
     
     def setup(self, console=True, copyDongle=None):
@@ -294,9 +305,9 @@ class USBDongle:
             self._usbcfg = copyDongle._usbcfg
             self._usbintf = copyDongle._usbintf
             self._usbeps = copyDongle._usbeps
-            self._threadGo = True
+            self._threadGo.set()
             self.ep5timeout = EP_TIMEOUT_ACTIVE
-            copyDongle._threadGo = False            # we're taking over from here.
+            copyDongle._threadGo.clear()            # we're taking over from here.
             self.rsema = copyDongle.rsema
             self.xsema = copyDongle.xsema
             return
@@ -342,7 +353,7 @@ class USBDongle:
             else:
                 self._usbmaxo = ep.maxPacketSize
 
-        self._threadGo = True
+        self._threadGo.set()
 
     def resetup(self, console=True, copyDongle=None):
         self._do=None
@@ -363,7 +374,7 @@ class USBDongle:
 
 
     ########  BASE FOUNDATIONAL "HIDDEN" CALLS ########
-    def _sendEP0(self, request=0, buf=None, value=0x200, index=0, timeout=1000):
+    def _sendEP0(self, request=0, buf=None, value=0x200, index=0, timeout=DEFAULT_USB_TIMEOUT):
         if buf == None:
             buf = 'HELLO THERE'
         #return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, "\x00\x00\x00\x00\x00\x00\x00\x00"+buf, value, index, timeout), buf
@@ -375,7 +386,7 @@ class USBDongle:
             return ''.join(retary)
         return ""
 
-    def _sendEP5(self, buf=None, timeout=1000):
+    def _sendEP5(self, buf=None, timeout=DEFAULT_USB_TIMEOUT):
         global direct
         if (buf==None):
             buf = "\xff\x82\x07\x00ABCDEFG"
@@ -394,6 +405,7 @@ class USBDongle:
                 if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
                 self.xsema.acquire()
                 msg = self.xmit_queue.insert(0, drain)
+                self.xmit_event.set()
                 self.xsema.release()
                 if self._debug: print >>sys.stderr, repr(self.xmit_queue)
         '''
@@ -455,8 +467,8 @@ class USBDongle:
         return ''
 
     def _clear_buffers(self, clear_recv_mbox=False):
-        threadGo = self._threadGo
-        self._threadGo = False
+        threadGoSet = self._threadGo.isSet()
+        self._threadGo.clear()
         if self._debug:
             print >>sys.stderr,("_clear_buffers()")
         if clear_recv_mbox:
@@ -465,28 +477,30 @@ class USBDongle:
         self.trash.append((time.time(),self.recv_queue))
         self.recv_queue = ''
         # self.xmit_queue = []          # do we want to keep this?
-        self._threadGo = threadGo
+        if threadGoSet: self._threadGo.set()
 
 
     ######## TRANSMIT/RECEIVE THREADING ########
-    def runEP5(self):
+    def runEP5_send(self):
         msg = ''
-        self.threadcounter = 0
+        self.send_threadcounter = 0
 
         while True:
-            if (self._do is None or not self._threadGo): 
-                time.sleep(.04)
-                continue
+            #if self._debug: print "Waiting on device....",self._threadGo.isSet()
+            self._threadGo.wait()
 
-            self.threadcounter = (self.threadcounter + 1) & 0xffffffff
+            self.send_threadcounter = (self.send_threadcounter + 1) & 0xffffffff
+            #if self._debug: print "Send Thread counter: ",self.send_threadcounter
 
             #### transmit stuff.  if any exists in the xmit_queue
+            self.xmit_event.wait() # event driven xmit
             msgsent = False
-            msgrecv = False
             try:
                 if len(self.xmit_queue):
                     self.xsema.acquire()
                     msg = self.xmit_queue.pop(0)
+                    if not len(self.xmit_queue): # if there was only one message
+                        self.xmit_event.clear() # clear the queue, within the lock
                     self.xsema.release()
                     self._sendEP5(msg)
                     msgsent = True
@@ -498,8 +512,20 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
+    def runEP5_recv(self):
+        msg = ''
+        self.recv_threadcounter = 0
+
+        while True:
+            #if self._debug: print "Waiting on device....",self._threadGo.isSet()
+            self._threadGo.wait()
+
+            self.recv_threadcounter = (self.recv_threadcounter + 1) & 0xffffffff
+            #if self._debug: print "Recv Thread counter: ",self.recv_threadcounter
+            msgrecv = False
 
             #### handle debug application
+            if self._debug>2: print >> sys.stderr, "Looking for debug application"
             try:
                 q = None
                 b = self.recv_mbox.get(APP_DEBUG, None)
@@ -551,6 +577,7 @@ class USBDongle:
                 sys.excepthook(*sys.exc_info())
 
             #### receive stuff.
+            if self._debug>2: print >> sys.stderr, "Doing receiving...",self.ep5timeout
             try:
                 #### first we populate the queue
                 msg = self._recvEP5(timeout=self.ep5timeout)
@@ -570,10 +597,10 @@ class USBDongle:
                     if ('could not release intf' in errstr):
                         pass
                     elif ('No such device' in errstr):
-                        self._threadGo = False
+                        self._threadGo.clear()
                         self.resetup(False)
                     elif ('Input/output error' in errstr):  # USBerror 5
-                        self._threadGo = False
+                        self._threadGo.clear()
                         self.resetup(False)
 
                     else:
@@ -584,13 +611,13 @@ class USBDongle:
             except AttributeError,e:
                 if "'NoneType' object has no attribute 'bInterfaceNumber'" in str(e):
                     print "Error: dongle went away.  USB bus problems?"
-                    self._threadGo = False
+                    self._threadGo.clear()
                     self.resetup(False)
 
             except:
                 sys.excepthook(*sys.exc_info())
 
-
+            if self._debug>2: print >> sys.stderr, "Sorting mail..."
             #### parse, sort, and deliver the mail.
             try:
                 # FIXME: is this robust?  or just overcomplex?
@@ -609,6 +636,7 @@ class USBDongle:
                         # DON'T CHANGE recv_queue from other threads!
                         msg = self.recv_queue
                         msglen = len(msg)
+                        #if self._debug > 2: print >> sys.stderr, "Sorting msg", len(msg), msg.encode("hex")
                         while (msglen>=5):                                      # if not enough to parse length... we'll wait.
                             if not self._recv_time:                             # should be 0 to start and when done with a packet
                                 self._recv_time = time.time()
@@ -645,6 +673,8 @@ class USBDongle:
                                             b[cmd] = q
 
                                         q.append((msg, self._recv_time))
+                                        # notify receivers that a new msg is available
+                                        self.recv_event.set()
                                         self._recv_time = 0                         # we've delivered the current message
                                     except:
                                         sys.excepthook(*sys.exc_info())
@@ -663,32 +693,40 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
-
-            if not (msgsent or msgrecv or len(msg)) :
+            if self._debug>2: print >> sys.stderr, "Loop finished"
+            if not (msgrecv or len(msg)) :
                 #time.sleep(.1)
                 self.ep5timeout = EP_TIMEOUT_IDLE
             else:
                 self.ep5timeout = EP_TIMEOUT_ACTIVE
-                if self._debug > 5:  sys.stderr.write(" %s:%s:%d .-P."%(msgsent,msgrecv,len(msg)))
-
-
-                
-
+                if self._debug > 5:  sys.stderr.write(" %s:%d .-P."%(msgrecv,len(msg)))
 
 
 
     ######## APPLICATION API ########
     def recv(self, app, cmd=None, wait=USB_RX_WAIT):
-        for x in xrange(wait+1):
+        startTime = time.time()
+        while (time.time() - startTime)*1000 < wait:
             try:
                 b = self.recv_mbox.get(app)
+                if b:
+                    if self._debug: print>>sys.stderr, "Recv msg",app,b,cmd
+                else:
+                    self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait for a cmd to be received
+                    b = self.recv_mbox.get(app)
                 if cmd is None:
                     keys = b.keys()
+                    if not len(keys):
+                        self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait for a cmd to be received
+                        keys = b.keys()
                     if len(keys):
-                        cmd = b.keys()[-1]
+                        cmd = b.keys()[-1] # default to last cmd received
+                        if self._debug: print>>sys.stderr, "Using last cmd",cmd
                 if b is not None:
+                    self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait on recv event, with timeout of remaining time
+                    self.recv_event.clear() # clear event, if it's set
                     q = b.get(cmd)
-                    #print >>sys.stderr,"debug(recv) q='%s'"%repr(q)
+                    if self._debug: print >>sys.stderr,"debug(recv) q='%s'"%repr(q)
                     if q is not None and self.rsema.acquire(False):
                         #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
                         try:
@@ -704,10 +742,13 @@ class USBDongle:
                             pass
                         self.rsema.release()
                         #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
+            except KeyboardInterrupt:
+                sys.excepthook(*sys.exc_info())
+                break
             except:
                 sys.excepthook(*sys.exc_info())
 
-            time.sleep(.001)                                      # only hits here if we don't have something in queue
+            time.sleep(0.001)
             
         raise(ChipconUsbTimeoutException())
 
@@ -742,7 +783,9 @@ class USBDongle:
         msg = "%c%c%s%s"%(app,cmd, struct.pack("<H",len(buf)),buf)
         self.xsema.acquire()
         self.xmit_queue.append(msg)
+        self.xmit_event.set()
         self.xsema.release()
+        if self._debug: print "Sent Msg",msg.encode("hex")
         return self.recv(app, cmd, wait)
 
     def getDebugCodes(self, timeout=100):
@@ -772,8 +815,12 @@ class USBDongle:
         bad=0
         for x in range(count):
             #r = self._recvEP0(3, 10)
-            r = self._recvEP0(request=2, value=count, length=count, timeout=1000)
-            print "PING: %d bytes received: %s"%(len(r), repr(r))
+            try:
+                r = self._recvEP0(request=2, value=count, length=count, timeout=DEFAULT_USB_TIMEOUT)
+                print "PING: %d bytes received: %s"%(len(r), repr(r))
+            except ChipconUsbTimeoutException, e:
+                r = None
+                print "Ping Failed.",e
             if r==None:
                 bad+=1
             else:
@@ -801,7 +848,7 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
-    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=1000):
+    def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=DEFAULT_USB_TIMEOUT):
         good=0
         bad=0
         start = time.time()
@@ -815,7 +862,7 @@ class USBDongle:
                 print "PING: %d bytes transmitted, received: %s (%f seconds)"%(len(buf), repr(r), istop-istart)
             except ChipconUsbTimeoutException, e:
                 r = None
-                print "Ping Failed."
+                print "Ping Failed.",e
             if r==None:
                 bad+=1
             else:
@@ -1930,7 +1977,7 @@ class USBDongle:
 
     def reprClientState(self, width=120):
         output = ["="*width]
-        output.append('     client thread cycles:      %d' % self.threadcounter)
+        output.append('     client thread cycles:      %d/%d' % (self.recv_threadcounter,self.send_threadcounter))
         output.append('     client errored cycles:     %d' % self._usberrorcnt)
         output.append('     recv_queue:                (%d bytes) %s'%(len(self.recv_queue),repr(self.recv_queue)[:width-42]))
         output.append('     trash:                     (%d blobs) "%s"'%(len(self.trash),repr(self.trash)[:width-44]))
@@ -2375,5 +2422,5 @@ if __name__ == "__main__":
     idx = 0
     if len(sys.argv) > 1:
         idx = int(sys.argv.pop())
-    d = USBDongle(idx=idx)
+    d = USBDongle(idx=idx, debug=False)
 
