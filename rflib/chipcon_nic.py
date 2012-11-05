@@ -451,5 +451,5 @@ if __name__ == "__main__":
     idx = 0
     if len(sys.argv) > 1:
         idx = int(sys.argv.pop())
-    d = FHSSNIC(idx=idx)
-
+    d = FHSSNIC(idx=idx, debug=False)
+    unittest(d)
