@@ -210,6 +210,8 @@ installRfCatChronosDongle: RfCatChronos.hex
 	goodfet.cc info
 
 installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
+	rfcat --bootloader --force
+	@sleep 1
 	bootload.py /dev/RFCAT_BL_C erase_all
 	bootload.py /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_C verify bins/RfCatChronosCCBootloader.hex && bootload.py /dev/RFCAT_BL_C run

@@ -264,6 +264,7 @@ class USBDongle:
     def __init__(self, idx=0, debug=False, copyDongle=None):
         self.rsema = None
         self.xsema = None
+        self._bootloader = False
         self._do = None
         self.idx = idx
         self.cleanup()
@@ -324,6 +325,9 @@ class USBDongle:
                         iSN = do.getDescriptor(1,0,50)[16]
                         devnum = dev.devnum
                         dongles.append((devnum, dev, do))
+                elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x6050)):
+                    print "Already in Bootloader Mode... exiting"
+                    exit(0)
 
         dongles.sort()
         if len(dongles) == 0:
@@ -357,6 +361,8 @@ class USBDongle:
 
     def resetup(self, console=True, copyDongle=None):
         self._do=None
+        if self._bootloader: 
+            return
         #self._threadGo = True
         if self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
         while (self._do==None):
@@ -879,7 +885,8 @@ class USBDongle:
         this allows the firmware to be updated via USB instead of goodfet/ccdebugger
         '''
         try:
-            r = self.send(APP_SYSTEM, SYS_CMD_BOOTLOADER, "")
+            self._bootloader = True
+            r = self.send(APP_SYSTEM, SYS_CMD_BOOTLOADER, "", wait=1)
         except ChipconUsbTimeoutException:
             pass
         
