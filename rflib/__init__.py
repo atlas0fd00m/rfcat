@@ -20,10 +20,10 @@ class RfCat(FHSSNIC):
         self.RFdump("Clearing")
         self.lowball(lowball)
         self.setMdmDRate(drate)
-        print "Scanning range: "
+        print "Scanning range:  "
         while not keystop():
             try:
-                print
+                print "(press Enter to quit)"
                 for freq in xrange(int(basefreq), int(basefreq+(inc*count)), int(inc)):
                     print "Scanning for frequency %d..." % freq
                     self.setFreq(freq)

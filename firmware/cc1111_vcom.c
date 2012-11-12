@@ -464,7 +464,7 @@ void vcom_down() {
   P1DIR &= ~0x02;
 }
 
-void txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)
+int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)
 {
     u16 test = 0;
 
