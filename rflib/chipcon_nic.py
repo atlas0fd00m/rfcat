@@ -91,38 +91,19 @@ def calculateT2(ms, mhz=24):
     return best
     #return ms, candidates, best
             
-def invertBits(data):
-    output = []
-    ldata = len(data)
-    off = 0
 
-    if ldata&1:
-        output.append( chr( ord( data[0] ) ^ 0xff) )
-        off = 1
-
-    if ldata&2:
-        output.append( struct.pack( "<H", struct.unpack( "<H", data[off:off+2] )[0] ^ 0xffff) )
-        off += 2
-
-    #method 1
-    #for idx in xrange( off, ldata, 4):
-    #    output.append( struct.pack( "<I", struct.unpack( "<I", data[idx:idx+4] )[0] & 0xffff) )
-
-    #method2
-    count = ldata / 4
-    #print ldata, count
-    numlist = struct.unpack( "<%dI" % count, data[off:] )
-    modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
-    output.extend(modlist)
-
-    return ''.join(output)
-
+class EnDeCode:
+    def encode(self, msg):
+        raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
+    def decode(self, msg):
+        raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
 
 
 
 class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None):
         USBDongle.__init__(self, idx, debug, copyDongle)
+        self.endec = None
 
     def setRfMode(self, rfmode, parms=''):
         r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
@@ -195,6 +176,9 @@ class FHSSNIC(USBDongle):
 
     # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
     def RFxmit(self, data, repeat=0, offset=0):
+        # encode, if necessary
+        if self.endec is not None:
+            data = self.endec.encode(data)
         # calculate wait time
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
@@ -207,7 +191,15 @@ class FHSSNIC(USBDongle):
             if blocksize > EP5OUT_BUFFER_SIZE: 
                 raise(Exception("Blocksize too large. Maximum %d") % EP5OUT_BUFFER_SIZE)
             self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
-        return self.recv(APP_NIC, NIC_RECV, timeout)
+        data = self.recv(APP_NIC, NIC_RECV, timeout)
+        # decode, if necessary
+        if self.endec is not None:
+            data = self.endec.decode(data)
+
+        return data
+
+    def setEnDeCoder(self, endec=None):
+        self.endec = endec
 
     def RFlisten(self):
         ''' just sit and dump packets as they come in

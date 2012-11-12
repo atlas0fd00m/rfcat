@@ -345,3 +345,29 @@ def reprBitArray(bitAry, width=194):
     bots = "".join(bot)
     return "\n".join([tops, mids, bots])
 
+def invertBits(data):
+    output = []
+    ldata = len(data)
+    off = 0
+
+    if ldata&1:
+        output.append( chr( ord( data[0] ) ^ 0xff) )
+        off = 1
+
+    if ldata&2:
+        output.append( struct.pack( "<H", struct.unpack( "<H", data[off:off+2] )[0] ^ 0xffff) )
+        off += 2
+
+    #method 1
+    #for idx in xrange( off, ldata, 4):
+    #    output.append( struct.pack( "<I", struct.unpack( "<I", data[idx:idx+4] )[0] & 0xffff) )
+
+    #method2
+    count = ldata / 4
+    #print ldata, count
+    numlist = struct.unpack( "<%dI" % count, data[off:] )
+    modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
+    output.extend(modlist)
+
+    return ''.join(output)
+
