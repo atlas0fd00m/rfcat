@@ -41,7 +41,7 @@ void vcom(char* buff);
 void usb_up(void);
 void usb_down(void);
 
-void txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
+//void txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
 
 // End external interface
 

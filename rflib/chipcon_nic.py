@@ -212,6 +212,8 @@ class FHSSNIC(USBDongle):
     def RFlisten(self):
         ''' just sit and dump packets as they come in
         kinda like discover() but without changing any of the communications settings '''
+        print "Entering RFlisten mode...  packets arriving will be displayed on the screen"
+        print "(press Enter to stop)"
         while not keystop():
 
             try:
@@ -229,6 +231,8 @@ class FHSSNIC(USBDongle):
         ''' dump packets as they come in, but return a list of packets when you exit capture mode.
         kinda like discover() but without changing any of the communications settings '''
         capture = []
+        print "Entering RFlisten mode...  packets arriving will be displayed on the screen (and returned in a list)"
+        print "(press Enter to stop)"
         while not keystop():
 
             try:
@@ -381,6 +385,7 @@ u16 synched_chans           %x
         if RegExpSearch is not None:
             print "RegExpSearch:",repr(RegExpSearch)
 
+        print "(press Enter to quit)"
         while not keystop():
 
             try:
@@ -451,5 +456,5 @@ if __name__ == "__main__":
     idx = 0
     if len(sys.argv) > 1:
         idx = int(sys.argv.pop())
-    d = FHSSNIC(idx=idx)
-
+    d = FHSSNIC(idx=idx, debug=False)
+    unittest(d)
