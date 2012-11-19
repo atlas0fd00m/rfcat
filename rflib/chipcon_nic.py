@@ -13,7 +13,7 @@ APP_NIC =                       0x42
 NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3
-NIC_RFMODE =                    0x4
+# NIC_RFMODE =                    0x4
 NIC_SET_RECV_LARGE =            0x5
 NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
@@ -104,9 +104,6 @@ class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None):
         USBDongle.__init__(self, idx, debug, copyDongle)
         self.endec = None
-
-    def setRfMode(self, rfmode, parms=''):
-        r = self.send(APP_NIC, NIC_RFMODE, "%c"%rfmode + parms)
 
     def setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
         '''
