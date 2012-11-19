@@ -85,27 +85,6 @@ void blink_binary_baby_msb(u16 num, char bits)
     sleepMillis(1500);
 }*/
 
-/* FIXME: not convinced libc hurts us that much
-int memcpy(volatile __xdata void* dst, volatile __xdata void* src, u16 len)
-{
-    u16 loop;
-    for (loop^=loop;loop<len; loop++)
-    {
-        *(dst++) = *(src++);
-    }
-    return loop+1;
-}
-
-int memset(volatile __xdata void* dst, const char ch, u16 len)
-{
-    u16 loop;
-    for (loop^=loop;loop<len; loop++)
-    {
-        *(ptr++) = 0;
-    }
-    return loop+1;
-}
-*/
 int strncmp(const char *s1, const char *s2, u16 n)
 {
     char tst;

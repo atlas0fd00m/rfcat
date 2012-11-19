@@ -238,7 +238,7 @@ class FHSSNIC(USBDongle):
         return capture
 
     def FHSSxmit(self, data):
-        self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data)+1, data))
+        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
 
     def changeChannel(self, chan):
         return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
