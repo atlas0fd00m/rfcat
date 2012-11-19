@@ -71,6 +71,7 @@ SYS_CMD_POKE_REG                = 0x84
 SYS_CMD_GET_CLOCK               = 0x85
 SYS_CMD_BUILDTYPE               = 0x86
 SYS_CMD_BOOTLOADER              = 0x87
+SYS_CMD_RFMODE                  = 0x88
 SYS_CMD_RESET                   = 0x8f
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
@@ -272,6 +273,7 @@ class USBDongle:
         self._threadGo = threading.Event()
         self._recv_time = 0
         self.radiocfg = RadioConfig()
+        self._rfmode = RFST_SRX     # default to RX mode
 
         self.recv_thread = threading.Thread(target=self.runEP5_recv)
         self.recv_thread.setDaemon(True)
@@ -948,12 +950,21 @@ class USBDongle:
         mode = radiocfg.marcstate
         return (MODES[mode], mode)
 
+    ### set the RfMode
+    def setRfMode(self, rfmode, parms=''):
+        '''
+        sets the radio state to "rfmode", and makes 
+        '''
+        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "%c"%rfmode + parms)
+
     ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
         '''
         BOTH: set radio to TX state
         AND:  set radio to return to TX state when done with other states
         '''
+        self._rfmode = RFST_STX
+        #self.setRfMode(RFST_STX)       #FIXME: when firmware makes the change, so must this
         self.setRfMode(RF_STATE_TX)
 
     def setModeRX(self):
@@ -961,6 +972,8 @@ class USBDongle:
         BOTH: set radio to RX state
         AND:  set radio to return to RX state when done with other states
         '''
+        self._rfmode = RFST_SRX
+        #self.setRfMode(RFST_SRX)
         self.setRfMode(RF_STATE_RX)
 
     def setModeIDLE(self):
@@ -968,6 +981,8 @@ class USBDongle:
         BOTH: set radio to IDLE state
         AND:  set radio to return to IDLE state when done with other states
         '''
+        self._rfmode = RFST_SIDLE
+        #self.setRfMode(RFST_SIDLE)
         self.setRfMode(RF_STATE_IDLE)
 
 
@@ -1007,10 +1022,11 @@ class USBDongle:
         attempts to return the the correct mode after configuring some radio register(s).
         it uses the marcstate provided (or self.radiocfg.marcstate if none are provided) to determine how to strobe the radio.
         """
-        if marcstate is None:
-            marcstate = self.radiocfg.marcstate
-        if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
-        self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
+        #if marcstate is None:
+            #marcstate = self.radiocfg.marcstate
+        #if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
+        #self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
+        self.poke(X_RFST, "%c" % self._rfmode)
 
         
         

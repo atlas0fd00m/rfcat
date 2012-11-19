@@ -341,6 +341,7 @@ void registerCb_ep5(void (*callback)(void));
 #define     CMD_GET_CLOCK   0x85
 #define     CMD_BUILDTYPE   0x86
 #define     CMD_BOOTLOADER  0x87
+#define     CMD_RFMODE      0x88
 #define     CMD_RESET       0x8f
 
 #define     EP0_CMD_GET_DEBUG_CODES         0x00
