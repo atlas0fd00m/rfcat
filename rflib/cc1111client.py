@@ -960,27 +960,24 @@ class USBDongle:
         AND:  set radio to return to TX state when done with other states
         '''
         self._rfmode = RFST_STX
-        #self.setRfMode(RFST_STX)       #FIXME: when firmware makes the change, so must this
-        self.setRfMode(RF_STATE_TX)
-
+        self.setRfMode(RFST_STX)       #FIXME: when firmware makes the change, so must this
+        
     def setModeRX(self):
         '''
         BOTH: set radio to RX state
         AND:  set radio to return to RX state when done with other states
         '''
         self._rfmode = RFST_SRX
-        #self.setRfMode(RFST_SRX)
-        self.setRfMode(RF_STATE_RX)
-
+        self.setRfMode(RFST_SRX)
+        
     def setModeIDLE(self):
         '''
         BOTH: set radio to IDLE state
         AND:  set radio to return to IDLE state when done with other states
         '''
         self._rfmode = RFST_SIDLE
-        #self.setRfMode(RFST_SIDLE)
-        self.setRfMode(RF_STATE_IDLE)
-
+        self.setRfMode(RFST_SIDLE)
+        
 
     ### send raw state change to radio (doesn't update the return state for after RX/TX occurs)
     def strobeModeTX(self):
