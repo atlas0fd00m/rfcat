@@ -401,7 +401,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 
         return 1;
     }
-    return 0;
+    //return 0;
 }
 
 

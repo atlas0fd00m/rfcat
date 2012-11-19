@@ -13,7 +13,6 @@ APP_NIC =                       0x42
 NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3
-# NIC_RFMODE =                    0x4
 NIC_SET_RECV_LARGE =            0x5
 NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
@@ -279,7 +278,7 @@ class FHSSNIC(USBDongle):
     def getMACdata(self):
         datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
         print (repr(datastr))
-        data = struct.unpack("<BIHHHHHHBBH", datastr)
+        data = struct.unpack("<BHHHHHHHHBBH", datastr)
         return data
 
     def reprMACdata(self):
@@ -287,6 +286,7 @@ class FHSSNIC(USBDongle):
         return """\
 u8 mac_state                %x
 u32 MAC_threshold           %x
+u32 MAC_ovcount             %x
 u16 NumChannels             %x
 u16 NumChannelHops          %x
 u16 curChanIdx              %x

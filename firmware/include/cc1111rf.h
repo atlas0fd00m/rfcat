@@ -96,4 +96,5 @@ u8 transmit(__xdata u8*, u16 len, u16 repeat, u16 offset);   // sends data out t
 void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
 void byte_shuffle(__xdata u8* buf, u16 len, u16 offset);
+void startRX(void);
 #endif
