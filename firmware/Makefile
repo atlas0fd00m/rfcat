@@ -224,6 +224,8 @@ installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc info
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
+	rfcat --bootloader --force
+	@sleep 1
 	bootload.py /dev/RFCAT_BL_D erase_all
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
