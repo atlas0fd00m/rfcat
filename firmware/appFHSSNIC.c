@@ -296,6 +296,7 @@ void t3IntHandler(void) interrupt T3_VECTOR
 {
     // transmit one message from queue... possibly more, if time allows
     // must check the time left when tx completes
+    clock ++;
 }
 
 void init_FHSS(void)
