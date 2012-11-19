@@ -90,6 +90,10 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq);
 // * usb_data.usbstatus  - usb state overall...  (IDLE, SUSPEND, RESUME, RESET)
 // * ep#iobuf.ep_status  - endpoint status
 
+/* txdata is used for communicating back to the host over USB.  
+ * return:  0 on success
+ *          -1 on failure
+ */
 int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for application use
     // gonna try this direct this time, and ignore all the "state tracking" for the endpoint.
     // wish me luck!  this could horribly crash and burn.
@@ -99,7 +103,7 @@ int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for a
     USBINDEX=5;
 
     while (len>0)
-     {
+    {
         // if we do this in the loop, for some reason ep5.flags never clears between frames.  
         // don't know why since this bit is cleared in the USB ISR.
         loop = TXDATA_MAX_WAIT;
@@ -166,6 +170,7 @@ int txdata(u8 app, u8 cmd, u16 len, xdata u8* dataptr)      // assumed EP5 for a
         dataptr += loop;
 
     }
+    return(0);
 }
 
 
@@ -926,7 +931,7 @@ void processOUTEP5(void)
     xdata u8* ptr; 
 
     // if the buffer is still being loaded or just plain empty, ignore this  (superfluous... may remove this check later)
-    if (ep5.flags & EP_OUTBUF_WRITTEN == 0)
+    if ((ep5.flags & EP_OUTBUF_WRITTEN) == 0)
         return;
 
     ptr = &ep5.OUTbuf[0];

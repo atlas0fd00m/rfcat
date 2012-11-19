@@ -58,7 +58,7 @@ void MAC_initChannels()
     {
         g_Channels[loop] = loop % macdata.NumChannels;
     }
-    macdata.MAC_threshold = 0;
+    //macdata.MAC_threshold = 0;
 }
 
 void begin_hopping(u8 T2_offset)
@@ -212,47 +212,56 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
     // otherwise....
     //
     // if we are here, the T2CT must have cycled.  increment rf_MAC_timer
-    if (++rf_MAC_timer >= macdata.MAC_threshold)
+    if (++rf_MAC_timer == macdata.MAC_threshold)
+        rf_MAC_timer = 0;   // since we're 0-based, MAC_threshold is actually past the end of our state machine, which makes it 0 *right now*
+    
+    switch (rf_MAC_timer)
     {
-        // mark last hop time
-        macdata.tLastHop = T2CT | (rf_MAC_timer<<8);
-        
-        // change to the next channel
-        if (++macdata.curChanIdx >= macdata.NumChannelHops)
-        {
-            macdata.curChanIdx = 0;
-        }
+        case 0:     // change channels
+            // mark last hop time
+            macdata.tLastHop = T2CT | (rf_MAC_timer<<8);        // should this be based on clock and T1?
+            
+            // change to the next channel
+            if (++macdata.curChanIdx >= macdata.NumChannelHops)
+            {
+                macdata.curChanIdx = 0;
+            }
 
-        // actually change the channel to our new index
-        if (MARCSTATE == MARC_STATE_TX)
-            return;
+#ifndef DEBUG_HOPPING
+            // if we are transmitting, don't change.  this helps with certain faster hopping systems where the packet is intended to take longer than the dwell time
+            if (MARCSTATE == MARC_STATE_TX)
+                return;
+#endif
 
-        MAC_set_chanidx(macdata.curChanIdx);
-        rf_MAC_timer = 0;
+            // actually change the channel to our new index
+            MAC_set_chanidx(macdata.curChanIdx);
+            
 #ifdef DEBUG_HOPPING
-        debug("hop");
-        RFOFF;
-        RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
-        LED = !LED;
-        while(MARCSTATE != MARC_STATE_TX);
-#else
-
-        // if we are the SYNC_MASTER and are in the process of "doing the SYNC"
-        // we need to transmit something indicating the channel we're on
-        switch (macdata.mac_state)
-        {
-            case MAC_STATE_SYNCINGMASTER:
+            debug("hop");
+            RFOFF;
+            RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
+            LED = !LED;
+            while(MARCSTATE != MARC_STATE_TX);
+            return();
+    
+#endif
+            break;
+            
+        case 1:
+            //only on the first tick do we send our sync master discovery beacon frame
+            if (macdata.mac_state == MAC_STATE_SYNCINGMASTER)
+            {
                 sleepMillis(FHSS_TX_SLEEP_DELAY);
                 packet[0] = 28;
                 packet[1] = macdata.curChanIdx & 0xff;
                 packet[2] = macdata.curChanIdx >> 8;
-                packet[3] = 'B';
-                packet[4] = 'L';
-                packet[5] = 'A';
-                packet[6] = 'H';
-                packet[7] = 'B';
-                packet[8] = 'L';
-                packet[9] = 'A';
+                packet[3] =  'B';
+                packet[4] =  'L';
+                packet[5] =  'A';
+                packet[6] =  'H';
+                packet[7] =  'B';
+                packet[8] =  'L';
+                packet[9] =  'A';
                 packet[10] = 'H';
                 packet[11] = 'B';
                 packet[12] = 'L';
@@ -274,45 +283,49 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
 
                 transmit((xdata u8*)&packet[1], 28, 0, 0);
                 macdata.synched_chans++;
-                break;
-
-
-            case MAC_STATE_SYNC_MASTER:
-                if (100 < (clock - macdata.tLastStateChange))
-                {
-                    debug("SYNCH_MASTER -> SYNCINGMASTER");
-                    macdata.mac_state = MAC_STATE_SYNCINGMASTER;
-                    macdata.tLastStateChange = clock;
-                }
-                //debughex(clock);
-                //debughex(T1CNTH);
-                //debughex(T1CNTL);
-            case MAC_STATE_SYNCHED:
-                // if the queue is not empty, wait but then tx.
-                // FIXME: this currently sends only once per hop.  this may or may not be appropriate, but it's simple to implement.
-
-                /*if (T2CT < 10 || T2CT > 246)      // always 0xff, i mean, we're *in* the interrupt handler after all.
-                {
-                    debughex(T2CT);
-                    return;
-                }*/
-
-                if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
-                {
-                    LED = !LED;
-                    sleepMillis(FHSS_TX_SLEEP_DELAY);
-                    transmit(&g_txMsgQueue[macdata.txMsgIdxDone][!(PKTCTRL0&1)], g_txMsgQueue[macdata.txMsgIdxDone][0], 0, 0);
-                    // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
-                    g_txMsgQueue[macdata.txMsgIdxDone][0] = 0;
-
-                    if (++macdata.txMsgIdxDone >= MAX_TX_MSGS)
+                break;      // don't want to do anything else if we're in this state.
+            }
+            break;
+            
+        default:    // all other ticks we can transmit
+            // if we are the SYNC_MASTER and are in the process of "doing the SYNC"
+            // we need to transmit something indicating the channel we're on
+            switch (macdata.mac_state)
+            {
+                case MAC_STATE_SYNCINGMASTER:
+                case MAC_STATE_SYNC_MASTER:
+                    if (100 < (clock - macdata.tLastStateChange))   // periodically shift back to beaconing
                     {
-                        macdata.txMsgIdxDone = 0;
+                        debug("SYNCH_MASTER -> SYNCINGMASTER");
+                        macdata.mac_state = MAC_STATE_SYNCINGMASTER;
+                        macdata.tLastStateChange = clock;
                     }
-                    debug("FHSSxmit done");
-                }
-        }
-#endif
+                    // flow into SYNCHED to behave just like any other synched node (transmitting, etc...)
+                case MAC_STATE_SYNCHED:
+                    // if the queue is not empty, wait but then tx.
+                    // FIXME: this currently sends only once per hop.  this may or may not be appropriate, but it's simple to implement.
+
+                    /*if (T2CT < 10 || T2CT > 246)      // always 0xff, i mean, we're *in* the interrupt handler after all.
+                    {
+                        debughex(T2CT);
+                        return;
+                    }*/
+
+                    if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
+                    {
+                        LED = !LED;
+                        sleepMillis(FHSS_TX_SLEEP_DELAY);
+                        transmit(&g_txMsgQueue[macdata.txMsgIdxDone][!(PKTCTRL0&1)], g_txMsgQueue[macdata.txMsgIdxDone][0], 0, 0);
+                        // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
+                        g_txMsgQueue[macdata.txMsgIdxDone][0] = 0;
+
+                        if (++macdata.txMsgIdxDone >= MAX_TX_MSGS)
+                        {
+                            macdata.txMsgIdxDone = 0;
+                        }
+                        debug("FHSSxmit done");
+                    }
+            }
     }
 }
 
@@ -320,7 +333,6 @@ void t3IntHandler(void) interrupt T3_VECTOR
 {
     // transmit one message from queue... possibly more, if time allows
     // must check the time left when tx completes
-    clock ++;
 }
 
 void init_FHSS(void)
@@ -333,7 +345,8 @@ void init_FHSS(void)
     macdata.NumChannelHops = DEFAULT_NUM_CHANHOPS;
     macdata.tLastHop = 0;
     macdata.tLastStateChange = 0;
-    macdata.MAC_threshold = 0;
+    macdata.MAC_threshold = 6;
+    macdata.MAC_timer = 0;
     macdata.desperatelySeeking = 0;
     macdata.synched_chans = 0;
 
@@ -343,24 +356,6 @@ void init_FHSS(void)
 
 
     // Timer Setup:
-    // FIXME: MAKE THIS PART OF THE CLIENT CONFIGURATION?
-// FIXME: this should be defined so it works with 24/26mhz
-    // setup TIMER 1
-    // free running mode
-    // time freq:
-    //   ******************** NOW IN GLOBAL.C ************************
-    //CLKCON &= 0xc7;          //( ~ 0b111000);
-    //T1CTL |= T1CTL_DIV_128;
-    //T1CTL |= T1CTL_MODE_FREERUN;
-    //   *************************************************************
-// FIXME: turn on timer interrupts for t1 and t2
-    // (TIMER2 is initially setup in cc1111rf.c in init_RF())
-    // setup TIMER 2
-    // NOTE:
-    // !!! any changes to TICKSPD will change the calculation of MAC timer speed !!!
-    //
-    // free running mode
-    // time freq:
 #ifndef IMME
     // 100ms at 24mhz
     //T2PR = 0x92;        
@@ -411,6 +406,13 @@ void init_FHSS(void)
     T3CTL |= T3CTL_START;
 }
 
+//  initialize the MAC layer.  
+void init_MAC(void)
+{
+    init_FHSS();
+}
+
+
 /*************************************************************************************************
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
@@ -421,10 +423,7 @@ void appMainInit(void)
     registerCb_ep5( appHandleEP5 );
     clock = 0;
 
-    init_FHSS();
-
-    //RxMode();
-    
+    init_MAC();
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
@@ -787,6 +786,7 @@ int appHandleEP5()
                     break;
 
                 case FHSS_GET_MAC_DATA:
+                    macdata.MAC_timer = rf_MAC_timer;
                     appReturn( sizeof(macdata), (xdata u8*)&macdata);
                     break;
 
