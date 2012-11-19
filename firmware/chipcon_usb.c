@@ -1301,10 +1301,7 @@ __code u8 USBDESCBEGIN [] = {
 // Serial number
                10,                      // bLength
                USB_DESC_STRING,         // bDescriptorType
-              '0', 0,
-              '2', 0,
-              '1', 0,
-              '6', 0,
+               USB_DEVICE_SERIAL_NUMBER
           
 // END OF STRINGS (len 0, type ff)
                0, 0xff

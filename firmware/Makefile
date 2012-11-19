@@ -1,6 +1,7 @@
 # set BOOTLOADER_SIZE to match your bootloader
 BOOTLOADER_SIZE = 0x1400
 LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
+USB_DEVICE_SERIAL_NUMBER="`./new_serial.py`"
 
 CC=sdcc
 CFLAGS=-Iinclude -DBUILD_VERSION=`../revision.sh`
@@ -28,8 +29,8 @@ testxmit: testxmitapplication.hex
 
 # helper targets 
 chipcon_usb.rel : 
-	./new_serial.py
-	$(CC) $(CFLAGS) $(DEFINES) -c chipcon_usb.c
+	#./new_serial.py
+	$(CC) $(CFLAGS) $(DEFINES)  -DUSB_DEVICE_SERIAL_NUMBER=$(USB_DEVICE_SERIAL_NUMBER) -c chipcon_usb.c
 
 %.rel : %.c
 	$(CC) $(CFLAGS) $(DEFINES) -c $<

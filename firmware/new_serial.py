@@ -12,23 +12,11 @@ try:
 except IOError:
     ser = 0
 
-print("[--- new serial number: %.4d ---]" % ser)
+print >>sys.stderr,("[--- new serial number: %.4d ---]" % ser)
 
 file(".serial", 'wb').write("%.4d" % ser)
 sertxt = "%.4d" % ser
 
-sf = file("chipcon_usb.c", 'r+')
-sfile = sf.read()
-idx = sfile.find('// Serial number')
-eos = sfile.find('// END OF STRINGS')
-
-sf.seek(idx)
-sf.write(sn_header)
-
 for c in sertxt:
-    sf.write("              '%s', 0,\n" % c)
+    sys.stdout.write("'%s',0," % c)
 
-sf.write(" "*(eos-sf.tell()-1))
-sf.write('\n')
-
-sf.close()
