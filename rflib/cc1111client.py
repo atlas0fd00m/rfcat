@@ -104,10 +104,6 @@ SYNCM_CARRIER_15_of_16          = 5
 SYNCM_CARRIER_16_of_16          = 6
 SYNCM_CARRIER_30_of_32          = 7
 
-RF_STATE_RX                     = 1
-RF_STATE_TX                     = 2
-RF_STATE_IDLE                   = 3
-
 RF_SUCCESS                      = 0
 
 RF_MAX_TX_BLOCK                 = 255
