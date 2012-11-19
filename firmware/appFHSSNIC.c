@@ -79,6 +79,28 @@ void stop_hopping(void)
     
 }
 
+void MAC_tx(xdata u8* msg, u8 len)
+{
+    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
+    // queue data for sending at subsequent time slots.
+    // FIXME: this is not good for fixed-length
+
+    if (len > MAX_TX_MSGLEN)
+    {
+        debug("FHSSxmit message too long");
+        return;
+    }
+
+    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+
+    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+    {
+        macdata.txMsgIdx = 0;
+    }
+
+}
+
 void MAC_sync(u16 CellID)
 {
     // this should be implemented for a specific MAC/PHY.  too many details are left out here.
@@ -152,22 +174,6 @@ void MAC_set_chanidx(u16 chanidx)
     PHY_set_channel( g_Channels[ chanidx ] );
 }
 
-void MAC_tx(u8* message, u8 len)
-{
-    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
-    // queue data for sending at subsequent time slots.
-    // FIXME: this is not good for fixed-length
-
-    g_txMsgQueue[macdata.txMsgIdx][0] = len;
-    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], message, len);
-
-    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
-    {
-        macdata.txMsgIdx = 0;
-    }
-
-}
-
 
 void MAC_set_NIC_ID(u16 NIC_ID)
 {
@@ -175,7 +181,7 @@ void MAC_set_NIC_ID(u16 NIC_ID)
     g_NIC_ID = NIC_ID;
 }
 
-void MAC_rx_handle(u8 len, u8* message)
+void MAC_rx_handle(u8 len, xdata u8* message)
 {
     len;
     message;
@@ -270,11 +276,28 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                 macdata.synched_chans++;
                 break;
 
-            case MAC_STATE_SYNCHED:
+
             case MAC_STATE_SYNC_MASTER:
+                if (100 < (clock - macdata.tLastStateChange))
+                {
+                    debug("SYNCH_MASTER -> SYNCINGMASTER");
+                    macdata.mac_state = MAC_STATE_SYNCINGMASTER;
+                    macdata.tLastStateChange = clock;
+                }
+                //debughex(clock);
+                //debughex(T1CNTH);
+                //debughex(T1CNTL);
+            case MAC_STATE_SYNCHED:
                 // if the queue is not empty, wait but then tx.
                 // FIXME: this currently sends only once per hop.  this may or may not be appropriate, but it's simple to implement.
-                if (g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
+
+                /*if (T2CT < 10 || T2CT > 246)      // always 0xff, i mean, we're *in* the interrupt handler after all.
+                {
+                    debughex(T2CT);
+                    return;
+                }*/
+
+                if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
                 {
                     LED = !LED;
                     sleepMillis(FHSS_TX_SLEEP_DELAY);
@@ -286,6 +309,7 @@ void t2IntHandler(void) interrupt T2_VECTOR  // interrupt handler should trigger
                     {
                         macdata.txMsgIdxDone = 0;
                     }
+                    debug("FHSSxmit done");
                 }
         }
 #endif
@@ -604,23 +628,6 @@ int appHandleEP5()
                     appReturn( 1, buf);
                     break;
 
-                case NIC_RFMODE:
-                    switch (*buf++)
-                    {
-                        case RF_STATE_RX:
-                            RxMode();
-                            break;
-                        case RF_STATE_IDLE:
-                            LED = 0;
-                            IdleMode();
-                            break;
-                        case RF_STATE_TX:
-                            TxMode();
-                            break;
-                    }
-                    appReturn(ep5.OUTlen,buf);
-                    break;
-
                 case NIC_XMIT:
                     // this needs to place buf data into the FHSS txMsgQueue    - really?
                     // certainly don't want to allow this function if we're HOPPING.  that would be baaaaaaaaad.
@@ -695,8 +702,37 @@ int appHandleEP5()
                     break;
 
                 case FHSS_XMIT:
-                    MAC_tx(buf, ep5.OUTlen);
-                    appReturn( 1, (xdata u8*)"\x00");
+                    len = *buf++;
+                    //len += (*buf++) << 8;
+                    //repeat = *buf++;
+                    //repeat += (*buf++) << 8;
+                    //offset = *buf++;
+                    //offset += (*buf++) << 8;
+                    //transmit(buf, len, repeat, offset);
+                    //MAC_tx(buf, len);
+    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
+    if (len > MAX_TX_MSGLEN)
+    {
+        debug("FHSSxmit message too long");
+                    appReturn( 1, (xdata u8*)&len);
+        break;
+    }
+
+    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
+    {
+        debug("still waiting on the last packet");
+                    appReturn( 1, (xdata u8*)&len);
+        break;
+    }
+    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+
+    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+    {
+        macdata.txMsgIdx = 0;
+    }
+
+                    appReturn( 1, (xdata u8*)&len);
                     break;
                     
                 case FHSS_SET_CHANNELS:
