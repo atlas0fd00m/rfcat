@@ -323,7 +323,7 @@ class USBDongle:
                         iSN = do.getDescriptor(1,0,50)[16]
                         devnum = dev.devnum
                         dongles.append((devnum, dev, do))
-                elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x6050)):
+                elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x604a)):
                     print "Already in Bootloader Mode... exiting"
                     exit(0)
 
