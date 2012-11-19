@@ -139,6 +139,7 @@ void clock_init(void){
     CLKCON &= 0xc7;          //( ~ 0b111000);
     T1CTL |= T1CTL_DIV_128;
     T1CTL |= T1CTL_MODE_FREERUN;
+    T1IE = 1;
 }
 
 
