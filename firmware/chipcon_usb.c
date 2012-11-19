@@ -1013,6 +1013,24 @@ void processOUTEP5(void)
                 sleepMillis(200);
                 run_bootloader();
                 break;
+                
+            case CMD_RFMODE:
+                switch (*ptr++)
+                {
+                    case RFST_SRX:
+                        RxMode();
+                        break;
+                    case RFST_SIDLE:
+                        LED = 0;
+                        IdleMode();
+                        break;
+                    case RFST_STX:
+                        TxMode();
+                        break;
+                }
+                //appReturn(ep5.OUTlen,buf);
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
+                break;
 
             case CMD_RESET:
                 if (strncmp(ptr, "RESET_NOW", 9))
