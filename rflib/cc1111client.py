@@ -258,7 +258,7 @@ direct=False
 
 class USBDongle:
     ######## INITIALIZATION ########
-    def __init__(self, idx=0, debug=False, copyDongle=None):
+    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         self.rsema = None
         self.xsema = None
         self._bootloader = False
@@ -266,10 +266,11 @@ class USBDongle:
         self.idx = idx
         self.cleanup()
         self._debug = debug
+        self._quiet = False
         self._threadGo = threading.Event()
         self._recv_time = 0
         self.radiocfg = RadioConfig()
-        self._rfmode = RFST_SRX     # default to RX mode
+        self._rfmode = RfMode
 
         self.recv_thread = threading.Thread(target=self.runEP5_recv)
         self.recv_thread.setDaemon(True)
@@ -291,7 +292,10 @@ class USBDongle:
         self.xmit_queue = []
         self.xmit_event.clear()
         self.trash = []
-    
+   
+    def setRFparameters(self):
+        pass
+
     def setup(self, console=True, copyDongle=None):
         global dongles
 
@@ -355,6 +359,7 @@ class USBDongle:
             else:
                 self._usbmaxo = ep.maxPacketSize
 
+        #self.setRFparameters()
         self._threadGo.set()
 
     def resetup(self, console=True, copyDongle=None):
@@ -369,11 +374,13 @@ class USBDongle:
                 if copyDongle is None:
                     self._clear_buffers(False)
                 self.ping(3, wait=10, silent=True)
+                self.setRfMode(self._rfmode)
 
             except Exception, e:
                 #if console: sys.stderr.write('.')
-                print >>sys.stderr,("Error in resetup():" + repr(e))
-                if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
+                if self._quiet:
+                    print >>sys.stderr,("Error in resetup():" + repr(e))
+                #if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
                 time.sleep(1)
 
 
@@ -951,7 +958,8 @@ class USBDongle:
         '''
         sets the radio state to "rfmode", and makes 
         '''
-        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "%c"%rfmode + parms)
+        self._rfmode = rfmode
+        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "%c" % (self._rfmode) + parms)
 
     ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
@@ -959,7 +967,6 @@ class USBDongle:
         BOTH: set radio to TX state
         AND:  set radio to return to TX state when done with other states
         '''
-        self._rfmode = RFST_STX
         self.setRfMode(RFST_STX)       #FIXME: when firmware makes the change, so must this
         
     def setModeRX(self):
@@ -967,7 +974,6 @@ class USBDongle:
         BOTH: set radio to RX state
         AND:  set radio to return to RX state when done with other states
         '''
-        self._rfmode = RFST_SRX
         self.setRfMode(RFST_SRX)
         
     def setModeIDLE(self):
@@ -975,7 +981,6 @@ class USBDongle:
         BOTH: set radio to IDLE state
         AND:  set radio to return to IDLE state when done with other states
         '''
-        self._rfmode = RFST_SIDLE
         self.setRfMode(RFST_SIDLE)
         
 
