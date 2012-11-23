@@ -1,5 +1,55 @@
 import struct
 
+
+def wtfo(string):
+    outstr = []
+    bitlen = len(outstr) * 8
+    for x in range(8):
+        outstr.append(shiftString(string, x))
+
+    string = strBitReverse(string)
+    for x in range(8):
+        outstr.append(shiftString(string, x))
+
+    return outstr
+
+def strBitReverse(string):
+    # FIXME: this is really dependent upon python's number system.  large strings will not convert well.  
+    # FIXME: break up array of 8-bit numbers and bit-swap in the array
+    num = 0
+    bits = len(string)*8
+    # convert to MSB number
+    for x in range(len(string)):
+        ch = string[x]
+        #num |= (ord(ch)<<(8*x))        # this is LSB
+        num <<= 8
+        num |= ord(ch)
+
+    print (hex(num))
+    rnum = bitReverse(num, bits)
+    print (hex(rnum))
+
+    # convert back from MSB number to string
+    out = []
+    for x in range(len(string)):
+        out.append(chr(rnum&0xff))
+        rnum >>= 8
+    out.reverse()
+    print(''.join(out).encode('hex'))
+    return ''.join(out)
+
+
+        
+        
+
+def bitReverse(num, bitcnt):
+    newnum = 0
+    for idx in range(bitcnt):
+        newnum <<= 1
+        newnum |= num&1
+        num    >>= 1
+    return newnum
+
 def shiftString(string, bits):
     carry = 0
     news = []
