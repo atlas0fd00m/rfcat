@@ -100,8 +100,8 @@ class EnDeCode:
 
 
 class FHSSNIC(USBDongle):
-    def __init__(self, idx=0, debug=False, copyDongle=None):
-        USBDongle.__init__(self, idx, debug, copyDongle)
+    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
+        USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
         self.endec = None
 
     def setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
