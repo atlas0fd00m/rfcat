@@ -70,23 +70,24 @@ T2SETTINGS_26MHz = {
     
 TIP = (64,128,256,1024)
 
-def calculateT2(ms, mhz=24):
+def calculateT2(tick_ms, mhz=24):
+    # each tick, not each cycle
     TICKSPD = [(mhz*1000000/pow(2,x)) for x in range(8)]
     
-    ms = 1.0*ms/1000
+    tick_ms = 1.0*tick_ms/1000
     candidates = []
     for tickidx in xrange(8):
         for tipidx in range(4):
             for PR in xrange(256):
                 T = 1.0 * PR * TIP[tipidx] / TICKSPD[tickidx]
-                if abs(T-ms) < .010:
+                if abs(T-tick_ms) < .010:
                     candidates.append((T, tickidx, tipidx, PR))
     diff = 1024
     best = None
     for c in candidates:
-        if abs(c[0] - ms) < diff:
+        if abs(c[0] - tick_ms) < diff:
             best = c
-            diff = abs(c[0] - ms)
+            diff = abs(c[0] - tick_ms)
     return best
     #return ms, candidates, best
             
@@ -260,8 +261,12 @@ class FHSSNIC(USBDongle):
     def stopHopping(self):
         return self.send(APP_NIC, FHSS_STOP_HOPPING, '')
 
-    def setMACperiod(self, ms, mhz=24):
-        val = calculateT2(ms, mhz)
+    def setMACperiod(self, dwell_ms, mhz=24):
+        macdata = self.getMACdata()
+        cycles_per_channel = macdata[1]
+        ticks_per_cycle = 256
+        tick_ms = dwell_ms / (ticks_per_cycle * cycles_per_channel)
+        val = calculateT2(tick_ms, mhz)
         T, tickidx, tipidx, PR = val
         print "Setting MAC period to %f secs (%x %x %x)" % (val)
         t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
