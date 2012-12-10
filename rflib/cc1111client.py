@@ -322,11 +322,11 @@ class USBDongle:
             for dev in bus.devices:
                 # OpenMoko assigned or Legacy TI
                 if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or dev.idProduct == 0x6048)):
-                        if self._debug: print >>sys.stderr,(dev)
-                        do = dev.open()
-                        iSN = do.getDescriptor(1,0,50)[16]
-                        devnum = dev.devnum
-                        dongles.append((devnum, dev, do))
+                    if self._debug: print >>sys.stderr,(dev)
+                    do = dev.open()
+                    iSN = do.getDescriptor(1,0,50)[16]
+                    devnum = dev.devnum
+                    dongles.append((devnum, dev, do))
                 elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x604a)):
                     print "Already in Bootloader Mode... exiting"
                     exit(0)
@@ -378,7 +378,7 @@ class USBDongle:
 
             except Exception, e:
                 #if console: sys.stderr.write('.')
-                if self._quiet:
+                if not self._quiet:
                     print >>sys.stderr,("Error in resetup():" + repr(e))
                 #if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
                 time.sleep(1)
