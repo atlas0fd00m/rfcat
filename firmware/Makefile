@@ -387,7 +387,7 @@ verifyRfCatChronosDongle: chronosapplication.hex
 	goodfet.cc verify bins/chronosFHSS.hex
 
 verifyRfCatDonsDongle: chronosapplication.hex
-	goodfet.cc verify bins/chronosFHSS.hex
+	goodfet.cc verify bins/donsFHSS.hex
 
 clean:
 	@printf "\n==== CLEANING STUFF UP ====\n"
