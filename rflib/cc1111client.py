@@ -262,6 +262,7 @@ class USBDongle:
         self.rsema = None
         self.xsema = None
         self._bootloader = False
+        self._init_on_reconnect = True
         self._do = None
         self.idx = idx
         self.cleanup()
@@ -359,7 +360,8 @@ class USBDongle:
             else:
                 self._usbmaxo = ep.maxPacketSize
 
-        #self.setRFparameters()
+        if self._init_on_reconnect:
+            self.setRFparameters()
         self._threadGo.set()
 
     def resetup(self, console=True, copyDongle=None):
