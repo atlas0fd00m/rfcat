@@ -111,7 +111,7 @@ chronosSniff.hex: $(libsusb) $(apps1111)
 
 donsSniff.hex: DEFINES= -DDONSDONGLES -DCC1111 -DUSBDEVICE
 donsSniff.hex: $(libsusb) $(apps1111)
-	@printf "\n\n==donsNIC.hex building==\n"
+	@printf "\n\n==donsSniff.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appSniff.ihx >bins/donsSniff.hex
 
@@ -361,25 +361,27 @@ restoredongle:
 testall: clean
 testall: RfCatChronosCCBootloader
 testall:	RfCatChronos
+testall:	chronosFHSS.hex
+testall:	chronosapplication.hex
+testall:	chronostestrecvusb.hex
+testall:	chronostestxmitusb.hex
+testall:	chronosNIC.hex
+testall:	chronosSniff.hex
 testall:	RfCatDons
 testall:	RfCatDonsCCBootloader
-testall:	chronosapplication.hex
+testall:	donsFHSS.hex
 testall:	donsapplication.hex
-testall:	chronostestrecvusb.hex
 testall:	donstestrecvusb.hex
-testall:	chronostestxmitusb.hex
 testall:	donstestxmitusb.hex
 testall:	testrecvapplication.hex
 testall:	testxmitapplication.hex
-testall:	chronosNIC.hex
-testall:	donsNIC.hex
-testall:	chronosFHSS.hex
-testall:	donsFHSS.hex
-testall:	chronosSniff.hex
+#testall:	donsNIC.hex
 #testall:	cc2531.hex
 ##testall:	immedongleapplication.hex 
-testall:	donsSniff.hex
-	@make immeSniff
+#testall:	donsSniff.hex
+	@make clean donsNIC.hex
+	@make clean donsSniff.hex
+	@make clean immeSniff
 
 # testing should see that each enumerates correctly in linux
 
