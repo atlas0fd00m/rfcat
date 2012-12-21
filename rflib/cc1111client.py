@@ -1054,6 +1054,17 @@ class USBDongle:
             #self.strobeModeTX()
         # if other than these, we can stay in IDLE
 
+    def setRFbits(self, addr, bitnum, bitsz, val, suppress=False):
+        ''' sets individual bits of a register '''
+        mask = ((1<<bitsz) - 1) << bitnum
+        rmask = ~mask
+
+        temp = ord(self.peek(addr)) & rmask
+        temp |= ((val << bitnum) & mask)
+
+        self.setRFRegister(addr, temp, suppress=suppress)
+
+    
     ### radio config
     def getRadioConfig(self):
         bytedef = self.peek(0xdf00, 0x3e)
