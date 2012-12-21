@@ -44,7 +44,7 @@
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 
-xdata u32 recvCnt;
+__xdata u32 recvCnt;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -58,7 +58,7 @@ void appMainInit(void)
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
-    xdata u8 processbuffer;
+    __xdata u8 processbuffer;
 
 #ifdef IMME
     immeLCDUpdateState();
@@ -138,8 +138,8 @@ void appHandleEP0OUT(void)
 {
 #ifndef VIRTUAL_COM
     u16 loop;
-    xdata u8* dst;
-    xdata u8* src;
+    __xdata u8* dst;
+    __xdata u8* src;
 
     // we are not called with the Request header as is appHandleEP0.  this function is only called after an OUT packet has been received,
     // which triggers another usb interrupt.  the important variables from the EP0 request are stored in ep0req, ep0len, and ep0value, as
@@ -150,8 +150,8 @@ void appHandleEP0OUT(void)
     {
         case 1:     // poke
             
-            src = (xdata u8*) &ep0.OUTbuf[0];
-            dst = (xdata u8*) ep0value;
+            src = (__xdata u8*) &ep0.OUTbuf[0];
+            dst = (__xdata u8*) ep0value;
 
             for (loop=ep0.OUTlen; loop>0; loop--)
             {
@@ -183,16 +183,16 @@ int appHandleEP0(USB_Setup_Header* pReq)
                 setup_send_ep0(&lastCode[0], 2);
                 break;
             case 1:
-                setup_sendx_ep0((xdata u8*)USBADDR, 40);
+                setup_sendx_ep0((__xdata u8*)USBADDR, 40);
                 break;
             case 2:
-                setup_sendx_ep0((xdata u8*)pReq->wValue, pReq->wLength);
+                setup_sendx_ep0((__xdata u8*)pReq->wValue, pReq->wLength);
                 break;
             case 3:     // ping
                 setup_send_ep0((u8*)pReq, pReq->wLength);
                 break;
             case 4:     // ping
-                setup_sendx_ep0((xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
+                setup_sendx_ep0((__xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
                 break;
         }
     }

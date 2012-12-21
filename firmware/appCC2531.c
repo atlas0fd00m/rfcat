@@ -26,8 +26,8 @@
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 
-xdata u32 loopCnt;
-xdata u8 xmitCnt;
+__xdata u32 loopCnt;
+__xdata u8 xmitCnt;
 
 int appHandleEP5(void);
 
@@ -49,7 +49,7 @@ void appMainLoop(void)
 {
     /*
     //  this is part of the NIC code to handle received RF packets and may be replaced/modified //
-    xdata u8 processbuffer;
+    __xdata u8 processbuffer;
 
     if (rfif)
     {

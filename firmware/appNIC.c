@@ -37,8 +37,8 @@
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 
-xdata u32 loopCnt;
-xdata u8 xmitCnt;
+__xdata u32 loopCnt;
+__xdata u8 xmitCnt;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -54,7 +54,7 @@ void appMainInit(void)
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
-    xdata u8 processbuffer;
+    __xdata u8 processbuffer;
 
     if (rfif)
     {
@@ -107,7 +107,7 @@ int appHandleEP5()
             case NIC_XMIT:
                 transmit(ptr, ep5.OUTlen-1, 0, 0);
                 { LED=1; sleepMillis(2); LED=0; sleepMillis(1); }
-                txdata(ep5.OUTapp, ep5.OUTcmd, 1, (xdata u8*)"0");
+                txdata(ep5.OUTapp, ep5.OUTcmd, 1, (__xdata u8*)"0");
                 break;
             default:
                 break;

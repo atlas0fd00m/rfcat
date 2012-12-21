@@ -55,7 +55,7 @@ typedef struct DMA_DESC_S {
 #define DMA_LEN_HIGH_VLEN_PLUS_2   (3 << 5)
 #define DMA_LEN_HIGH_VLEN_PLUS_3   (4 << 5)
 #define DMA_LEN_HIGH_MASK      (0x1f)
-extern xdata DMA_DESC dma_configs[DMA_CHANNELS];
+extern __xdata DMA_DESC dma_configs[DMA_CHANNELS];
  
 #define DMA_CFG0_WORDSIZE_8        (0 << 7)
 #define DMA_CFG0_WORDSIZE_16       (1 << 7)
