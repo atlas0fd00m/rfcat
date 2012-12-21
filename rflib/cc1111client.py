@@ -28,7 +28,7 @@ FREQ_MID_900  = 848000000
 EP_TIMEOUT_IDLE     = 400
 EP_TIMEOUT_ACTIVE   = 10
 
-USB_RX_WAIT         = 100
+USB_RX_WAIT         = 1000
 USB_TX_WAIT         = 10000
 
 USB_BM_REQTYPE_TGTMASK          =0x1f
@@ -246,8 +246,8 @@ MARC_STATE_MAPPINGS = [
     (22, 'MARC_STATE_TX_UNDERFLOW', RFST_SIDLE) # FIXME: this should actually be the config setting in register
 ]
 
-def keystop():
-    return len(select.select([sys.stdin],[],[],0)[0])
+def keystop(delay=0):
+    return len(select.select([sys.stdin],[],[],delay)[0])
 
 
 class ChipconUsbTimeoutException(Exception):
@@ -475,7 +475,6 @@ class USBDongle:
         if self._debug: print >>sys.stderr,"RECV:"+repr(retary)
         if len(retary):
             return ''.join(retary)
-            #return retary
         return ''
 
     def _clear_buffers(self, clear_recv_mbox=False):
@@ -498,11 +497,8 @@ class USBDongle:
         self.send_threadcounter = 0
 
         while True:
-            #if self._debug: print "Waiting on device....",self._threadGo.isSet()
             self._threadGo.wait()
-
             self.send_threadcounter = (self.send_threadcounter + 1) & 0xffffffff
-            #if self._debug: print "Send Thread counter: ",self.send_threadcounter
 
             #### transmit stuff.  if any exists in the xmit_queue
             self.xmit_event.wait() # event driven xmit
@@ -510,17 +506,18 @@ class USBDongle:
             try:
                 if len(self.xmit_queue):
                     self.xsema.acquire()
+
                     msg = self.xmit_queue.pop(0)
                     if not len(self.xmit_queue): # if there was only one message
                         self.xmit_event.clear() # clear the queue, within the lock
+                    
                     self.xsema.release()
+
                     self._sendEP5(msg)
                     msgsent = True
+
                 else:
                     if self._debug>3: sys.stderr.write("NoMsgToSend ")
-            #except IndexError:
-                #if self._debug==3: sys.stderr.write("NoMsgToSend ")
-                #pass
             except:
                 sys.excepthook(*sys.exc_info())
 
@@ -529,15 +526,12 @@ class USBDongle:
         self.recv_threadcounter = 0
 
         while True:
-            #if self._debug: print "Waiting on device....",self._threadGo.isSet()
             self._threadGo.wait()
 
             self.recv_threadcounter = (self.recv_threadcounter + 1) & 0xffffffff
-            #if self._debug: print "Recv Thread counter: ",self.recv_threadcounter
             msgrecv = False
 
             #### handle debug application
-            if self._debug>2: print >> sys.stderr, "Looking for debug application"
             try:
                 q = None
                 b = self.recv_mbox.get(APP_DEBUG, None)
@@ -546,8 +540,8 @@ class USBDongle:
                         q = b[cmd]
                         if len(q):
                             buf,timestamp = q.pop(0)
-                            #cmd = ord(buf[1])
-                            if self._debug > 1: print >>sys.stderr,("buf length: %x\t\t cmd: %x\t\t(%s)"%(len(buf), cmd, repr(buf)))
+                            if self._debug > 1: print >>sys.stderr,("recvthread: buf length: %x\t\t cmd: %x\t\t(%s)"%(len(buf), cmd, repr(buf)))
+
                             if (cmd == DEBUG_CMD_STRING):
                                 if (len(buf) < 4):
                                     if (len(q)):
@@ -589,7 +583,7 @@ class USBDongle:
                 sys.excepthook(*sys.exc_info())
 
             #### receive stuff.
-            if self._debug>2: print >> sys.stderr, "Doing receiving...",self.ep5timeout
+            if self._debug>2: print >> sys.stderr, "recvthread: Doing receiving...",self.ep5timeout
             try:
                 #### first we populate the queue
                 msg = self._recvEP5(timeout=self.ep5timeout)
@@ -629,7 +623,7 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
-            if self._debug>2: print >> sys.stderr, "Sorting mail..."
+            if self._debug>2: print >> sys.stderr, "recvthread: Sorting mail..."
             #### parse, sort, and deliver the mail.
             try:
                 # FIXME: is this robust?  or just overcomplex?
@@ -656,7 +650,7 @@ class USBDongle:
                             cmd = ord(msg[2])
                             length, = struct.unpack("<H", msg[3:5])
 
-                            if self._debug>1: print>>sys.stderr,("app=%x  cmd=%x  len=%x"%(app,cmd,length))
+                            if self._debug>1: print>>sys.stderr,("recvthread: app=%x  cmd=%x  len=%x"%(app,cmd,length))
 
                             if (msglen >= length+5):
                                 #### if the queue has enough characters to handle the next message... chop it and put it in the appropriate recv_mbox
@@ -664,8 +658,8 @@ class USBDongle:
                                 self.recv_queue = self.recv_queue[length+5:]        # chop it out of the queue
 
                                 b = self.recv_mbox.get(app,None)
+
                                 if self.rsema.acquire():                            # THREAD SAFETY DANCE
-                                    #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],0
                                     try:
                                         if (b == None):
                                             b = {}
@@ -674,25 +668,25 @@ class USBDongle:
                                         sys.excepthook(*sys.exc_info())
                                     finally:
                                         self.rsema.release()                            # THREAD SAFETY DANCE COMPLETE
-                                        #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],0
                                
                                 q = b.get(cmd)
+
                                 if self.rsema.acquire():                            # THREAD SAFETY DANCE
-                                    #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],1
                                     try:
                                         if (q is None):
                                             q = []
                                             b[cmd] = q
 
                                         q.append((msg, self._recv_time))
+
                                         # notify receivers that a new msg is available
                                         self.recv_event.set()
                                         self._recv_time = 0                         # we've delivered the current message
+
                                     except:
                                         sys.excepthook(*sys.exc_info())
                                     finally:
                                         self.rsema.release()                            # THREAD SAFETY DANCE COMPLETE
-                                        #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],1
                                
                             else:            
                                 if self._debug>1:     sys.stderr.write('=')
@@ -700,12 +694,11 @@ class USBDongle:
                             msg = self.recv_queue
                             msglen = len(msg)
                             # end of while loop
-                        #else:
-                        #    if self._debug:     sys.stderr.write('.')
+
             except:
                 sys.excepthook(*sys.exc_info())
 
-            if self._debug>2: print >> sys.stderr, "Loop finished"
+            if self._debug>2: print >> sys.stderr, "readthread: Loop finished"
             if not (msgrecv or len(msg)) :
                 #time.sleep(.1)
                 self.ep5timeout = EP_TIMEOUT_IDLE
@@ -717,43 +710,53 @@ class USBDongle:
 
     ######## APPLICATION API ########
     def recv(self, app, cmd=None, wait=USB_RX_WAIT):
+        '''
+        high-level USB EP5 receive.  
+        checks the mbox for app "app" and command "cmd" and returns the next one in the queue
+        if any of this does not exist yet, wait for a RECV event until "wait" times out.
+        RECV events are generated by the low-level recv thread "runEP5_recv()"
+        '''
         startTime = time.time()
+        self.recv_event.clear() # an event is only interesting if we've already failed to find our message
+
         while (time.time() - startTime)*1000 < wait:
             try:
                 b = self.recv_mbox.get(app)
                 if b:
                     if self._debug: print>>sys.stderr, "Recv msg",app,b,cmd
-                else:
-                    self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait for a cmd to be received
-                    b = self.recv_mbox.get(app)
-                if cmd is None:
-                    keys = b.keys()
-                    if not len(keys):
-                        self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait for a cmd to be received
+                    if cmd is None:
                         keys = b.keys()
-                    if len(keys):
-                        cmd = b.keys()[-1] # default to last cmd received
-                        if self._debug: print>>sys.stderr, "Using last cmd",cmd
-                if b is not None:
-                    self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait on recv event, with timeout of remaining time
-                    self.recv_event.clear() # clear event, if it's set
+                        if len(keys):
+                            cmd = b.keys()[-1] # just grab one.   no guarantees on the order
+
+                if b is not None and cmd is not None:
                     q = b.get(cmd)
                     if self._debug: print >>sys.stderr,"debug(recv) q='%s'"%repr(q)
+
                     if q is not None and self.rsema.acquire(False):
-                        #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
+                        if self._debug>3: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
                         try:
                             resp, rt = q.pop(0)
+
                             self.rsema.release()
-                            #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
+                            if self._debug>3: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
+
+                            # bring it on home...  this is the way out.
                             return resp[4:], rt
+
                         except IndexError:
                             pass
-                            #sys.excepthook(*sys.exc_info())
+
                         except AttributeError:
                             sys.excepthook(*sys.exc_info())
                             pass
+
                         self.rsema.release()
-                        #if self._debug: print ("rsema.UNlocked", "rsema.locked")[self.rsema.locked()],2
+
+                print "wait"
+                self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait on recv event, with timeout of remaining time
+                self.recv_event.clear() # clear event, if it's set
+
             except KeyboardInterrupt:
                 sys.excepthook(*sys.exc_info())
                 break
