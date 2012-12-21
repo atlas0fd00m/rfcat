@@ -1,11 +1,12 @@
 #!/usr/bin/env ipython
+import re
 import sys
 import usb
 import code
 import time
 import struct
+import pickle
 import threading
-import re
 #from chipcondefs import *
 from cc1111client import *
 
@@ -99,6 +100,10 @@ class EnDeCode:
         raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
 
 
+def savePkts(pkts, filename):
+    pickle.dump(pkts, file(filename, 'a'))
+def loadPkts(filename):
+    return pickle.load( file(filename, 'r'))
 
 class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
