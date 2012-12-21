@@ -753,7 +753,6 @@ class USBDongle:
 
                         self.rsema.release()
 
-                print "wait"
                 self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait on recv event, with timeout of remaining time
                 self.recv_event.clear() # clear event, if it's set
 
