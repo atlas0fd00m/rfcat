@@ -7,12 +7,12 @@
 #include "immekeys.h"
 #include "cc1111rf.h"
 
-extern xdata u32 recvCnt;
+extern __xdata u32 recvCnt;
 
-xdata u8 imme_state;
-xdata u16 imme_state_counter;
+__xdata u8 imme_state;
+__xdata u16 imme_state_counter;
 
-char xdata rxbuf[30];
+char __xdata rxbuf[30];
 u8 modulations[] = {MOD_2FSK, MOD_GFSK, MOD_ASKOOK, MOD_MSK};
 
 u8 current_modulation;
@@ -409,11 +409,11 @@ void immeLCDInitScreen(void)
 
 void immeLCDShowPacket(void)
 {
-    xdata u8 *pval = &rfrxbuf[!rfRxCurrentBuffer][0];
-    xdata u8 len   = rfRxCounter[!rfRxCurrentBuffer];
-    xdata u8 count = 0;
-    xdata u8 line = 3;
-    xdata u16 nibble;
+    __xdata u8 *pval = &rfrxbuf[!rfRxCurrentBuffer][0];
+    __xdata u8 len   = rfRxCounter[!rfRxCurrentBuffer];
+    __xdata u8 count = 0;
+    __xdata u8 line = 3;
+    __xdata u16 nibble;
 
     SSN=LOW;
     drawstr(3,0, "                                ");

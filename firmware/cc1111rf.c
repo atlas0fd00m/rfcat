@@ -31,8 +31,8 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 
 u8 rfif;
 volatile __xdata u8 rf_status;
-volatile xdata u16 rf_MAC_timer;
-volatile xdata u16 rf_tLastRecv;
+volatile __xdata u16 rf_MAC_timer;
+volatile __xdata u16 rf_tLastRecv;
 #ifdef RFDMA
 volatile __xdata DMA_DESC rfDMA;
 #endif

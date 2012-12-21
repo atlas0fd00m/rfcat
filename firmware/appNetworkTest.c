@@ -37,8 +37,8 @@
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 
-xdata u32 loopCnt;
-xdata u8 xmitCnt;
+__xdata u32 loopCnt;
+__xdata u8 xmitCnt;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -56,9 +56,9 @@ void appMainInit(void)
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
-    xdata u8 processbuffer;
+    __xdata u8 processbuffer;
 #ifdef TRANSMIT_TEST
-    xdata u8 testPacket[14];
+    __xdata u8 testPacket[14];
 
 
     if (loopCnt++ == 90000)
