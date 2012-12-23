@@ -71,6 +71,32 @@ T2SETTINGS_26MHz = {
     
 TIP = (64,128,256,1024)
 
+def makeFriendlyAscii(instring):
+    out = []
+    start = 0
+    last = -1
+    instrlen = len(instring)
+
+    for cidx in xrange(instrlen):
+        if (0x20 < ord(instring[cidx]) < 0x7f):
+            if last < cidx-1:
+                out.append( "." * (cidx-1-last))
+                start = cidx
+            last = cidx
+        else:
+            if last == cidx-1:
+                out.append( instring[ start:last+1 ] )
+
+    if last != cidx:
+        out.append( "." * (cidx-last) )
+    else: # if start == 0:
+        out.append( instring[ start: ] )
+
+    return ''.join(out)
+
+
+
+
 def calculateT2(tick_ms, mhz=24):
     # each tick, not each cycle
     TICKSPD = [(mhz*1000000/pow(2,x)) for x in range(8)]
@@ -212,7 +238,7 @@ class FHSSNIC(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                print "(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -231,7 +257,8 @@ class FHSSNIC(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                #print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
+                print "(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y))
                 capture.append((y,t))
 
             except ChipconUsbTimeoutException:
