@@ -1999,6 +1999,9 @@ class USBDongle:
     PA_TABLE0   = 0x83;
 """
 
+    def printRadioState(self, radiocfg=None):
+        print self.reprRadioState(radiocfg)
+
     def reprRadioState(self, radiocfg=None):
         output = []
         try:
@@ -2013,6 +2016,9 @@ class USBDongle:
             output.append("     DONGLE *not* RESPONDING")
 
         return "\n".join(output)
+
+    def printClientState(self, width=120):
+        print self.reprClientState(width)
 
     def reprClientState(self, width=120):
         output = ["="*width]
