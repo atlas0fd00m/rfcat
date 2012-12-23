@@ -360,9 +360,9 @@ class USBDongle:
             else:
                 self._usbmaxo = ep.maxPacketSize
 
+        self._threadGo.set()
         if self._init_on_reconnect:
             self.setRFparameters()
-        self._threadGo.set()
 
     def resetup(self, console=True, copyDongle=None):
         self._do=None
