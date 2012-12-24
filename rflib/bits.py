@@ -60,15 +60,19 @@ def shiftString(string, bits):
     news.append("%c"%newc)
     return "".join(news)
 
-def findDword(byts, inverted=False):
+def findSyncWord(byts, sensitivity=4): 
+        '''
+        seek SyncWords from a raw bitstream.  
+        assumes we capture at least two (more likely 3 or more) preamble bytes
+        '''
         possDwords = []
         # find the preamble (if any)
-        while True:
+        while True:         # keep searching through string until we don't find any more preamble bits to pick on
             sbyts = byts
             pidx = byts.find("\xaa\xaa")
             if pidx == -1:
                 pidx = byts.find("\x55\x55")
-                byts = shiftString(byts,1)
+                byts = shiftString(byts, 1)
 
             if pidx == -1:
                 return possDwords
@@ -107,7 +111,8 @@ def findDword(byts, inverted=False):
                 #    bits1 >>= 2
                 #print "bits: %x" % (bits1)
                 
-                for frontbits in xrange((0,1)[inverted], 17, 2):
+                bitcount = min( 2 * sensitivity, 17 ) 
+                for frontbits in xrange( bitcount ):            # with so many bit-inverted systems, let's not assume we know anything about the bit-arrangement.  \x55\x55 could be a perfectly reasonable preamble.
                     poss = (bits1 >> frontbits) & 0xffff
                     if not poss in possDwords:
                         possDwords.append(poss)
@@ -115,7 +120,7 @@ def findDword(byts, inverted=False):
         
         return possDwords
 
-def findDwordDoubled(byts):
+def findSyncWordDoubled(byts):
         possDwords = []
         # find the preamble (if any)
         bitoff = 0
