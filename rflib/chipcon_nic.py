@@ -434,10 +434,10 @@ u16 synched_chans           %x
                         ynext = bits.shiftString(ynext, 1)
 
                 if IdentSyncWord:
-                    if lowball == 1:
-                        y = '\xaa\xaa' + y
+                    #if lowball == 1:
+                    #    y = '\xaa\xaa' + y
 
-                    poss = bits.findDword(y)
+                    poss = bits.findSyncWord(y)
                     if len(poss):
                         print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
 
