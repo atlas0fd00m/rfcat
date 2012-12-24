@@ -60,7 +60,7 @@ def shiftString(string, bits):
     news.append("%c"%newc)
     return "".join(news)
 
-def findSyncWord(byts, sensitivity=4): 
+def findSyncWord(byts, sensitivity=4, minpreamble=2): 
         '''
         seek SyncWords from a raw bitstream.  
         assumes we capture at least two (more likely 3 or more) preamble bytes
@@ -69,9 +69,9 @@ def findSyncWord(byts, sensitivity=4):
         # find the preamble (if any)
         while True:         # keep searching through string until we don't find any more preamble bits to pick on
             sbyts = byts
-            pidx = byts.find("\xaa\xaa")
+            pidx = byts.find("\xaa"*minpreamble)
             if pidx == -1:
-                pidx = byts.find("\x55\x55")
+                pidx = byts.find("\x55"*minpreamble)
                 byts = shiftString(byts, 1)
 
             if pidx == -1:

@@ -131,6 +131,17 @@ def savePkts(pkts, filename):
 def loadPkts(filename):
     return pickle.load( file(filename, 'r'))
 
+def printSyncWords(syncworddict):
+    print "SyncWords seen:"
+
+    tmp = []
+    for x,y in syncworddict.items():
+        tmp.append((y,x))
+    tmp.sort()
+    for y,x in tmp:
+        print("0x%.4x: %d" % (x,y))
+
+
 class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
@@ -374,7 +385,7 @@ u16 synched_chans           %x
     def getPktAddr(self):
         return self.peek(ADDR)
 
-    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, SyncWordMatchList=None, Search=None, RegExpSearch=None):
+    def discover(self, lowball=1, debug=None, length=30, IdentSyncWord=False, ISWsensitivity=4, ISWminpreamble=2, SyncWordMatchList=None, Search=None, RegExpSearch=None):
         '''
         discover() sets lowball mode to the mode requested (length too), and begins to dump packets to the screen.  
                 press <enter> to quit, and your radio config will be set back to its original configuration.
@@ -387,7 +398,10 @@ u16 synched_chans           %x
             Search              - byte string to search through each received packet for (real bytes, not hex repr)
             RegExpSearch        - regular expression to search through received bytes (not the hex repr that is printed)
 
+        if IdentSyncWord == True (or SyncWordMatchList != None), returns a dict of unique possible SyncWords identified along with the number of times seen.
         '''
+        retval = {}
+
         oldebug = self._debug
         if IdentSyncWord and lowball <= 1:
             print "Entering Discover mode and searching for possible SyncWords..."
@@ -437,9 +451,13 @@ u16 synched_chans           %x
                     #if lowball == 1:
                     #    y = '\xaa\xaa' + y
 
-                    poss = bits.findSyncWord(y)
+                    poss = bits.findSyncWord(y, ISWsensitivity, ISWminpreamble)
                     if len(poss):
                         print "  possible Sync Dwords: %s" % repr([hex(x) for x in poss])
+                        for dw in poss:
+                            lst = retval.get(dw, 0)
+                            lst += 1
+                            retval[dw] = lst
 
                     if SyncWordMatchList is not None:
                         for x in poss:
@@ -455,6 +473,12 @@ u16 synched_chans           %x
         self._debug = oldebug
         self.lowballRestore()
         print "Exiting Discover mode..."
+
+        if len(retval) == 0:
+            return
+
+        printSyncWords(retval)
+        return retval
 
     def testTX(self, data="XYZABCDEFGHIJKL"):
         while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
