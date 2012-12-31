@@ -141,7 +141,7 @@ class CC1111NIC_Server(cmd.Cmd):
                                     self.nic.RFxmit(data)
 
                             try:
-                                data, time = self.nic.RFrecv(0)
+                                data, time = self.nic.RFrecv(1)
                                 if self.printable:
                                     data = "\n"+str(time)+": "+repr(data)
                                 else:
