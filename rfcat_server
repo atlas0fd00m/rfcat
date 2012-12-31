@@ -83,7 +83,8 @@ class CC1111NIC_Server(cmd.Cmd):
         self.use_rawinput = rawinput
         self.printable = printable
 
-        self.nic = FHSSNIC(nicidx)
+        #self.nic = FHSSNIC(nicidx)
+        self.nic = RfCat(nicidx)
         self._ip = ip
         self._nicport = nicport
         self._nicsock = None
