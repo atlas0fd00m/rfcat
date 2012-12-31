@@ -79,7 +79,9 @@ class RfCat(FHSSNIC):
     def rf_configure(*args, **k2args):
         pass
 
-    def rf_redirection(self, fdtup):
+    def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
+        buf = ''
+
         if len(fdtup)>1:
             fd0i, fd0o = fdtup 
         else:
@@ -91,28 +93,63 @@ class RfCat(FHSSNIC):
             fdsock = True
 
         while True:
-            x,y,z = select.select([fd0i ], [], [], .1)
             #if self._pause:
             #    continue
 
-            if fd0i in x:
-                if fdsock:
-                    data = fd0i.recv(self.max_packet_size)
-                else:
-                    data = fd0i.read(self.max_packet_size)
+            try:
+                x,y,z = select.select([fd0i ], [], [], .1)
+                if fd0i in x:
+                    if fdsock:
+                        data = fd0i.recv(self.max_packet_size)
+                    else:
+                        data = fd0i.read(self.max_packet_size)
 
-                if not len(data):       # terminated socket
-                    break
+                    if not len(data):       # terminated socket
+                        break
 
-                self.RFxmit(data)
+                    buf += data
+                    pktlen, vlen = self.getPktLEN()
+                    if vlen:
+                        pktlen = ord(buf[0])
+
+                    #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
+                    data = buf[:pktlen]
+                    if use_rawinput:
+                        data = eval('"%s"'%data)
+
+                    if len(buf) >= pktlen:
+                        self.RFxmit(data)
+
+            except ChipconUsbTimeoutException:
+                pass
 
             try:
-                data = self.RFrecv(0)
+                data, time = self.RFrecv(1)
+
+                if printable:
+                    data = "\n"+str(time)+": "+repr(data)
+                else:
+                    data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+
                 if fdsock:
                     fd0o.sendall(data)
                 else:
                     fd0o.write(data)
+
             except ChipconUsbTimeoutException:
+                pass
+
+            #special handling of specan dumps...  somewhat set in solid jello
+            try:
+                data, time = self.recv(APP_SPECAN, 1, 1)
+                data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                if fdsock:
+                    fd0o.sendall(data)
+                else:
+                    fd0o.write(data)
+
+            except ChipconUsbTimeoutException:
+                #print "this is a valid exception, run along... %x"% APP_SPECAN
                 pass
 
 def cleanupInteractiveAtExit():
