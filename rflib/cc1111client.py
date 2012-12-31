@@ -1343,6 +1343,12 @@ class USBDongle:
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
         self.setRFRegister(PKTLEN, (radiocfg.pktlen))
 
+    def getPktLEN(self):
+        '''
+        returns (pktlen, pktctrl0)
+        '''
+        return (self.radiocfg.pktlen, self.radiocfg.pktctrl0 & PKTCTRL0_LENGTH_CONFIG)
+        
     def setEnablePktCRC(self, enable=True, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()

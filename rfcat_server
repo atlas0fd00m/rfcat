@@ -103,6 +103,7 @@ class CC1111NIC_Server(cmd.Cmd):
         while self._go:
             # serve the NIC port
             try:
+                buf = ''
                 self._nicsock = socket.socket()
                 s = self._nicsock
                 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -126,12 +127,18 @@ class CC1111NIC_Server(cmd.Cmd):
                                 data = rs.recv(self.nic.max_packet_size)
                                 if not len(data):       # terminated socket
                                     break
+                                buf += data
+                                pktlen, vlen = self.nic.getPktLEN()
+                                if vlen:
+                                    pktlen = ord(buf[0])
 
                                 #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
+                                data = buf[:pktlen]
                                 if self.use_rawinput:
                                     data = eval('"%s"'%data)
 
-                                self.nic.RFxmit(data)
+                                if len(buf) >= pktlen:
+                                    self.nic.RFxmit(data)
 
                             try:
                                 data, time = self.nic.RFrecv(0)
