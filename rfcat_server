@@ -773,7 +773,7 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         * ping - hello?  is the dongle still responding?
         '''
-        self.Print("Successful: %d, Failed: %d, Time: %f") % self.ping()
+        self.Print("Successful: %d, Failed: %d, Time: %f" % self.nic.ping())
 
     def do_debug_codes(self, line):
         '''
