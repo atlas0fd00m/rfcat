@@ -33,6 +33,9 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
     parser.add_argument('-i', '--index', default=0, type=int) 
     parser.add_argument('-s', '--specan', default=False, action="store_true", help='start spectrum analyzer')
+    parser.add_argument('-f', '--basefreq', default=902e6, type=float) 
+    parser.add_argument('-c', '--inc', default=25e3, type=float) 
+    parser.add_argument('-n', '--specchans', default=104, type=int) 
     parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order to flash the dongle)')
     parser.add_argument('--force', default=False, action="store_true", help='use this to make sure you want to set bootloader mode (you *must* flash after setting --bootloader)')
 
@@ -46,6 +49,9 @@ if __name__ == "__main__":
         print "Entering RfCat Bootloader mode, ready for new image..."
         RfCat(ifo.index).bootloader()
         exit(0)
+
+    elif ifo.specan:
+        RfCat(ifo.index).specan(ifo.basefreq,ifo.inc,ifo.specchans)
 
     elif ifo.research:
         interactive(ifo.index, DongleClass=RfCat, intro=intro)
