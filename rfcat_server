@@ -870,3 +870,5 @@ class CC1111NIC_Server(cmd.Cmd):
 if __name__ == "__main__":
     dongleserver = CC1111NIC_Server()
     
+import atexit
+atexit.register(cleanupInteractiveAtExit)
