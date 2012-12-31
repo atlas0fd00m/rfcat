@@ -11,6 +11,7 @@ import threading
 from cc1111client import *
 
 APP_NIC =                       0x42
+APP_SPECAN =                    0x43
 NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3

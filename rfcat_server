@@ -151,6 +151,20 @@ class CC1111NIC_Server(cmd.Cmd):
                             except ChipconUsbTimeoutException:
                                 pass
 
+                            #special handling of specan dumps...  somewhat set in solid jello
+                            try:
+                                data, time = self.nic.recv(APP_SPECAN, 1, 1)
+                                #print "APP_SPECAN recv: %x  %f: %s" %(APP_SPECAN, time, data)
+                                if self.printable:
+                                    data = "\n"+str(time)+": "+repr(data)
+                                else:
+                                    data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                                rs.sendall(data)
+
+                            except ChipconUsbTimeoutException:
+                                #print "this is a valid exception, run along... %x"% APP_SPECAN
+                                pass
+
                         print >>sys.stderr,("NIC connection on port %d terminated" % self._nicport)
 
                     except KeyboardInterrupt:
@@ -220,6 +234,22 @@ class CC1111NIC_Server(cmd.Cmd):
         self._pause = False
 
     #### configuration ####
+    #def do_specan(self,basefreq=902e6,inc=25e3,count=104):
+    def do_specan(self,line):
+        '''
+        * SPECAN - spectrum analysis mode
+        '''
+        basefreq=902e6
+        inc=25e3 
+        count=104
+        self.nic._doSpecAn(basefreq,inc,count)
+
+    def do_stopspecan(self,line):
+        '''
+        * SPECAN - spectrum analysis mode
+        '''
+        self.nic._stopSpecAn()
+
     def do_rfmode(self, line):
         '''
         * RFMODE - set the radio in RX/IDLE/TX/CAL  (CAL returns to IDLE)
