@@ -63,8 +63,8 @@ extern volatile __xdata u16 rfRxLargeLen;
 extern volatile __xdata u8 *rftxbuf;
 extern volatile __xdata u16 rfTxCounter;
 
-extern volatile xdata u16 rf_MAC_timer;
-extern volatile xdata u16 rf_tLastRecv;
+extern volatile __xdata u16 rf_MAC_timer;
+extern volatile __xdata u16 rf_tLastRecv;
 
 // AES
 extern volatile __xdata u8 rfAESMode;

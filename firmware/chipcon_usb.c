@@ -37,7 +37,7 @@ __xdata u16  ep0value;
 
 //__xdata dmacfg_t usbdma;
 __xdata DMA_DESC *usbdma;
-data u8 usbdmachan, usbdmaarm;
+__data u8 usbdmachan, usbdmaarm;
 //__xdata u8 usbdmar[8];
 
 __xdata void (*cb_ep0outdone)(void);
