@@ -11,11 +11,10 @@ from rflib import *
 
 intro = """'RfCat, the greatest thing since Frequency Hopping!'
 
-Don't you wish this were a CLI!?  Sorry.  Maybe soon...
-For now, enjoy the raw power of rflib, or write your own device-specific CLI!
+Research Mode: enjoy the raw power of rflib
 
 currently your environment has an object called "d" for dongle.  this is how 
-you interact with the rfcat dongle, for :
+you interact with the rfcat dongle:
     >>> d.ping()
     >>> d.setFreq(433000000)
     >>> d.setMdmModulation(MOD_ASK_OOK)
