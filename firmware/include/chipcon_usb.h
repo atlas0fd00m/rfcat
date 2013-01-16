@@ -324,10 +324,10 @@ void waitForUSBsetup();
 // export as this *must* be in main loop.
 void usbProcessEvents(void);
 
-void registerCb_ep0OutDone(void (*callback)(void));
-void registerCb_ep0Out(void (*callback)(void));
-void registerCb_ep0Vendor(void (*callback)(USB_Setup_Header* pReq));
-void registerCb_ep5(void (*callback)(void));
+void registerCb_ep0OutDone(int (*callback)(void));
+void registerCb_ep0Out(int (*callback)(void));
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* pReq));
+void registerCb_ep5(int (*callback)(void));
 
 
 

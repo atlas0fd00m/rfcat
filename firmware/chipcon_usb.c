@@ -40,10 +40,10 @@ __xdata DMA_DESC *usbdma;
 __data u8 usbdmachan, usbdmaarm;
 //__xdata u8 usbdmar[8];
 
-__xdata void (*cb_ep0outdone)(void);
-__xdata void (*cb_ep0out)(void);
-__xdata void (*cb_ep0vendor)(USB_Setup_Header*);
-__xdata void (*cb_ep5)(void);
+__xdata int (*cb_ep0outdone)(void);
+__xdata int (*cb_ep0out)(void);
+__xdata int (*cb_ep0vendor)(USB_Setup_Header*);
+__xdata int (*cb_ep5)(void);
 
 __code u8 sdccver[] = {
     'S','D','C','C','v',
@@ -442,14 +442,14 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-void registerCb_ep0Vendor(void (*callback)(void))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*))
 {
     cb_ep0vendor = callback;
 }
 
-void registerCb_ep5(void (*callback)(void))
+void registerCb_ep5(int (*callback2)(void))
 {
-    cb_ep5 = callback;
+    cb_ep5 = callback2;
 }
 
 

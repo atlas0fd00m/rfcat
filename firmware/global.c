@@ -100,7 +100,8 @@ int strncmp(const char *s1, const char *s2, u16 n)
     return 0;
 }
 
-void clock_init(void){
+void clock_init(void)
+{
     //  SET UP CPU SPEED!  USE 26MHz for CC1110 and 24MHz for CC1111
     // Set the system clock source to HS XOSC and max CPU speed,
     // ref. [clk]=>[clk_xosc.c]
@@ -110,16 +111,19 @@ void clock_init(void){
     while (CLKCON & CLKCON_OSC);
     SLEEP |= SLEEP_OSC_PD;
     while (!IS_XOSC_STABLE());
-
-// FIXME: this should be defined so it works with 24/26mhz
+    
+    // FIXME: this should be defined so it works with 24/26mhz
     // setup TIMER 1
     // free running mode
-    // time freq:
-    CLKCON &= 0xc7;          //( ~ 0b111000);
-    T1CTL |= T1CTL_DIV_128;
+    // time freq:       187.50 for cc1111 / 203.125kHz for cc1110
+    CLKCON &= 0xc7;          //( ~ 0b00111000);  - clearing out TICKSPD  freq = 24mhz on cc1111, 26mhz on cc1110
+    
+    T1CTL |= T1CTL_DIV_128;     // T1 running at 187.500 kHz
     T1CTL |= T1CTL_MODE_FREERUN;
     T1IE = 1;
+
 }
+
 
 
 /* initialize the IO subsystems for the appropriate dongles */
@@ -184,7 +188,7 @@ static void io_init(void)
 }
 
 
-void t1IntHandler(void) interrupt T1_VECTOR  // interrupt handler should trigger on T1 overflow
+void t1IntHandler(void) __interrupt T1_VECTOR  // interrupt handler should trigger on T1 overflow
 {   
     clock ++;
 }

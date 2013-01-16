@@ -13,7 +13,7 @@
 #define FHSS_START_SYNC         0x22
 #define FHSS_START_HOPPING      0x23
 #define FHSS_STOP_HOPPING       0x24
-
+#define FHSS_SET_MAC_PERIOD     0x25
 
 #define MAC_STATE_NONHOPPING        0
 #define MAC_STATE_DISCOVERY         1
