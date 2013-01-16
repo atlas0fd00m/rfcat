@@ -6,8 +6,8 @@
  * AES helpers                                                                                   *
  ************************************************************************************************/
 
-xdata DMA_DESC *aesdmai, *aesdmao;
-data u8 aesdmachani, aesdmaarmi, aesdmachano, aesdmaarmo;
+__xdata DMA_DESC *aesdmai, *aesdmao;
+__data u8 aesdmachani, aesdmaarmi, aesdmachano, aesdmaarmo;
 
 // initialise DMA
 void initAES(void)
