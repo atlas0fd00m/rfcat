@@ -1,5 +1,6 @@
-#!/usr/bin/env ipython
+#!/usr/bin/env ipython -i --no-banner
 from chipcon_nic import *
+import rflib.bits as rfbits
 
 RFCAT_START_SPECAN  = 0x40
 RFCAT_STOP_SPECAN   = 0x41
@@ -151,6 +152,18 @@ class RfCat(FHSSNIC):
             except ChipconUsbTimeoutException:
                 #print "this is a valid exception, run along... %x"% APP_SPECAN
                 pass
+
+class InverseCat(RfCat):
+    def setMdmSyncWord(self, word, radiocfg=None):
+        FHSSNIC.setMdmSyncWord(self, word ^ 0xffff, radiocfg)
+
+    def RFrecv(self, timeout=1000):
+        global data
+        data,timestamp = RfCat.RFrecv(self, timeout)
+        return rfbits.invertBits(data),timestamp
+
+    def RFxmit(self, data):
+        return RfCat.RFxmit(self, rfbits.invertBits(data) )
 
 def cleanupInteractiveAtExit():
     try:
