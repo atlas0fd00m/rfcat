@@ -402,19 +402,21 @@ u16 synched_chans           %x
         if IdentSyncWord == True (or SyncWordMatchList != None), returns a dict of unique possible SyncWords identified along with the number of times seen.
         '''
         retval = {}
-
         oldebug = self._debug
-        if IdentSyncWord and lowball <= 1:
-            print "Entering Discover mode and searching for possible SyncWords..."
-            if SyncWordMatchList is not None:
-                print "  seeking one of: %s" % repr([hex(x) for x in SyncWordMatchList])
+        
+        if SyncWordMatchList != None:
+            IdentSyncWord = True
 
-        else:
-            if IdentSyncWord and lowball > 1: 
+        if IdentSyncWord:
+            if lowball <= 1:
+                print "Entering Discover mode and searching for possible SyncWords..."
+                if SyncWordMatchList != None:
+                    print "  seeking one of: %s" % repr([hex(x) for x in SyncWordMatchList])
+
+            else:
                 print "-- lowball too high -- ignoring request to IdentSyncWord"
+                print "Entering Discover mode..."
                 IdentSyncWord = False
-
-            print "Entering Discover mode..."
 
         self.lowball(level=lowball, length=length)
         if debug is not None:
