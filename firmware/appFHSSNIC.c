@@ -239,7 +239,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
 #ifdef DEBUG_HOPPING
             debug("hop");
             RFOFF;
-            RFST = RFST_STX;        // for debugging purposes, we'll just transmit carrier at each hop
+            RFTX;        // for debugging purposes, we'll just transmit carrier at each hop
             LED = !LED;
             while(MARCSTATE != MARC_STATE_TX);
             return();
@@ -451,7 +451,7 @@ void appMainLoop(void)
             for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
-                RFST = RFST_SRX;
+                RFRX;
                 sleepMillis(2);
 
                 /* read RSSI */
@@ -459,7 +459,7 @@ void appMainLoop(void)
             }
 
             /* end RX */
-            RFST = RFST_SIDLE;
+            RFOFF;
             txdata( APP_SPECAN, SPECAN_QUEUE, (u8)macdata.synched_chans, (__xdata u8*)&chan_table[0] );
             break;
 

@@ -116,6 +116,17 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR;
         #define LED_GREEN P1_1
         #define CC1111EM_BUTTON P1_2
 
+    #elif defined YARDSTICKONE
+        #define LED1          P1_1
+        #define LED_GREEN     P1_1
+        #define LED2          P1_2
+        #define LED_RED       P1_2
+        #define LED3          P1_3
+        #define LED_YELLOW    P1_3
+        #define TX_AMP_EN     P2_0
+        #define RX_AMP_EN     P2_4
+        #define AMP_BYPASS_EN P2_3
+
     #elif defined CHRONOSDONGLE
         // CC1111 USB Chronos watch dongle - 24mhz
         #define LED_RED   P1_0
