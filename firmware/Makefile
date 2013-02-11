@@ -18,13 +18,14 @@ libsimme =
 libsidongle  = $(libsimme) immeusb.rel immeusbdebug.rel chipcon_dma.rel
 
 
-all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader
+all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader
 	make clean immeSniff
 
 donfw: 	RfCatDons
 immefw: immeSniff
 testrecv: testrecvapplication.hex
 testxmit: testxmitapplication.hex
+ys1fw: RfCatYS1
 
 
 # helper targets 
@@ -42,6 +43,8 @@ RfCatChronos: 				clean RfCatChronos.hex
 RfCatChronosCCBootloader: 	clean RfCatChronosCCBootloader.hex
 RfCatDons: 					clean RfCatDons.hex
 RfCatDonsCCBootloader: 		clean RfCatDonsCCBootloader.hex
+RfCatYS1: 					clean RfCatYS1.hex
+RfCatYS1CCBootloader: 		clean RfCatYS1CCBootloader.hex
 immeSniff: 					clean immeSniff.hex
 
 RfCatChronos.hex: DEFINES = -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
@@ -68,6 +71,18 @@ RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
 
+RfCatYS1.hex: DEFINES = -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+RfCatYS1.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatYS1.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatYS1.hex
+
+RfCatYS1CCBootloader.hex: DEFINES = -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+RfCatYS1CCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatYS1CCBootloader.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatYS1CCBootloader.hex
+
 
 immeSniff.hex: DEFINES = -DIMME
 immeSniff.hex: $(libsimme) $(appsimme)
@@ -89,6 +104,12 @@ donsapplication.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <application.ihx >bins/application.hex
 
+ys1application.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+ys1application.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==ys1application.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) application.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <application.ihx >bins/application.hex
+
 
 ## legacy and test / play build targets ##
 chronosFHSS.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
@@ -103,6 +124,12 @@ donsFHSS.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/donsFHSS.hex
 
+ys1FHSS.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+ys1FHSS.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==ys1FHSS.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/ys1FHSS.hex
+
 chronosSniff.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
 chronosSniff.hex: $(libsusb) $(apps1111)
 	@printf "\n\n==chronosFHSS.hex building==\n"
@@ -115,6 +142,12 @@ donsSniff.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appSniff.ihx >bins/donsSniff.hex
 
+ys1Sniff.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+ys1Sniff.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==ys1Sniff.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appSniff.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appSniff.ihx >bins/ys1Sniff.hex
+
 chronosNIC.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
 chronosNIC.hex: appNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==chronosNIC.hex building==\n"
@@ -126,6 +159,12 @@ donsNIC.hex: $(libsusb) $(apps1111)
 	@printf "\n\n==donsNIC.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appNIC.ihx >bins/donsNIC.hex
+
+ys1NIC.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+ys1NIC.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==ys1NIC.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appNIC.ihx >bins/ys1NIC.hex
 
 immeGame1.hex: DEFINES= -DIMME
 immeGame1.hex: $(libsimme) $(appsimme)
@@ -157,6 +196,12 @@ donstestusbonly.hex: usbonly.c chipcon_usb.rel global.rel
 	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel $(DEFINES)
 	packihx <usbonly.ihx >bins/usbonly.hex
 
+ys1testusbonly.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DUSBDEVICE
+ys1testusbonly.hex: usbonly.c chipcon_usb.rel global.rel
+	@printf "\n\n==ys1testusbonly.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) usbonly.c chipcon_usb.rel global.rel $(DEFINES)
+	packihx <usbonly.ihx >bins/usbonly.hex
+
 #	may be helpful when we actually have one...
 #immedongleapplication.hex: DEFINES=  -DIMMEDONGLE -DIMME
 #immedongleapplication.hex: application.c $(libsusb)
@@ -175,6 +220,12 @@ donstestxmitusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
 
+ys1testxmitusb.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DTRANSMIT_TEST  -DUSBDEVICE
+ys1testxmitusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==ys1testxmitusb.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appNetworkTest.ihx >bins/testxmit.hex
+
 chronostestrecvusb.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
 chronostestrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 	@printf "\n\n==donstestrecvusb.hex building==\n"
@@ -184,6 +235,12 @@ chronostestrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 donstestrecvusb.hex: DEFINES= -DDONSDONGLES -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
 donstestrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 	@printf "\n\n==donstestrecvusb.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111)  $(DEFINES)
+	packihx <appNetworkTest.ihx >bins/testrecv.hex
+
+ys1testrecvusb.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
+ys1testrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==ys1testrecvusb.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111)  $(DEFINES)
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
@@ -230,6 +287,19 @@ installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
 
+installRfCatYS1: RfCatYS1.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/RfCatYS1.hex
+	goodfet.cc verify bins/RfCatYS1.hex
+	goodfet.cc info
+
+installRfCatYS1CCBootloader: RfCatYS1CCBootloader.hex
+	rfcat --bootloader --force
+	@sleep 1
+	bootload.py /dev/RFCAT_BL_D erase_all
+	bootload.py /dev/RFCAT_BL_D download bins/RfCatYS1CCBootloader.hex
+	bootload.py /dev/RFCAT_BL_D verify bins/RfCatYS1CCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
+
 installimmesnifffw: immeSniff
 	goodfet.cc erase
 	goodfet.cc flash bins/immeSniff.hex
@@ -255,11 +325,23 @@ installchronosnicfw: chronosNIC.hex
 	goodfet.cc flash bins/chronosNIC.hex
 	goodfet.cc verify bins/chronosNIC.hex
 	goodfet.cc info
+	
+installys1fhssnicfw: ys1FHSS.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/ys1FHSS.hex
+	goodfet.cc verify bins/ys1FHSS.hex
+	goodfet.cc info
 
 installdonsnicfw: donsNIC.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/donsNIC.hex
 	goodfet.cc verify bins/donsNIC.hex
+	goodfet.cc info
+
+installys1nicfw: ys1NIC.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/ys1NIC.hex
+	goodfet.cc verify bins/ys1NIC.hex
 	goodfet.cc info
 
 installchronossnifffw: chronosSniff.hex
@@ -272,6 +354,12 @@ installdonssnifffw: donsSniff.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/donsSniff.hex
 	goodfet.cc verify bins/donsSniff.hex
+	goodfet.cc info
+
+installys1snifffw: ys1Sniff.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/ys1Sniff.hex
+	goodfet.cc verify bins/ys1Sniff.hex
 	goodfet.cc info
 
 installimmegame1: immeGame1.hex
@@ -309,6 +397,12 @@ installdonstestrecvusbfw: donstestrecvusb.hex
 	goodfet.cc verify bins/testrecv.hex
 	goodfet.cc info
 
+installys1testrecvusbfw: ys1testrecvusb.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/testrecv.hex
+	goodfet.cc verify bins/testrecv.hex
+	goodfet.cc info
+
 installchronostestxmitusbfw: chronostestxmitusb.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/testxmit.hex
@@ -316,6 +410,12 @@ installchronostestxmitusbfw: chronostestxmitusb.hex
 	goodfet.cc info
 
 installdonstestxmitusbfw: donstestxmitusb.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/testxmit.hex
+	goodfet.cc verify bins/testxmit.hex
+	goodfet.cc info
+
+installys1testxmitusbfw: ys1testxmitusb.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/testxmit.hex
 	goodfet.cc verify bins/testxmit.hex
@@ -345,6 +445,12 @@ installdonsbootloader:
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-donsdongle.hex
 	goodfet.cc info
 
+installys1bootloader: 
+	goodfet.cc erase
+	goodfet.cc flash CCBootloader/CCBootloader-rfcat-ys1.hex
+	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1.hex
+	goodfet.cc info
+
 testgoodfet:
 	goodfet.cc info
 
@@ -369,10 +475,16 @@ testall:	chronosNIC.hex
 testall:	chronosSniff.hex
 testall:	RfCatDons
 testall:	RfCatDonsCCBootloader
+testall:	RfCatYS1
+testall:	RfCatYS1CCBootloader
 testall:	donsFHSS.hex
 testall:	donsapplication.hex
 testall:	donstestrecvusb.hex
 testall:	donstestxmitusb.hex
+testall:	ys1FHSS.hex
+testall:	ys1application.hex
+testall:	ys1testrecvusb.hex
+testall:	ys1testxmitusb.hex
 testall:	testrecvapplication.hex
 testall:	testxmitapplication.hex
 #testall:	donsNIC.hex
@@ -390,6 +502,9 @@ verifyRfCatChronosDongle: chronosapplication.hex
 
 verifyRfCatDonsDongle: chronosapplication.hex
 	goodfet.cc verify bins/donsFHSS.hex
+
+verifyRfCatYS1: chronosapplication.hex
+	goodfet.cc verify bins/ys1FHSS.hex
 
 clean:
 	@printf "\n==== CLEANING STUFF UP ====\n"

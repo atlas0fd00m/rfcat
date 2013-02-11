@@ -173,6 +173,18 @@ static void io_init(void)
     // Activate BUTTON - Do we need this?
     //CC1111EM_BUTTON = 1;
 
+ #elif defined YARDSTICKONE
+    // LED1, LED2, and LED3
+    P1DIR |= 0xf;
+    // amplifer configuration pins
+    P2DIR |= 0x19;
+    // initial states
+    LED2 = 0;
+    LED3 = 0;
+    TX_AMP_EN = 0;
+    RX_AMP_EN = 0;
+    AMP_BYPASS_EN = 1;
+
  #else
     // CC1111 USB (ala Chronos watch dongle), we just need LED
     P1DIR |= 3;

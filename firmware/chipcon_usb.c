@@ -53,6 +53,8 @@ __code u8 sdccver[] = {
 __code u8 buildname[] = {
 #ifdef DONSDONGLES
     'D','O','N','S','D','O','N','G','L','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
+#elif defined YARDSTICKONE
+    'Y','A','R','D','S','T','I','C','K','O','N','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #elif defined CHRONOSDONGLE
     'C','H','R','O','N','O','S',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #else
@@ -68,6 +70,13 @@ __code u8 buildname[] = {
     #define MANUFACTURER   'R',0,'f',0,'C',0,'a',0,'t',0
     #define PROD_LEN       24
     #define PRODUCT_NAME   'D',0,'o',0,'n',0,'s',0,' ',0,'D',0,'o',0,'n',0,'g',0,'l',0,'e',0
+#elif YARDSTICKONE
+    #define ID_VENDOR      0x1D50
+    #define ID_PRODUCT     0x605b
+    #define MANU_LEN       40
+    #define MANUFACTURER   'G',0,'r',0,'e',0,'a',0,'t',0,' ',0,'S',0,'c',0,'o',0,'t',0,'t',0,' ',0,'G',0,'a',0,'d',0,'g',0,'e',0,'t',0,'s',0
+    #define PROD_LEN       30
+    #define PRODUCT_NAME   'Y',0,'A',0,'R',0,'D',0,' ',0,'S',0,'t',0,'i',0,'c',0,'k',0,' ',0,'O',0,'n',0,'e',0
 #elif defined CHRONOSDONGLE
     #define ID_VENDOR      0x1D50
     #define ID_PRODUCT     0x6047

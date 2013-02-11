@@ -56,7 +56,9 @@ void setFreq(u32 freq)
 
 void resetRFSTATE(void)
 {
-    RFOFF;
+	// like RFOFF but without changing amplifier configuration
+	RFST = RFST_SIDLE; while ((MARCSTATE) != MARC_STATE_IDLE);
+
     RFST = rf_status;
     while (rf_status != RFST_SIDLE && MARCSTATE == MARC_STATE_IDLE)
         ;    
@@ -343,7 +345,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     // FIXME: waitRSSI()?  not sure about that one.
     // FIXME: doublecheck CCA enabled and that we're in RX mode
     /* Strobe to rx */
-    //RFST = RFST_SRX;
+    //RFRX;
     //while((MARCSTATE != MARC_STATE_RX));
     //* wait for good RSSI, TODO change while loop this could hang forever */
     //do
@@ -366,7 +368,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         }
 #endif
         /* Put radio into tx state */
-        RFST = RFST_STX;
+        RFTX;
 
         // wait until we're safely in TX mode
         countdown = 60000;
