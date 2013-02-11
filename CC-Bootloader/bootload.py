@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
+import sys
+import time
 import serial
+from serial.serialutil import SerialException
+
 
 bootloader_error_codes = {
   '0' : "OK",
@@ -200,7 +204,22 @@ if __name__ == '__main__':
   serial_port_name = sys.argv[1]
   command = sys.argv[2]
   options = sys.argv[3:]
-  serial_port = serial.Serial(serial_port_name, timeout=1)
+
+  while True:
+      try:
+          serial_port = serial.Serial(serial_port_name, timeout=1)
+          break
+
+      except SerialException,e:
+          print "\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient."
+          time.sleep(6)
+      except KeyboardInterrupt:
+          print "Caught <CTRL-C>, exitting..."
+          exit (-2)
+      except Exception,e:
+          sys.excepthook(*sys.exc_info())
+          print e
+          exit (-1)
   
   try:
     if (command == 'download' or command == 'verify'):
