@@ -1,0 +1,11 @@
+# legacy RfCats and cc1111usb
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0666"
+
+# modern RfCats
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6047" MODE:="0666"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6048" MODE:="0666"
+
+# RfCat bootloader subsystem (uses it's own product id)
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D"
+
