@@ -1,0 +1,22 @@
+ok, simple stuff:
+
+Q: why do i get this when i start rfcat:  Error in resetup():USBError(110, 'Operation timed out')
+A: try starting rfcat *before* plugging in the dongle
+A: this has been "fixed" in the latest firmware and client.  dongles now only enter RX mode when the client first talks to them, and that is only in "research" mode, so individual tools can control this
+
+Q: why does it not work!
+A: check dependencies (pyusb, libusb)
+A: see question above
+A: try a different usb port.  especially usb3 ports just bomb out.  not sure why yet.
+A: debian likes to break things.  email me if you are trying this on debian.
+
+
+Q: why do i sometimes get an error about "Input/output error" (often when RfCat was working)??
+A: this appears to be a bug between the CC1111 and some USB3 ports.  try a different USB port, and then a different computer.  i currently get this on two of three ports on my newest laptop (the third is a USB2 port)
+
+Q: why does my device sometimes not show up in RfCat?
+A: see answer to the question above.
+
+Q: why does my dongle still go into bootloader mode even though i've installed RfCat?
+A: if you still have your debugger attached you may be grounding the hardware bootloader request line. detach your debugger!
+

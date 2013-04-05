@@ -1,0 +1,33 @@
+
+Key Bindings
+============
+
+q, a - inc/dec highest sync word nibble
+w, s - inc/dec high-middle sync word nibble
+e, d - inc/dec low-middle sync word nibble
+r, f - inc/dec lowest sync word nibble
+z    - NO sync word matching
+
+menu - inc Modulation type
+bye! - dec Modulation type
+
+up   - inc recv bandwidth
+down - dec recv bandwidth
+
+right - inc baudrate
+left - dec baudrate
+
+p, Enter - inc/dec frequency
+o, ',' - faster inc/dec frequency
+i, m   - even faster inc/dec frequency
+l    - set freq to 915mhz
+k    - set freq to 868mhz
+j    - set freq to 433mhz
+h    - set freq to 315mhz
+t, v - inc/dec channels
+g    - set channel = 0
+
+
+SPACE - switch screens
+SPKR  - toggle CARRIER TX mode (good for showing up on a SpecAn, or, umm, jamming?)
+

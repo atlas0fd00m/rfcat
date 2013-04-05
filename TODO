@@ -1,0 +1,21 @@
+
+create methods to get/set PA_POWER and assist in ASK/OOK modulation.
+create method setPktPreambleTX() and change g/setPktPQT to g/setPktPreambleRX(numTimesFour)
+
+continuous detection mode cleanup and enhancement
+port hedyattack spectrum analysis code to rfcat
+
+fill out options for CC1111 stuff like DMA, etc....  right now it's skeleton and fits what i need, but perhaps not what others want.
+
+
+CLEAN UP CODE/PROJECT  / UNBORK
+    make firmware CC25x1-friendly
+        consolidate chipcon code from cc1111/cc2531/cc2511 code
+
+rfcat_server
+    make this more complete and tested!
+
+all USB firmwares:
+    * add reset capability to EP0's commands
+    * add stall recovery to client and EP0 commands (explore this one...)
+    * add poke() functionality to EP0's commands
