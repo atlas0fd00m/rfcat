@@ -272,6 +272,11 @@ class USBDongle:
         self._recv_time = 0
         self.radiocfg = RadioConfig()
         self._rfmode = RfMode
+        self._radio_configured = False
+
+        self.ctrl_thread = threading.Thread(target=self.run_ctrl)
+        self.ctrl_thread.setDaemon(True)
+        self.ctrl_thread.start()
 
         self.recv_thread = threading.Thread(target=self.runEP5_recv)
         self.recv_thread.setDaemon(True)
@@ -290,12 +295,24 @@ class USBDongle:
         self.recv_mbox  = {}
         self.recv_event = threading.Event()
         self.xmit_event = threading.Event()
+        self.reset_event = threading.Event()
         self.xmit_queue = []
         self.xmit_event.clear()
+        self.reset_event.clear()
         self.trash = []
    
     def setRFparameters(self):
         pass
+
+    def run_ctrl(self):
+        '''
+        we wait for reset events and run resetup
+        '''
+        while True:
+            self.reset_event.wait()
+            self.resetup(False)
+            self.reset_event.clear()
+            time.sleep(4)
 
     def setup(self, console=True, copyDongle=None):
         global dongles
@@ -362,7 +379,12 @@ class USBDongle:
 
         self._threadGo.set()
         if self._init_on_reconnect:
-            self.setRFparameters()
+            if self._radio_configured:
+                self._clear_buffers()
+                self.setRadioConfig()
+            else:
+                self.setRFparameters()
+                self._radio_configured = True
 
     def resetup(self, console=True, copyDongle=None):
         self._do=None
@@ -487,6 +509,8 @@ class USBDongle:
         if clear_recv_mbox:
             for key in self.recv_mbox.keys():
                 self.trash.extend(self.recvAll(key))
+        else:
+            self.trash.extend(self.recvAll(APP_SYSTEM))
         self.trash.append((time.time(),self.recv_queue))
         self.recv_queue = ''
         # self.xmit_queue = []          # do we want to keep this?
@@ -529,6 +553,7 @@ class USBDongle:
 
         while True:
             self._threadGo.wait()
+            if self._debug>3: sys.stderr.write(".")
 
             self.recv_threadcounter = (self.recv_threadcounter + 1) & 0xffffffff
             msgrecv = False
@@ -599,17 +624,24 @@ class USBDongle:
                 if self._debug>4: print >>sys.stderr,repr(sys.exc_info())
                 if ('No error' in errstr):
                     pass
+                elif ('Connection timed out' in errstr):
+                    pass
                 elif ('Operation timed out' in errstr):
                     pass
                 else:
                     if ('could not release intf' in errstr):
+                        if self._debug: print "skipping"
                         pass
                     elif ('No such device' in errstr):
                         self._threadGo.clear()
-                        self.resetup(False)
+                        #self.resetup(False) ## THIS IS A PROBLEM.
+                        self.reset_event.set()
+                        print "===== RESETUP set from recv thread"
                     elif ('Input/output error' in errstr):  # USBerror 5
                         self._threadGo.clear()
-                        self.resetup(False)
+                        #self.resetup(False) ## THIS IS A PROBLEM.
+                        self.reset_event.set()
+                        print "===== RESETUP set from recv thread"
 
                     else:
                         if self._debug: print "Error in runEP5() (receiving): %s" % errstr
@@ -620,7 +652,8 @@ class USBDongle:
                 if "'NoneType' object has no attribute 'bInterfaceNumber'" in str(e):
                     print "Error: dongle went away.  USB bus problems?"
                     self._threadGo.clear()
-                    self.resetup(False)
+                    #self.resetup(False)
+                    self.reset_event.set()
 
             except:
                 sys.excepthook(*sys.exc_info())
