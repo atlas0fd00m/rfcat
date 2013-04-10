@@ -93,65 +93,70 @@ class RfCat(FHSSNIC):
         if hasattr(fd0i, 'recv'):
             fdsock = True
 
-        while True:
-            #if self._pause:
-            #    continue
+        try:
+            while True:
+                #if self._pause:
+                #    continue
 
-            try:
-                x,y,z = select.select([fd0i ], [], [], .1)
-                if fd0i in x:
-                    if fdsock:
-                        data = fd0i.recv(self.max_packet_size)
+                try:
+                    x,y,z = select.select([fd0i ], [], [], .1)
+                    if fd0i in x:
+                        # FIXME: make this aware of VLEN/FLEN and the proper length
+                        if fdsock:
+                            data = fd0i.recv(self.max_packet_size)
+                        else:
+                            data = fd0i.read(self.max_packet_size)
+
+                        if not len(data):       # terminated socket
+                            break
+
+                        buf += data
+                        pktlen, vlen = self.getPktLEN()
+                        if vlen:
+                            pktlen = ord(buf[0])
+
+                        #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
+                        data = buf[:pktlen]
+                        if use_rawinput:
+                            data = eval('"%s"'%data)
+
+                        if len(buf) >= pktlen:
+                            self.RFxmit(data)
+
+                except ChipconUsbTimeoutException:
+                    pass
+
+                try:
+                    data, time = self.RFrecv(1)
+
+                    if printable:
+                        data = "\n"+str(time)+": "+repr(data)
                     else:
-                        data = fd0i.read(self.max_packet_size)
+                        data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
 
-                    if not len(data):       # terminated socket
-                        break
+                    if fdsock:
+                        fd0o.sendall(data)
+                    else:
+                        fd0o.write(data)
 
-                    buf += data
-                    pktlen, vlen = self.getPktLEN()
-                    if vlen:
-                        pktlen = ord(buf[0])
+                except ChipconUsbTimeoutException:
+                    pass
 
-                    #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
-                    data = buf[:pktlen]
-                    if use_rawinput:
-                        data = eval('"%s"'%data)
-
-                    if len(buf) >= pktlen:
-                        self.RFxmit(data)
-
-            except ChipconUsbTimeoutException:
-                pass
-
-            try:
-                data, time = self.RFrecv(1)
-
-                if printable:
-                    data = "\n"+str(time)+": "+repr(data)
-                else:
+                #special handling of specan dumps...  somewhat set in solid jello
+                try:
+                    data, time = self.recv(APP_SPECAN, 1, 1)
                     data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                    if fdsock:
+                        fd0o.sendall(data)
+                    else:
+                        fd0o.write(data)
 
-                if fdsock:
-                    fd0o.sendall(data)
-                else:
-                    fd0o.write(data)
+                except ChipconUsbTimeoutException:
+                    #print "this is a valid exception, run along... %x"% APP_SPECAN
+                    pass
 
-            except ChipconUsbTimeoutException:
-                pass
-
-            #special handling of specan dumps...  somewhat set in solid jello
-            try:
-                data, time = self.recv(APP_SPECAN, 1, 1)
-                data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
-                if fdsock:
-                    fd0o.sendall(data)
-                else:
-                    fd0o.write(data)
-
-            except ChipconUsbTimeoutException:
-                #print "this is a valid exception, run along... %x"% APP_SPECAN
-                pass
+        except KeyboardInterrupt:
+            self.setModeIDLE()
 
 class InverseCat(RfCat):
     def setMdmSyncWord(self, word, radiocfg=None):
