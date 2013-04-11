@@ -53,13 +53,13 @@ RfCatChronos.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatChronos.hex
 
-RfCatChronosCCBootloader.hex: DEFINES = -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
+RfCatChronosCCBootloader.hex: DEFINES = -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
 RfCatChronosCCBootloader.hex: $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatChronosCCBootloader.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatChronosCCBootloader.hex
 
-RfCatDons.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE
+RfCatDons.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
 RfCatDons.hex: $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatDons.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
@@ -434,18 +434,21 @@ installtestxmitfw: testxmitapplication.hex
 	goodfet.cc info
 
 installchronosbootloader: 
+	#./bootloader_serial.py
 	goodfet.cc erase
-	goodfet.cc flash CCBootloader/CCBootloader-rfcat-chronosdongle.hex
-	goodfet.cc verify CCBootloader/CCBootloader-rfcat-chronosdongle.hex
+	goodfet.cc flash CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
+	goodfet.cc verify CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
 	goodfet.cc info
 
 installdonsbootloader: 
+	#./bootloader_serial.py
 	goodfet.cc erase
-	goodfet.cc flash CCBootloader/CCBootloader-rfcat-donsdongle.hex
-	goodfet.cc verify CCBootloader/CCBootloader-rfcat-donsdongle.hex
+	goodfet.cc flash CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
+	goodfet.cc verify CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
 	goodfet.cc info
 
 installys1bootloader: 
+	#./bootloader_serial.py
 	goodfet.cc erase
 	goodfet.cc flash CCBootloader/CCBootloader-rfcat-ys1.hex
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1.hex
