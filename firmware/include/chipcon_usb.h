@@ -30,6 +30,8 @@
 
 #define USBADDR_UPDATE          0x80    //r
 
+#define USB_SERIAL_STRIDX_BYTE  0x03
+
 // Power/Control Register
 #define USBPOW_SUSPEND_EN       0x01    //rw
 #define USBPOW_SUSPEND          0x02    //r
