@@ -487,7 +487,18 @@ u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
     while (descType != 0xff ){
 
-        if (descType == wantedType){
+        if (descType == wantedType)
+        {
+#ifdef BOOTLOADER_SIZE
+            if (wantedType == USB_DESC_STRING 
+                    && index == USB_SERIAL_STRIDX_BYTE
+                    && *((u32*)BOOTLOADER_SIZE-16) == 0x73616c40) //@las
+            {
+                descPtr = (u8*) (BOOTLOADER_SIZE - 12);
+                descType = wantedType;
+            }
+
+#endif
             if (index == 0){
                 descType = 0xff;                            // WARNING: destructive.  go directly to ret, do not pass go, do not collect $200
             } else {
@@ -1268,7 +1279,7 @@ __code u8 USBDESCBEGIN [] = {
                LE_WORD(0x0100),         // bcdDevice             (change to hardware version)
                0x01,                    // iManufacturer
                0x02,                    // iProduct
-               0x03,                    // iSerialNumber
+               USB_SERIAL_STRIDX_BYTE,  // iSerialNumber
                0x01,                    // bNumConfigurations
 
 // Device Qualifier

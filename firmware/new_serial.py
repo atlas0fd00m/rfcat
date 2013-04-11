@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 import sys
 
 sn_header = """// Serial number
