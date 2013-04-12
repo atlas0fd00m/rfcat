@@ -434,21 +434,21 @@ installtestxmitfw: testxmitapplication.hex
 	goodfet.cc info
 
 installchronosbootloader: 
-	#./bootloader_serial.py
+	./bootloader_serial.py $(USBSERNUM)
 	goodfet.cc erase
 	goodfet.cc flash CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
 	goodfet.cc info
 
 installdonsbootloader: 
-	#./bootloader_serial.py
+	./bootloader_serial.py $(USBSERNUM)
 	goodfet.cc erase
 	goodfet.cc flash CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
 	goodfet.cc info
 
 installys1bootloader: 
-	#./bootloader_serial.py
+	./bootloader_serial.py $(USBSERNUM)
 	goodfet.cc erase
 	goodfet.cc flash CCBootloader/CCBootloader-rfcat-ys1.hex
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1.hex
