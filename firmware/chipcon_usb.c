@@ -476,11 +476,11 @@ void usbSetConfiguration(USB_Setup_Header* pReq)
     usb_data.usbstatus = USB_STATE_IDLE;
 }
 
+__xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
-u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
-
-    u8 descType;
-    u8* descPtr = (u8*)&USBDESCBEGIN;                 // start of data... sorta
+    __xdata u8 descType;
+    __xdata u8* tmpdesc = BOOTLOADER_SIZE;
+    __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
 
     descType = *(descPtr+1);
 
@@ -492,12 +492,13 @@ u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 #ifdef BOOTLOADER_SIZE
             if (wantedType == USB_DESC_STRING 
                     && index == USB_SERIAL_STRIDX_BYTE
-                    && *((u32*)BOOTLOADER_SIZE-16) == 0x73616c40) //@las
+                    && *((__xdata u32*)(tmpdesc-32)) == 0x73616c40) //@las
             {
-                descPtr = (u8*) (BOOTLOADER_SIZE - 12);
-                descType = wantedType;
+                descPtr = (__xdata u8*)(tmpdesc-28);
+                descType = 0xff;
+                break;
             }
-
+            else
 #endif
             if (index == 0){
                 descType = 0xff;                            // WARNING: destructive.  go directly to ret, do not pass go, do not collect $200
@@ -517,7 +518,7 @@ u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
 void usbGetDescriptor(USB_Setup_Header* pReq)
 {
-    u8* buffer;                                  // this will point to the start of the descriptor (in code) when we're done
+    __xdata u8* buffer;                                  // this will point to the start of the descriptor (in code) when we're done
     u16 length;
 
     switch ((pReq->wValue)>>8){
@@ -544,7 +545,7 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
     if (length > pReq->wLength)
         length = pReq->wLength;
 
-    setup_send_ep0(buffer, length);
+    setup_sendx_ep0(buffer, length);
     
 }
 
