@@ -454,6 +454,21 @@ installys1bootloader:
 	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1.hex
 	goodfet.cc info
 
+installchronosbootloadercctool: 
+	./bootloader_serial.py $(USBSERNUM)
+	cc-tool -n CC1111 -e -w CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
+	cc-tool -n CC1111 -v CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex
+
+installdonsbootloadercctool: 
+	./bootloader_serial.py $(USBSERNUM)
+	cc-tool -n CC1111 -e -w CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
+	cc-tool -n CC1111 -v CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex
+
+installys1bootloadercctool: 
+	./bootloader_serial.py $(USBSERNUM)
+	cc-tool -n CC1111 -e -w CCBootloader/CCBootloader-rfcat-ys1.hex
+	cc-tool -n CC1111 -v CCBootloader/CCBootloader-rfcat-ys1.hex
+
 testgoodfet:
 	goodfet.cc info
 
