@@ -368,7 +368,10 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         }
 #endif
         /* Put radio into tx state */
-        RFTX;
+#ifdef YARDSTICKONE
+        SET_TX_AMP;
+#endif
+        RFST = RFST_STX;
 
         // wait until we're safely in TX mode
         countdown = 60000;
