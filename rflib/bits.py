@@ -60,6 +60,53 @@ def shiftString(string, bits):
     news.append("%c"%newc)
     return "".join(news)
 
+def getNextByte_feedbackRegister7bitsMSB():
+    '''
+    this returns a byte of a 7-bit feedback register stemming off bits 4 and 7
+    the register is 7 bits long, but we return a more usable 8bits (ie. 
+    '''
+    global fbRegister
+
+    retval = 0
+    for x in range(8):      #MSB, 
+        retval <<= 1
+        retval |= (fbRegister >> 6)         # start with bit 7
+        nb = ( ( fbRegister>>3) ^ (fbRegister>>6)) &1 
+        fbRegister = ( ( fbRegister << 1 )   |   nb ) & 0x7f # do shifting
+        #print "retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb)
+
+    return retval
+
+def getNextByte_feedbackRegister7bitsLSB():
+    '''
+    this returns a byte of a 7-bit feedback register stemming off bits 4 and 7
+    the register is 7 bits long, but we return a more usable 8bits (ie. 
+    '''
+    global fbRegister
+
+    retval = 0
+    for x in range(8):      #MSB, 
+        retval >>= 1
+        retval |= ((fbRegister << 1)&0x80)         # start with bit 7
+
+        nb = ( ( fbRegister>>3) ^ (fbRegister>>6)) &1 
+        fbRegister = ( ( fbRegister << 1 )   |   nb ) & 0x7f # do shifting
+        #print "retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb)
+
+    return retval
+
+
+def whitenData(data, seed=0xffff, getNextByte=getNextByte_feedbackRegister7bitsMSB):
+    global fbRegister
+    fbRegister = seed
+
+    carry = 0
+    news = []
+    for x in xrange(len(data)-1):
+        newc = ((ord(data[x]) ^ getNextByte() ) & 0xff)
+        news.append("%c"%newc)
+    return "".join(news)
+
 def findSyncWord(byts, sensitivity=4, minpreamble=2): 
         '''
         seek SyncWords from a raw bitstream.  
