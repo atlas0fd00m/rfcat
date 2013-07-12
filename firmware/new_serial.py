@@ -7,14 +7,14 @@ sn_header = """// Serial number
 """
 
 try:
-    ser = int(file(".serial", 'rb').read()) + 1
+    ser = int(file(".serial", 'rb').read(), 16) #+ 1
 except IOError:
     ser = 0
 
-print >>sys.stderr,("[--- new serial number: %.4d ---]" % ser)
+print >>sys.stderr,("[--- new serial number: %.4x ---]" % ser)
 
-file(".serial", 'wb').write("%.4d" % ser)
-sertxt = "%.4d" % ser
+file(".serial", 'wb').write("%.4x" % ser)
+sertxt = "%.4x" % ser
 
 for c in sertxt:
     sys.stdout.write("'%s',0," % c)
