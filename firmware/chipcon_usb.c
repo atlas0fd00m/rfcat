@@ -476,18 +476,31 @@ void usbSetConfiguration(USB_Setup_Header* pReq)
     usb_data.usbstatus = USB_STATE_IDLE;
 }
 
+__xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
-u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
-
-    u8 descType;
-    u8* descPtr = (u8*)&USBDESCBEGIN;                 // start of data... sorta
+    __xdata u8 descType;
+    __xdata u8* tmpdesc;
+    __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
 
     descType = *(descPtr+1);
 
 
     while (descType != 0xff ){
 
-        if (descType == wantedType){
+        if (descType == wantedType)
+        {
+#ifdef BOOTLOADER_SIZE
+            tmpdesc = BOOTLOADER_SIZE;
+            if (wantedType == USB_DESC_STRING 
+                    && index == USB_SERIAL_STRIDX_BYTE
+                    && *((__xdata u32*)(tmpdesc-32)) == 0x73616c40) //@las
+            {
+                descPtr = (__xdata u8*)(tmpdesc-28);
+                descType = 0xff;
+                break;
+            }
+            else
+#endif
             if (index == 0){
                 descType = 0xff;                            // WARNING: destructive.  go directly to ret, do not pass go, do not collect $200
             } else {
@@ -506,7 +519,7 @@ u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
 void usbGetDescriptor(USB_Setup_Header* pReq)
 {
-    u8* buffer;                                  // this will point to the start of the descriptor (in code) when we're done
+    __xdata u8* buffer;                                  // this will point to the start of the descriptor (in code) when we're done
     u16 length;
 
     switch ((pReq->wValue)>>8){
@@ -533,7 +546,7 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
     if (length > pReq->wLength)
         length = pReq->wLength;
 
-    setup_send_ep0(buffer, length);
+    setup_sendx_ep0(buffer, length);
     
 }
 
@@ -1268,7 +1281,7 @@ __code u8 USBDESCBEGIN [] = {
                LE_WORD(0x0100),         // bcdDevice             (change to hardware version)
                0x01,                    // iManufacturer
                0x02,                    // iProduct
-               0x03,                    // iSerialNumber
+               USB_SERIAL_STRIDX_BYTE,  // iSerialNumber
                0x01,                    // bNumConfigurations
 
 // Device Qualifier
