@@ -7,7 +7,7 @@
 void debug(__code u8* text)
 {
     u16 len = 0;
-    code u8* ptr = text;
+    __code u8* ptr = text;
     while (*ptr++ != 0)
         len ++;
     txdata(0xfe, 0xf0, len, (__xdata u8*)text);
