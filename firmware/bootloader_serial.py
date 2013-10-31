@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys
-from intelhex import IntelHex
+from rflib.intelhex import IntelHex
 
 WRITEBACK = True
 if len(sys.argv) > 1:
