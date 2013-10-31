@@ -16,11 +16,11 @@ char __xdata rxbuf[30];
 u8 modulations[] = {MOD_2FSK, MOD_GFSK, MOD_ASKOOK, MOD_MSK};
 
 u8 current_modulation;
-char code fsk2[] = "2FSK";
-char code gfsk[] = "GFSK";
-char code ask[] = "ASK ";
-char code msk[] = "MSK ";
-char* code modstrings[] = {fsk2, gfsk, ask, msk};
+char __code fsk2[] = "2FSK";
+char __code gfsk[] = "GFSK";
+char __code ask[] = "ASK ";
+char __code msk[] = "MSK ";
+char* __code modstrings[] = {fsk2, gfsk, ask, msk};
 
 
 

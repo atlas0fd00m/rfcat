@@ -23,8 +23,8 @@
 // etc.
 //
 
-xdata DMA_DESC dma_configs[DMA_CHANNELS];
-data dma_channels= 0;
+__xdata DMA_DESC dma_configs[DMA_CHANNELS];
+__data dma_channels= 0;
 
 void initDMA(void)
 {
