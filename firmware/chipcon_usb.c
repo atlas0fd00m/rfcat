@@ -978,7 +978,7 @@ void processOUTEP5(void)
             case CMD_POKE:
                     loop =  *ptr++;
                     loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;                                // hack, but it works
+                    ep5.dptr = (__xdata u8*) loop;
 
                     loop = ep5.OUTlen - 2;
 
@@ -988,7 +988,7 @@ void processOUTEP5(void)
                     }
 
                     //if (ep5.OUTbytesleft == 0)
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
                     break;
 
             case CMD_POKE_REG:
@@ -996,7 +996,7 @@ void processOUTEP5(void)
                 {
                     loop =  *ptr++;
                     loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;                                // hack, but it works
+                    ep5.dptr = (__xdata u8*) loop;
                 }
                 // FIXME: do we want to DMA here?
                 
@@ -1014,7 +1014,7 @@ void processOUTEP5(void)
                     *ep5.dptr++ = *ptr++;
                 }
 
-                txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
+                txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
 
                 break;
             case CMD_PING:
