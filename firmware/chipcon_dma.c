@@ -11,8 +11,8 @@
 //
 // example:
 //
-// xdata u8 my_dma_usb_chan, my_dma_usb_arm;
-// xdata DMA_DESC *my_dma_usb_desc;
+// __xdata u8 my_dma_usb_chan, my_dma_usb_arm;
+// __xdata DMA_DESC *my_dma_usb_desc;
 //
 // my_dma_usb_chan= getDMA();
 // my_dma_usb_arm= (DMAARM0 << my_dma_usb_chan);
@@ -23,8 +23,8 @@
 // etc.
 //
 
-xdata DMA_DESC dma_configs[DMA_CHANNELS];
-data dma_channels= 0;
+__xdata DMA_DESC dma_configs[DMA_CHANNELS];
+__data dma_channels= 0;
 
 void initDMA(void)
 {

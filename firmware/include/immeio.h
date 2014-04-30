@@ -30,7 +30,7 @@ void immeLCDInitialState(void);
 #define MOD_ASKOOK  3
 #define MOD_MSK     7
 
-extern char xdata rxbuf[30];
+extern char __xdata rxbuf[30];
 extern u8 modulations[];
 extern u8 current_modulation;
 extern char code fsk2[];
