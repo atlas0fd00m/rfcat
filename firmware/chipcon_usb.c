@@ -1059,6 +1059,15 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
+            case CMD_PARTNUM:
+                ep5.OUTbytesleft = 1;
+
+                ptr = (__xdata u8*) &PARTNUM;
+
+                txdata(ep5.OUTapp, ep5.OUTcmd, ep5.OUTbytesleft, ptr);
+                ep5.OUTbytesleft = 0;
+                break;
+
             case CMD_RESET:
                 if (strncmp(ptr, "RESET_NOW", 9))
                     break;   //didn't match the signature.  must have been an accident.
@@ -1067,6 +1076,8 @@ void processOUTEP5(void)
                 WDCTL = 0x80;   // Watchdog ENABLE, Watchdog mode, 1s until reset
 
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }

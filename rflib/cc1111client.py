@@ -72,6 +72,7 @@ SYS_CMD_GET_CLOCK               = 0x85
 SYS_CMD_BUILDTYPE               = 0x86
 SYS_CMD_BOOTLOADER              = 0x87
 SYS_CMD_RFMODE                  = 0x88
+SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
@@ -378,6 +379,19 @@ class USBDongle:
                 self._usbmaxo = ep.maxPacketSize
 
         self._threadGo.set()
+
+        self.getRadioConfig()
+        chip = self.getPartNum()
+
+        if chip == 0x91:        # cc2511
+            print "CC2511"
+        elif chip == 0x81:      # cc2510
+            print "CC2510"
+        elif chip == 0x11:      # cc1111
+            print "CC1111"
+        elif chip == 0x01:      # cc1110
+            print "CC1110"
+
         if self._init_on_reconnect:
             if self._radio_configured:
                 self._clear_buffers()
@@ -897,6 +911,17 @@ class USBDongle:
                 sys.stdin.read(1)
                 break
 
+    def getPartNum(self):
+        try:
+            r = self.send(APP_SYSTEM, SYS_CMD_PARTNUM, "", 10000)
+            r,rt = r
+        except ChipconUsbTimeoutException, e:
+            r = None
+            print "SETUP Failed.",e
+
+        return ord(r)
+
+
     def ping(self, count=10, buf="ABCDEFGHIJKLMNOPQRSTUVWXYZ", wait=DEFAULT_USB_TIMEOUT, silent=False):
         good=0
         bad=0
@@ -1125,6 +1150,7 @@ class USBDongle:
 
         return bytedef
 
+        # FIXME: this needs to be updated to include 2.4ghz stuff.
     def setFreq(self, freq=902000000, mhz=24, radiocfg=None, applyConfig=True):        
         if radiocfg is None:
             radiocfg = self.radiocfg
@@ -1140,7 +1166,7 @@ class USBDongle:
         if (freq > FREQ_EDGE_900 and freq < FREQ_MID_900) or (freq > FREQ_EDGE_400 and freq < FREQ_MID_400) or (freq < FREQ_MID_300):
             # select low VCO
             radiocfg.fscal2 = 0x0A
-        else:
+        elif freq <1e9 and ((freq > FREQ_MID_900) or (freq > FREQ_MID_400) or (freq > FREQ_MID_300)):
             # select high VCO
             radiocfg.fscal2 = 0x2A
 
@@ -2076,6 +2102,47 @@ class USBDongle:
 
 
     ######## APPLICATION METHODS ########
+    def setup24330MHz(self):
+        #self.setRadioConfig('0c4eff000800000b0065600068b583231145073f14166c4340915610a90a0011593f3f8831090000000000000000c02e0006000000000000000000000000'.decode('hex'))
+        self.getRadioConfig()
+        rc = self.radiocfg
+        rc.iocfg0     = 0x06
+        rc.sync1      = 0x0c
+        rc.sync0      = 0x4e
+        rc.pktlen     = 0xff
+        rc.pktctrl1   = 0x00
+        rc.pktctrl0   = 0x08
+        rc.fsctrl1    = 0x0b
+        rc.fsctrl0    = 0x00
+        rc.addr       = 0x00
+        rc.channr     = 0x00
+        rc.mdmcfg4    = 0x68
+        rc.mdmcfg3    = 0xb5
+        rc.mdmcfg2    = 0x83
+        rc.mdmcfg1    = 0x23
+        rc.mdmcfg0    = 0x11
+        rc.mcsm2      = 0x07
+        rc.mcsm1      = 0x3f
+        rc.mcsm0      = 0x14
+        rc.deviatn    = 0x45
+        rc.foccfg     = 0x16
+        rc.bscfg      = 0x6c
+        #rc.agcctrl2  |= AGCCTRL2_MAX_DVGA_GAIN
+        rc.agcctrl2   = 0x43
+        rc.agcctrl1   = 0x40
+        rc.agcctrl0   = 0x91
+        rc.frend1     = 0x56
+        rc.frend0     = 0x10
+        rc.fscal3     = 0xad
+        rc.fscal2     = 0x0A
+        rc.fscal1     = 0x00
+        rc.fscal0     = 0x11
+        rc.test2      = 0x88
+        rc.test1      = 0x31
+        rc.test0      = 0x09
+        rc.pa_table0  = 0xc0
+        self.setRadioConfig()
+
     def setup900MHz(self):
         self.getRadioConfig()
         rc = self.radiocfg
