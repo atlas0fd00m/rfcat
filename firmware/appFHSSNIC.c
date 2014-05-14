@@ -1008,6 +1008,40 @@ static void appInitRf(void)
     //PA_TABLE0   = 0x83;
 #endif
 
+#ifdef CC2511
+    IOCFG2      = 0x2e;
+    IOCFG1      = 0x00;
+    IOCFG0      = 0x06;
+    //PKTCTRL1    = 0x04; // PQT threshold  - was 0x00
+    //PKTCTRL0    = 0x00; // FLEN.  for VLEN use |1 (ie.  FLEN=00, VLEN=01)
+    FSCTRL1     = 0x0b;
+    FSCTRL0     = 0x00;
+    FREQ2       = 0x65;
+    FREQ1       = 0x60;
+    FREQ0       = 0x00;
+    MDMCFG4     = 0x68;
+    MDMCFG3     = 0xb5;
+    MDMCFG2     = 0x83;
+    MDMCFG1     = 0x23;
+    MDMCFG0     = 0x11;
+    DEVIATN     = 0x45;
+    MCSM2       = 0x07;             // RX_TIMEOUT
+    MCSM1       = 0x30;             // CCA_MODE RSSI below threshold unless currently recvg pkt - always end up in RX mode
+    MCSM0       = 0x14;             // fsautosync when going from idle to rx/tx/fstxon
+    FOCCFG      = 0x16;
+    BSCFG       = 0x6c;
+    AGCCTRL2    = 0x43;
+    AGCCTRL1    = 0x40;
+    AGCCTRL0    = 0x91;
+    FREND1      = 0x56;
+    FREND0      = 0x10;
+    FSCAL3      = 0xa9;
+    FSCAL2      = 0x0a;
+    FSCAL1      = 0x00;
+    FSCAL0      = 0x11;
+#endif
+
+
 }
 
 /*************************************************************************************************
