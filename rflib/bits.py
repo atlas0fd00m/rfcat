@@ -1,5 +1,9 @@
 import struct
 
+fmtsLSB = [None, "B", "<H", "<I", "<I", "<Q", "<Q", "<Q", "<Q"]
+fmtsMSB = [None, "B", ">H", ">I", ">I", ">Q", ">Q", ">Q", ">Q"]
+sizes = [ 0, 1, 2, 4, 4, 8, 8, 8, 8]
+masks = [ (1<<(8*i))-1 for i in xrange(9) ]
 
 def wtfo(string):
     outstr = []
@@ -38,6 +42,23 @@ def strBitReverse(string):
     print(''.join(out).encode('hex'))
     return ''.join(out)
 
+def strXorMSB(string, xorval, size):
+    '''
+    lsb
+    pads end of string with 00
+    '''
+    out = []
+    strlen = len(string)
+    string += "\x00" * sizes[size]
+
+    for idx in range(0, strlen, size):
+        tempstr = string[idx:idx+sizes[size]]
+        temp, = struct.unpack( fmtsMSB[size], tempstr )
+        temp ^= xorval
+        temp &= masks[size]
+        tempstr = struct.pack( fmtsMSB[size], temp )[-size:]
+        out.append(tempstr)
+    return ''.join(out)
 
         
         

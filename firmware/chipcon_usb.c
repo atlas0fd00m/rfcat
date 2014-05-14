@@ -978,7 +978,7 @@ void processOUTEP5(void)
             case CMD_POKE:
                     loop =  *ptr++;
                     loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;                                // hack, but it works
+                    ep5.dptr = (__xdata u8*) loop;
 
                     loop = ep5.OUTlen - 2;
 
@@ -988,7 +988,7 @@ void processOUTEP5(void)
                     }
 
                     //if (ep5.OUTbytesleft == 0)
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
+                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
                     break;
 
             case CMD_POKE_REG:
@@ -996,7 +996,7 @@ void processOUTEP5(void)
                 {
                     loop =  *ptr++;
                     loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;                                // hack, but it works
+                    ep5.dptr = (__xdata u8*) loop;
                 }
                 // FIXME: do we want to DMA here?
                 
@@ -1014,7 +1014,7 @@ void processOUTEP5(void)
                     *ep5.dptr++ = *ptr++;
                 }
 
-                txdata(ep5.OUTapp, ep5.OUTcmd, 2, ep5.OUTbytesleft);
+                txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
 
                 break;
             case CMD_PING:
@@ -1059,6 +1059,15 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
+            case CMD_PARTNUM:
+                ep5.OUTbytesleft = 1;
+
+                ptr = (__xdata u8*) &PARTNUM;
+
+                txdata(ep5.OUTapp, ep5.OUTcmd, ep5.OUTbytesleft, ptr);
+                ep5.OUTbytesleft = 0;
+                break;
+
             case CMD_RESET:
                 if (strncmp(ptr, "RESET_NOW", 9))
                     break;   //didn't match the signature.  must have been an accident.
@@ -1067,6 +1076,8 @@ void processOUTEP5(void)
                 WDCTL = 0x80;   // Watchdog ENABLE, Watchdog mode, 1s until reset
 
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
