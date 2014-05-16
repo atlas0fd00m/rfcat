@@ -1011,7 +1011,7 @@ static void appInitRf(void)
 #ifdef CC2511
     IOCFG2      = 0x2e;
     IOCFG1      = 0x00;
-    IOCFG0      = 0x06;
+    IOCFG0      = 0x00; //0x06; for "write"
     //PKTCTRL1    = 0x04; // PQT threshold  - was 0x00
     //PKTCTRL0    = 0x00; // FLEN.  for VLEN use |1 (ie.  FLEN=00, VLEN=01)
     FSCTRL1     = 0x0b;
