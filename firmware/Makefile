@@ -43,6 +43,8 @@ RfCatChronos: 				clean RfCatChronos.hex
 RfCatChronosCCBootloader: 	clean RfCatChronosCCBootloader.hex
 RfCatDons: 					clean RfCatDons.hex
 RfCatDonsCCBootloader: 		clean RfCatDonsCCBootloader.hex
+RfCatDons24: 				clean RfCatDons24.hex
+RfCatDons24CCBootloader: 	clean RfCatDons24CCBootloader.hex
 RfCatYS1: 					clean RfCatYS1.hex
 RfCatYS1CCBootloader: 		clean RfCatYS1CCBootloader.hex
 immeSniff: 					clean immeSniff.hex
@@ -70,6 +72,18 @@ RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatDonsCCBootloader.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatDonsCCBootloader.hex
+
+RfCatDons24.hex: DEFINES = -DDONSDONGLES -DCC2511 -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+RfCatDons24.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatDons24.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatDons24.hex
+
+RfCatDons24CCBootloader.hex: DEFINES = -DDONSDONGLES -DCC2511 -DUSBDEVICE
+RfCatDons24CCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatDons24CCBootloader.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatDons24CCBootloader.hex
 
 RfCatYS1.hex: DEFINES = -DYARDSTICKONE -DCC1111 -DUSBDEVICE
 RfCatYS1.hex: $(libsusb) $(apps1111)
@@ -273,6 +287,19 @@ installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_C erase_all
 	bootload.py /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
 	bootload.py /dev/RFCAT_BL_C verify bins/RfCatChronosCCBootloader.hex && bootload.py /dev/RFCAT_BL_C run
+
+installRfCat24DonsDongle: RfCatDons24.hex
+	goodfet.cc erase
+	goodfet.cc flash bins/RfCatDons24.hex
+	goodfet.cc verify bins/RfCatDons24.hex
+	goodfet.cc info
+
+installRfCat24DonsDongleCCBootloader: RfCatDons24CCBootloader.hex
+	rfcat --bootloader --force
+	@sleep 1
+	bootload.py /dev/RFCAT_BL_D erase_all
+	bootload.py /dev/RFCAT_BL_D download bins/RfCatDons24CCBootloader.hex
+	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDons24CCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
 
 installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc erase
