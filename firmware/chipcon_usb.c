@@ -129,7 +129,7 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
         // if USB is still not ready... fail.  this should only happen when the USB is disconnected anyway <crosses fingers>
         if (!loop)
         {
-            blink(100, 100);
+            blink(1000, 1000);
             return -1;
         }
         
@@ -478,6 +478,7 @@ void usbSetConfiguration(USB_Setup_Header* pReq)
 
 __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
+    __xdata u8 counter = 0;
     __xdata u8 descType;
     __xdata u8* tmpdesc;
     __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
@@ -486,6 +487,7 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
 
     while (descType != 0xff ){
+        counter ++;
 
         if (descType == wantedType)
         {
@@ -530,9 +532,12 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
         case USB_DESC_CONFIG:
             buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, (pReq->wValue)&0xff);
             length = (u16)*(buffer+2);
-            if ((pReq->wValue>>8) != *(buffer+1))
+            /*if ((pReq->wValue>>8) != *(buffer+1))
+            {
+                blink_binary_baby_lsb(0x41, 8); 
                 while (1)   //blink(100,100);                               ///////// DEBUGGING!  WILL STOP EXECUTION!
                     blink_binary_baby_lsb((pReq->wValue), 16); 
+            }*/
             break;
         case USB_DESC_STRING:
             buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, (pReq->wValue)&0xff);
@@ -544,7 +549,18 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
             break;
     }
     if (length > pReq->wLength)
+    {
         length = pReq->wLength;
+    }
+
+    if (! length)       // desired descriptor not found.
+    {
+        USBCS0 |= USBCS0_SEND_STALL;
+        //blink_binary_baby_lsb(0x42, 8);
+        //blink_binary_baby_lsb(pReq->wValue, 16);
+        //blink(700,100);
+        //blink(700,100);
+    }
 
     setup_sendx_ep0(buffer, length);
     
@@ -588,12 +604,12 @@ void handleCS0(void)
         USBCS0 = 0x00;
         lastCode[1] = LCE_USB_EP0_SENT_STALL;
         ep0.epstatus = EP_STATE_IDLE;
-        blink(200,200);
+        blink(20,20);
     }
     
     if (ep0.epstatus == EP_STATE_STALL)
     {
-        blink(500,500);
+        blink(50,50);
         ep0.epstatus = EP_STATE_IDLE;
     }
 
@@ -643,8 +659,10 @@ void handleCS0(void)
                         else if (loop == USB_BM_REQTYPE_TGT_INTF)
                         {
                             switch (req.bRequest){
-                                case USB_GET_STATUS:        break;
-                                case USB_GET_INTERFACE:     break;
+                                case USB_GET_STATUS:
+                                    setup_send_ep0("\x00\x00", 2);      break;
+                                case USB_GET_INTERFACE:
+                                    setup_send_ep0("\x00", 1);          break;
                                 default:
                                     debugEP0Req((u8*)&req);
                             }
@@ -654,9 +672,19 @@ void handleCS0(void)
                         {
                             switch (req.bRequest){
                                 case USB_GET_STATUS:
-                                    setup_send_ep0("\x00\x00", 2);
-                                    break;
+                                    setup_send_ep0("\x00\x00", 2);      break;
                                 case USB_SYNCH_FRAME:
+                                    break;
+                                default:
+                                    debugEP0Req((u8*)&req);
+                            }
+                        }
+                        // Other Requests
+                        else if (loop == USB_BM_REQTYPE_TGT_OTHER)
+                        {
+                            switch (req.bRequest){
+                                case USB_GET_STATUS:
+                                    setup_send_ep0("\x00\x00", 2);
                                     break;
                                 default:
                                     debugEP0Req((u8*)&req);
@@ -667,6 +695,8 @@ void handleCS0(void)
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_CLASS:             // CLASS type
+                        USBCS0 |= USBCS0_SEND_STALL;
+                        //debugEP0Req((u8*)&req);
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
@@ -871,13 +901,6 @@ int handleOUTEP5(void)
         if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
             ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
 
-        //debug("New...");
-        //debughex16(loop);
-        //debughex16(ep5.OUTlen);
-        //debughex16(ep5.OUTbytesleft);
-
-        //ep5.flags &= ~EP_OUTBUF_CONTINUED;
-
     } else
     {
         //debug("Continued...");
@@ -913,10 +936,7 @@ int handleOUTEP5(void)
         lastCode[1] = LCE_USB_EP5_LEN_TOO_BIG;
         //USBCSOL |= USBCSOL_SEND_STALL;
         USBCSOL &= ~USBCSOL_OUTPKT_RDY;
-        //blink(300,200);
-        //blink(300,200);
         blink_binary_baby_lsb(len, 16);
-        //USBCSOL &= ~(USBCSOL_SEND_STALL | USBCSOL_SENT_STALL);
         return -2;
     }
 
@@ -1257,15 +1277,16 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR  // P0_7's interrupt is used as
 /* blinks the EP0 SETUP packet in binary on the LED */
 void debugEP0Req(u8 *pReq)
 {
-    (void) pReq;
-    /*
-    //u8  loop;
+    //(void) pReq;
+    // /*
+    u8  loop;
 
+    blink_binary_baby_lsb(0x40, 8);
     for (loop = sizeof(USB_Setup_Header);loop>0; loop--)
     {
         blink_binary_baby_lsb(*(pReq), 8);
         pReq++;
-    }*/
+    }//*/
 
 }
 

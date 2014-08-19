@@ -133,6 +133,7 @@
 #define USB_BM_REQTYPE_TGT_DEV          0x00
 #define USB_BM_REQTYPE_TGT_INTF         0x01
 #define USB_BM_REQTYPE_TGT_EP           0x02
+#define USB_BM_REQTYPE_TGT_OTHER        0x03
 #define USB_BM_REQTYPE_TYPEMASK         0x60
 #define USB_BM_REQTYPE_TYPE_STD         0x00
 #define USB_BM_REQTYPE_TYPE_CLASS       0x20
@@ -161,6 +162,7 @@
 #define USB_DESC_INTERFACE              0x04
 #define USB_DESC_ENDPOINT               0x05
 #define USB_DESC_DEVICE_QUALIFIER       0x06
+#define USB_DESC_OTHER_SPEED_CFG        0x07
 
 // usb_data bits
 #define USBD_CIF_SUSPEND        (u16)0x1
