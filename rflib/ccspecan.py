@@ -29,6 +29,10 @@ import cPickle as pickle
 from PySide import QtCore, QtGui
 from PySide.QtCore import Qt, QPointF, QLineF
 
+def ensureQapp():
+    global _qt_app
+    if not globals().get("_qt_app"):
+        _qt_app = QtGui.QApplication([])
 
 
 APP_SPECAN   = 0x43
