@@ -41,14 +41,13 @@ class RfCat(FHSSNIC):
         freq, delta = self._doSpecAn(basefreq, inc, count)
 
         import rflib.ccspecan as rfspecan
-        if not hasattr(self, "_qt_app") or self._qt_app is None:
-            self._qt_app = rfspecan.QtGui.QApplication([])
+        rfspecan.ensureQapp()
 
         fhigh = freq + (delta*(count+1))
 
         window = rfspecan.Window(self, freq, fhigh, delta, 0)
         window.show()
-        self._qt_app.exec_()
+        rfspecan._qt_app.exec_()
         
     def _doSpecAn(self, basefreq, inc, count):
         '''

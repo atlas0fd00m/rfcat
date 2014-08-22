@@ -133,6 +133,7 @@
 #define USB_BM_REQTYPE_TGT_DEV          0x00
 #define USB_BM_REQTYPE_TGT_INTF         0x01
 #define USB_BM_REQTYPE_TGT_EP           0x02
+#define USB_BM_REQTYPE_TGT_OTHER        0x03
 #define USB_BM_REQTYPE_TYPEMASK         0x60
 #define USB_BM_REQTYPE_TYPE_STD         0x00
 #define USB_BM_REQTYPE_TYPE_CLASS       0x20
@@ -161,6 +162,7 @@
 #define USB_DESC_INTERFACE              0x04
 #define USB_DESC_ENDPOINT               0x05
 #define USB_DESC_DEVICE_QUALIFIER       0x06
+#define USB_DESC_OTHER_SPEED_CFG        0x07
 
 // usb_data bits
 #define USBD_CIF_SUSPEND        (u16)0x1
@@ -199,6 +201,62 @@
 #define USB_RESUME_INT_DISABLE()    P0IE= 0
 #define USB_RESUME_INT_CLEAR()      P0IFG= 0; P0IF= 0
 #define PM1()                       SLEEP |= 1
+
+
+#ifdef VCOMTEST
+    //  from VCOM
+    #define USB_VID 0xFFFE
+    #define USB_PID 0x000A
+    
+    // iManufacturer
+    #define USB_iManufacturer_LEN 0x10
+    #define USB_iManufacturer_STRING "JobyGPS"
+    #define USB_iManufacturer_UCS2 'J', 0, 'o', 0, 'b', 0, 'y', 0, 'G', 0, 'P', 0, 'S', 0
+    // iProduct
+    #define USB_iProduct_LEN 0x1C
+    #define USB_iProduct_STRING "CC Bootloader"
+    #define USB_iProduct_UCS2 'C', 0, 'C', 0, ' ', 0, 'B', 0, 'o', 0, 'o', 0, 't', 0, 'l', 0, 'o', 0, 'a', 0, 'd', 0, 'e', 0, 'r', 0
+    // iSerial
+    #define USB_iSerial_LEN 0x0e
+    #define USB_iSerial_STRING "000001"
+    #define USB_iSerial_UCS2 '0', 0, '0', 0, '0', 0, '0', 0, '0', 0, '1', 0
+    
+    #define USB_GET_DESC_TYPE(x)  (((x)>>8)&0xFF)
+    #define USB_GET_DESC_INDEX(x) ((x)&0xFF)
+    
+    #define USB_CONTROL_EP    0
+    #define USB_INT_EP        1
+    #define USB_OUT_EP        5 //4
+    #define USB_IN_EP         5
+    #define USB_CONTROL_SIZE  32
+    
+    // Double buffer IN and OUT EPs, so each
+    // gets half of the available space
+    //
+    // Ah, but USB bulk packets can only come in 8, 16, 32 and 64
+    // byte sizes, so we'll use 64 for everything
+    #define USB_IN_SIZE   64
+    #define USB_OUT_SIZE  64
+    
+    #define USB_EP0_IDLE      0
+    #define USB_EP0_DATA_IN   1
+    #define USB_EP0_DATA_OUT  2
+    // CDC definitions
+    #define CS_INTERFACE  0x24
+    #define CS_ENDPOINT   0x25
+    
+    #define SET_LINE_CODING         0x20
+    #define GET_LINE_CODING         0x21
+    #define SET_CONTROL_LINE_STATE  0x22
+    // Data structure for GET_LINE_CODING / SET_LINE_CODING class requests
+    struct usb_line_coding {
+      unsigned long  rate;
+      unsigned char   char_format;
+      unsigned char   parity;
+      unsigned char   data_bits;
+    };
+
+#endif
 
 // formerly from cc1111usb.h
 typedef struct {

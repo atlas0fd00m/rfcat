@@ -23,6 +23,7 @@
  * 
  * */
 
+extern u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset);
 
 USB_STATE usb_data;
 __xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
@@ -129,7 +130,7 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
         // if USB is still not ready... fail.  this should only happen when the USB is disconnected anyway <crosses fingers>
         if (!loop)
         {
-            blink(100, 100);
+            blink(1000, 1000);
             return -1;
         }
         
@@ -300,7 +301,7 @@ void initUSB(void)
     usbdmaarm= (DMAARM0 << usbdmachan); // pre-calculate arming bit
     usbdma= &dma_configs[usbdmachan];   // point our DMA descriptor at allocated channel descriptor
     lastCode[0] = LC_USB_INITUSB;
-    USB_ENABLE();                       // enable our usb controller
+    //USB_ENABLE();                       // enable our usb controller
     usb_init();                         // setup the usb controller settings
 
 }
@@ -409,6 +410,7 @@ u16 usb_recv_ep0OUT(){
     if (ep0.flags & EP_OUTBUF_WRITTEN)
     {
         ep0.epstatus = EP_STATE_STALL;            // FIXME: don't currently handle stall->idle...
+        USBCS0 |= USBCS0_SENT_STALL;
         return -1;
     }
     ep0.flags |= EP_OUTBUF_WRITTEN;            // hey, we've written here, don't write again until this is cleared by a application handler
@@ -478,14 +480,18 @@ void usbSetConfiguration(USB_Setup_Header* pReq)
 
 __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 
+    __xdata u8 counter = 0;
     __xdata u8 descType;
+#ifdef BOOTLOADER_SIZE
     __xdata u8* tmpdesc;
+#endif
     __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
 
     descType = *(descPtr+1);
 
 
     while (descType != 0xff ){
+        counter ++;
 
         if (descType == wantedType)
         {
@@ -514,6 +520,7 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
             descType = *(descPtr+1);
         }
     }
+    //blink(50,30);
     return descPtr;
 }
 
@@ -523,20 +530,11 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
     u16 length;
 
     switch ((pReq->wValue)>>8){
-        case USB_DESC_DEVICE:
-            buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, 0);
-            length = (u8)*(buffer);
-            break;
+        case USB_DESC_OTHER_SPEED_CFG:
+            pReq->wValue &= 0xaf;   // strip the "other_speed" and just use config
         case USB_DESC_CONFIG:
             buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, (pReq->wValue)&0xff);
-            length = (u16)*(buffer+2);
-            if ((pReq->wValue>>8) != *(buffer+1))
-                while (1)   //blink(100,100);                               ///////// DEBUGGING!  WILL STOP EXECUTION!
-                    blink_binary_baby_lsb((pReq->wValue), 16); 
-            break;
-        case USB_DESC_STRING:
-            buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, (pReq->wValue)&0xff);
-            length = (u8)*(buffer);
+            length = (u16)*(buffer+2);  // use "total config/package size".  this will be reduced if necessary
             break;
         default:
             buffer = usbGetDescriptorPrimitive((pReq->wValue)>>8, (pReq->wValue)&0xff);
@@ -544,12 +542,26 @@ void usbGetDescriptor(USB_Setup_Header* pReq)
             break;
     }
     if (length > pReq->wLength)
+    {
         length = pReq->wLength;
+    }
+
+    if (! length)       // desired descriptor not found.
+    {
+        USBCS0 |= USBCS0_SEND_STALL;
+        //blink_binary_baby_lsb(0x42, 8);
+        //blink_binary_baby_lsb(pReq->wValue, 16);
+        //blink(700,100);
+        //blink(700,100);
+    }
 
     setup_sendx_ep0(buffer, length);
     
 }
 
+#ifdef VCOMTEST
+__xdata static struct usb_line_coding usb_line_codings = {115200, 0, 0, 8};
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // handler for activity on endpoint 0.  THIS IS VERY VERY IMPORTANT!                            //
@@ -569,7 +581,7 @@ void handleCS0(void)
     u8* pReq = (u8*)(&req);
     u8  csReg;
     u8  loop;
-    u16 val;
+    //u16 val;
     USBINDEX = 0;
 
     //** DEBUG: GETS HERE.... doesn't have to do anything in particular to show up in Linux logs...**/
@@ -588,12 +600,12 @@ void handleCS0(void)
         USBCS0 = 0x00;
         lastCode[1] = LCE_USB_EP0_SENT_STALL;
         ep0.epstatus = EP_STATE_IDLE;
-        blink(200,200);
+        blink(20,20);
     }
     
     if (ep0.epstatus == EP_STATE_STALL)
     {
-        blink(500,500);
+        blink(50,50);
         ep0.epstatus = EP_STATE_IDLE;
     }
 
@@ -607,14 +619,20 @@ void handleCS0(void)
         {
             // read in Setup Token Packet
             USBINDEX = 0;
-            for (loop=0; loop<8; loop++,pReq++) {               // FIXME: Use DMA
+            loop = USBCNT0;
+            for (; loop; loop--,pReq++) {               // FIXME: Use DMA
                 *pReq = USBF0;
             }
 
-            // handle by target and direction - skeleton shell... only interested in getting noticed and allowed to send shit down the usb interface!
+            // handle by target and direction - skeleton shell... only interested in getting 
+            // noticed and allowed to send shit down the usb interface!
             // Device Requests
             if (req.bmRequestType & USB_BM_REQTYPE_DIRMASK)                       // should be *sending* data, if any
             {   
+                //  if there's any length requirement, enter TX mode
+                if (req.wLength)
+                    ep0.epstatus == EP_STATE_TX;
+
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
                     case USB_BM_REQTYPE_TYPE_STD:               //  STANDARD type
@@ -624,49 +642,60 @@ void handleCS0(void)
                         {
                             switch (req.bRequest){
                                 // return wLength bytes of Device/Config/Interface/EP info (wValue information)
-                                case USB_GET_DESCRIPTOR:
-                                    usbGetDescriptor(&req);
-                                    break;
-                                case USB_GET_CONFIGURATION: 
-                                    usbGetConfiguration(); 
-                                    break;
+                                case USB_GET_DESCRIPTOR:        usbGetDescriptor(&req); break;
+                                case USB_GET_CONFIGURATION:     usbGetConfiguration(); break;
                                 // send back 0x0000 for GET_STATUS (not self-powered and not remote-wake-up capable.
-                                case USB_GET_STATUS:
-                                    val = 0;
-                                    setup_send_ep0((u8*)&val, 2);
-                                    break;
-                                default:
-                                    debugEP0Req((u8*)&req);
+                                case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
+                                default:                        debugEP0Req((u8*)&req); 
                             }
                         }
                         // Interface Requests
                         else if (loop == USB_BM_REQTYPE_TGT_INTF)
                         {
                             switch (req.bRequest){
-                                case USB_GET_STATUS:        break;
-                                case USB_GET_INTERFACE:     break;
-                                default:
-                                    debugEP0Req((u8*)&req);
+                                case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
+                                case USB_GET_INTERFACE:         setup_send_ep0("\x00", 1);          break;
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
                             }
                         }
                         // EndPoint Requests
                         else if (loop == USB_BM_REQTYPE_TGT_EP)
                         {
                             switch (req.bRequest){
-                                case USB_GET_STATUS:
-                                    setup_send_ep0("\x00\x00", 2);
-                                    break;
-                                case USB_SYNCH_FRAME:
-                                    break;
-                                default:
-                                    debugEP0Req((u8*)&req);
+                                case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
+                                case USB_SYNCH_FRAME:           break;
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
+                            }
+                        }
+                        // Other Requests
+                        else if (loop == USB_BM_REQTYPE_TGT_OTHER)
+                        {
+                            switch (req.bRequest){
+                                case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2); break;
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
                             }
                         } else {
+                            // We reached Never Never Land.  Stall
                             debugEP0Req((u8*)&req);
                             USBCS0 |= USBCS0_SEND_STALL;
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_CLASS:             // CLASS type
+#ifdef VCOMTEST
+                        switch (req.bRequest){
+                            case SET_LINE_CODING:
+                                setup_send_ep0((__xdata u8 *) &usb_line_codings, 7);
+                                break;
+                            case GET_LINE_CODING:
+                                setup_send_ep0((u8 *) &usb_line_codings, 7);
+                                break;
+                            case SET_CONTROL_LINE_STATE:
+                                break;
+                        }
+#else
+                        USBCS0 |= USBCS0_SEND_STALL;
+#endif
+                        //debugEP0Req((u8*)&req);
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
@@ -684,6 +713,10 @@ void handleCS0(void)
                         debugEP0Req((u8*)&req);
                 }
             } else {                                            // should be *receiving* data, if any
+                //  if there's any length requirement, enter RX mode
+                if (req.wLength)
+                    ep0.epstatus == EP_STATE_RX;
+
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
                     case USB_BM_REQTYPE_TYPE_STD:               // STANDARD type
@@ -692,20 +725,16 @@ void handleCS0(void)
                         {
                             switch (req.bRequest){
                                 case USB_SET_ADDRESS:
-                                    USBADDR = req.wValue;
-                                    break;
+                                    USBADDR = req.wValue;       break;
                                 case USB_SET_CONFIGURATION:
-                                    usbSetConfiguration(&req);
-                                    break;
+                                    usbSetConfiguration(&req);  break;
                                 // return wLength bytes of Device/Config/Interface/EP info (wValue information)
-                                case USB_CLEAR_FEATURE:
-                                    break;
-                                case USB_SET_FEATURE:
-                                    break;
-                                case USB_SET_DESCRIPTOR:
-                                    break;
+                                case USB_CLEAR_FEATURE:         break;
+                                case USB_SET_FEATURE:           break;
+                                case USB_SET_DESCRIPTOR:        break;
                                 default:
                                     debugEP0Req((u8*)&req);
+                                    USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
                         // Interface Requests
@@ -717,6 +746,7 @@ void handleCS0(void)
                                 case USB_SET_INTERFACE:     break;
                                 default:
                                     debugEP0Req((u8*)&req);
+                                    USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
                         // EndPoint Requests
@@ -727,6 +757,7 @@ void handleCS0(void)
                                 case USB_SET_FEATURE:       break;
                                 default:
                                     debugEP0Req((u8*)&req);
+                                    USBCS0 |= USBCS0_SEND_STALL;
                             }
                         } else {
                             USBCS0 |= USBCS0_SEND_STALL;
@@ -734,6 +765,8 @@ void handleCS0(void)
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_CLASS:             // CLASS type
+                        debugEP0Req((u8*)&req);
+                        USBCS0 |= USBCS0_SEND_STALL;
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
@@ -747,17 +780,17 @@ void handleCS0(void)
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_RESERVED:          // RESERVED type
-                        debugEP0Req((u8*)&req);
                         USBCS0 |= USBCS0_SEND_STALL;
+                        debugEP0Req((u8*)&req);
                 }
 
             }       // else *receive*
             USBCS0 |= USBCS0_CLR_OUTPKT_RDY;                    // clear the bit, we got it.
             if (req.wLength == 0x0)
                 USBCS0 |= USBCS0_DATA_END;                      // if the length is 0, signal that we got it and we're good.  (where did i come up with this?!?)
-
         }       // USBCS0_OUTPKT_RDY
     }       // EP_STATE_IDLE
+
 
     
     if (ep0.epstatus == EP_STATE_TX)
@@ -871,13 +904,6 @@ int handleOUTEP5(void)
         if (ep5.OUTbytesleft > EP5OUT_BUFFER_SIZE)
             ep5.OUTbytesleft = EP5OUT_BUFFER_SIZE;
 
-        //debug("New...");
-        //debughex16(loop);
-        //debughex16(ep5.OUTlen);
-        //debughex16(ep5.OUTbytesleft);
-
-        //ep5.flags &= ~EP_OUTBUF_CONTINUED;
-
     } else
     {
         //debug("Continued...");
@@ -913,10 +939,8 @@ int handleOUTEP5(void)
         lastCode[1] = LCE_USB_EP5_LEN_TOO_BIG;
         //USBCSOL |= USBCSOL_SEND_STALL;
         USBCSOL &= ~USBCSOL_OUTPKT_RDY;
-        //blink(300,200);
-        //blink(300,200);
+        blink_binary_baby_lsb(5, 4);
         blink_binary_baby_lsb(len, 16);
-        //USBCSOL &= ~(USBCSOL_SEND_STALL | USBCSOL_SENT_STALL);
         return -2;
     }
 
@@ -1197,6 +1221,7 @@ void usbProcessEvents(void)
                 USBD_CIF_RESUME|USBD_CIF_SUSPEND|USBD_CIF_SOFIF))
     {
         lastCode[1] = LCE_USB_DATA_LEFTOVER_FLAGS;
+        blink_binary_baby_lsb(0x44, 8);
         blink_binary_baby_lsb(usb_data.event, 16);
         usb_data.event &= ~(USBD_IIF_INEP5IF|USBD_OIF_OUTEP5IF|USBD_IIF_EP0IF|USBD_CIF_RESET|
                 USBD_CIF_RESUME|USBD_CIF_SUSPEND|USBD_CIF_SOFIF);
@@ -1257,15 +1282,18 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR  // P0_7's interrupt is used as
 /* blinks the EP0 SETUP packet in binary on the LED */
 void debugEP0Req(u8 *pReq)
 {
+#ifndef DEBUG
     (void) pReq;
-    /*
-    //u8  loop;
+#else
+    u8  loop;
 
+    blink_binary_baby_lsb(0x40, 8);
     for (loop = sizeof(USB_Setup_Header);loop>0; loop--)
     {
         blink_binary_baby_lsb(*(pReq), 8);
         pReq++;
-    }*/
+    }
+#endif
 
 }
 
@@ -1278,11 +1306,13 @@ void debugEP0Req(u8 *pReq)
 
 // all numbers are lsb.  modify this for your own use.
 
-__code u8 USBDESCBEGIN [] = {
+__code u8 USBDESCBEGIN [] = 
+#ifndef VCOMTEST
+{
 // Device descriptor
                18,                      // bLength 
                USB_DESC_DEVICE,         // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
+               LE_WORD(0x0110),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1298,7 +1328,7 @@ __code u8 USBDESCBEGIN [] = {
 // Device Qualifier
                10,                      // bLength 
                USB_DESC_DEVICE_QUALIFIER,  // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
+               LE_WORD(0x0110),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1309,7 +1339,7 @@ __code u8 USBDESCBEGIN [] = {
 // Configuration descriptor
                9,                       // bLength
                USB_DESC_CONFIG,         // bDescriptorType
-               LE_WORD(32),             //   overall configuration length, including Config, Interface, Endpoints
+               LE_WORD(33),             //   overall configuration length, including Config, Interface, Endpoints
                0x01,                    // NumInterfaces
                0x01,                    // bConfigurationValue  - should be nonzero
                0x00,                    // iConfiguration
@@ -1322,8 +1352,8 @@ __code u8 USBDESCBEGIN [] = {
                0x00,                    // bInterfaceNumber
                0x00,                    // bAlternateSetting
                0x02,                    // bNumEndpoints
-               0xff,                    // bInterfaceClass
-               0xff,                    // bInterfaceSubClass
+               0x00,                    // bInterfaceClass
+               0x00,                    // bInterfaceSubClass
                0x01,                    // bInterfaceProcotol
                0x00,                    // iInterface
 
@@ -1362,3 +1392,127 @@ __code u8 USBDESCBEGIN [] = {
 // END OF STRINGS (len 0, type ff)
                0, 0xff
 };
+#else
+{
+  // Device descriptor
+  0x12,
+  USB_DESC_DEVICE,
+  LE_WORD(0x0110),  // bcdUSB
+  0x02,             // bDeviceClass
+  0x00,             // bDeviceSubClass
+  0x00,             // bDeviceProtocol
+  USB_CONTROL_SIZE, // bMaxPacketSize
+  LE_WORD(USB_VID), // idVendor
+  LE_WORD(USB_PID), // idProduct
+  LE_WORD(0x010),   // bcdDevice
+  0x01,             // iManufacturer
+  0x02,             // iProduct
+  0x03,             // iSerialNumber
+  0x01,             // bNumConfigurations
+
+  // Configuration descriptor
+  0x09,
+  USB_DESC_CONFIG,
+  LE_WORD(67),  // wTotalLength
+  0x02,         // bNumInterfaces
+  0x01,         // bConfigurationValue
+  0x00,         // iConfiguration
+  0xC0,         // bmAttributes
+  0x32,         // bMaxPower
+
+  // Control class interface
+  0x09,
+  USB_DESC_INTERFACE,
+  0x00,  // bInterfaceNumber
+  0x00,  // bAlternateSetting
+  0x01,  // bNumEndPoints
+  0x02,  // bInterfaceClass
+  0x02,  // bInterfaceSubClass
+  0x01,  // bInterfaceProtocol, linux requires value of 1 for the cdc_acm module
+  0x00,  // iInterface
+
+  // Header functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x00,             // bDescriptor SubType Header
+  LE_WORD(0x0110),  // CDC version 1.1
+
+  // Call management functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x01,  // bDescriptor SubType Call Management
+  0x01,  // bmCapabilities = device handles call management
+  0x01,  // bDataInterface call management interface number
+
+  // ACM functional descriptor
+  0x04,
+  CS_INTERFACE,
+  0x02,  // bDescriptor SubType Abstract Control Management
+  0x02,  // bmCapabilities = D1 (Set_line_Coding, Set_Control_Line_State, Get_Line_Coding and Serial_State)
+
+  // Union functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x06,  // bDescriptor SubType Union Functional descriptor
+  0x00,  // bMasterInterface
+  0x01,  // bSlaveInterface0
+
+  // Notification EP
+  0x07,
+  USB_DESC_ENDPOINT,
+  USB_INT_EP|0x80,  // bEndpointAddress
+  0x03,             // bmAttributes = intr
+  LE_WORD(8),       // wMaxPacketSize
+  0x0A,             // bInterval
+
+  // Data class interface descriptor
+  0x09,
+  USB_DESC_INTERFACE,
+  0x01, // bInterfaceNumber
+  0x00, // bAlternateSetting
+  0x02, // bNumEndPoints
+  0x0A, // bInterfaceClass = data
+  0x00, // bInterfaceSubClass
+  0x00, // bInterfaceProtocol
+  0x00, // iInterface
+
+  // Data EP OUT
+  0x07,
+  USB_DESC_ENDPOINT,
+  USB_OUT_EP,             // bEndpointAddress
+  0x02,                   // bmAttributes = bulk
+  LE_WORD(USB_OUT_SIZE),  // wMaxPacketSize
+  0x00,                   // bInterval
+
+  // Data EP in
+  0x07,
+  USB_DESC_ENDPOINT,
+  USB_IN_EP|0x80,       // bEndpointAddress
+  0x02,                 // bmAttributes = bulk
+  LE_WORD(USB_IN_SIZE), // wMaxPacketSize
+  0x00,                 // bInterval
+
+  // String descriptors
+  0x04,
+  USB_DESC_STRING,
+  LE_WORD(0x0409),
+
+  // iManufacturer
+  USB_iManufacturer_LEN,
+  USB_DESC_STRING,
+  USB_iManufacturer_UCS2,
+
+  // iProduct
+  USB_iProduct_LEN,
+  USB_DESC_STRING,
+  USB_iProduct_UCS2,
+
+  // iSerial
+  USB_iSerial_LEN,
+  USB_DESC_STRING,
+  USB_iSerial_UCS2,
+
+  // Terminating zero
+  0
+};
+#endif
