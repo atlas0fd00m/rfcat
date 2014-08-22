@@ -1312,7 +1312,7 @@ __code u8 USBDESCBEGIN [] =
 // Device descriptor
                18,                      // bLength 
                USB_DESC_DEVICE,         // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
+               LE_WORD(0x0110),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1328,7 +1328,7 @@ __code u8 USBDESCBEGIN [] =
 // Device Qualifier
                10,                      // bLength 
                USB_DESC_DEVICE_QUALIFIER,  // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
+               LE_WORD(0x0110),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1339,7 +1339,7 @@ __code u8 USBDESCBEGIN [] =
 // Configuration descriptor
                9,                       // bLength
                USB_DESC_CONFIG,         // bDescriptorType
-               LE_WORD(32),             //   overall configuration length, including Config, Interface, Endpoints
+               LE_WORD(33),             //   overall configuration length, including Config, Interface, Endpoints
                0x01,                    // NumInterfaces
                0x01,                    // bConfigurationValue  - should be nonzero
                0x00,                    // iConfiguration
@@ -1352,8 +1352,8 @@ __code u8 USBDESCBEGIN [] =
                0x00,                    // bInterfaceNumber
                0x00,                    // bAlternateSetting
                0x02,                    // bNumEndpoints
-               0xff,                    // bInterfaceClass
-               0xff,                    // bInterfaceSubClass
+               0x00,                    // bInterfaceClass
+               0x00,                    // bInterfaceSubClass
                0x01,                    // bInterfaceProcotol
                0x00,                    // iInterface
 

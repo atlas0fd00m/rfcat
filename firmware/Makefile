@@ -67,7 +67,7 @@ RfCatDons.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatDons.hex
 
-RfCatDonsCCBootloader.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE      -DVCOMTEST
+RfCatDonsCCBootloader.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE      
 RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatDonsCCBootloader.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
