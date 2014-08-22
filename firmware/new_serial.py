@@ -17,5 +17,6 @@ file(".serial", 'wb').write("%.4x" % ser)
 sertxt = "%.4x" % ser
 
 for c in sertxt:
-    sys.stdout.write("'%s',0," % c)
+    n = ord(c)
+    sys.stdout.write("%s,0," % n)
 

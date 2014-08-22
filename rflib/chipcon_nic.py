@@ -12,6 +12,7 @@ from cc1111client import *
 
 APP_NIC =                       0x42
 APP_SPECAN =                    0x43
+
 NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
 NIC_SET_ID =                    0x3
@@ -20,7 +21,6 @@ NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
 NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
-
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11

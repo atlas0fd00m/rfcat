@@ -5,6 +5,8 @@
 
 #ifdef CC1111
   #include "cc1111.h"
+#elif defined CC2511
+  #include "cc1111.h"
 #elif defined CC2531
   #include "cc2531.h"
 #elif defined IMME
