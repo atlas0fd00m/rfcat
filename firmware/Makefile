@@ -67,7 +67,7 @@ RfCatDons.hex: $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatDons.hex
 
-RfCatDonsCCBootloader.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE
+RfCatDonsCCBootloader.hex: DEFINES = -DDONSDONGLES -DCC1111 -DUSBDEVICE      
 RfCatDonsCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	@printf "\n\n==RfCatDonsCCBootloader.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
@@ -240,16 +240,52 @@ ys1testxmitusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appNetworkTest.ihx >bins/testxmit.hex
 
+chronostest.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
+chronostest.hex: appTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==chronostest.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appTest.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appTest.ihx >bins/test.hex
+
+chronostestCC.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+chronostestCC.hex: appTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==chronostest.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appTest.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appTest.ihx >bins/test.hex
+
+donstest.hex: DEFINES= -DDONSDONGLES -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
+donstest.hex: appTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==donstest.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appTest.c $(libsusb) $(apps1111)  $(DEFINES)
+	packihx <appTest.ihx >bins/test.hex
+
+donstestCC.hex: DEFINES= -DDONSDONGLES -DCC1111 -DRECEIVE_TEST -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+donstestCC.hex: appTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==donstest.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appTest.c $(libsusb) $(apps1111)  $(DEFINES)
+	packihx <appTest.ihx >bins/test.hex
+
 chronostestrecvusb.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
 chronostestrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
-	@printf "\n\n==donstestrecvusb.hex building==\n"
+	@printf "\n\n==chronostestrecvusb.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appNetworkTest.ihx >bins/testrecv.hex
+
+chronostestrecvusbCC.hex: DEFINES= -DCHRONOSDONGLE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+chronostestrecvusbCC.hex: appNetworkTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==chronostestrecvusb.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appNetworkTest.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
 donstestrecvusb.hex: DEFINES= -DDONSDONGLES -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
 donstestrecvusb.hex: appNetworkTest.c $(libsusb) $(apps1111)
 	@printf "\n\n==donstestrecvusb.hex building==\n"
 	sdcc $(CFLAGS) $(LFLAGS) appNetworkTest.c $(libsusb) $(apps1111)  $(DEFINES)
+	packihx <appNetworkTest.ihx >bins/testrecv.hex
+
+donstestrecvusbCC.hex: DEFINES= -DDONSDONGLES -DCC1111 -DRECEIVE_TEST -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+donstestrecvusbCC.hex: appNetworkTest.c $(libsusb) $(apps1111)
+	@printf "\n\n==donstestrecvusb.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appNetworkTest.c $(libsusb) $(apps1111)  $(DEFINES)
 	packihx <appNetworkTest.ihx >bins/testrecv.hex
 
 ys1testrecvusb.hex: DEFINES= -DYARDSTICKONE -DCC1111 -DRECEIVE_TEST -DUSBDEVICE
@@ -418,11 +454,25 @@ installchronostestrecvusbfw: chronostestrecvusb.hex
 	goodfet.cc verify bins/testrecv.hex
 	goodfet.cc info
 
+installchronostestrecvusbfwCC: chronostestrecvusbCC.hex
+	rfcat --bootloader --force
+	@sleep 1
+	bootload.py /dev/RFCAT_BL_C erase_all
+	bootload.py /dev/RFCAT_BL_C download bins/testrecv.hex
+	bootload.py /dev/RFCAT_BL_C verify bins/testrecv.hex && bootload.py /dev/RFCAT_BL_C run
+
 installdonstestrecvusbfw: donstestrecvusb.hex
 	goodfet.cc erase
 	goodfet.cc flash bins/testrecv.hex
 	goodfet.cc verify bins/testrecv.hex
 	goodfet.cc info
+
+installdonstestrecvusbfwCC: donstestrecvusbCC.hex
+	rfcat --bootloader --force
+	@sleep 1
+	bootload.py /dev/RFCAT_BL_D erase_all
+	bootload.py /dev/RFCAT_BL_D download bins/testrecv.hex
+	bootload.py /dev/RFCAT_BL_D verify bins/testrecv.hex && bootload.py /dev/RFCAT_BL_D run
 
 installys1testrecvusbfw: ys1testrecvusb.hex
 	goodfet.cc erase
