@@ -1341,8 +1341,8 @@ __code u8 USBDESCBEGIN [] =
 // Configuration descriptor
                9,                       // bLength
                USB_DESC_CONFIG,         // bDescriptorType
-               LE_WORD(32),             //   overall configuration length, including Config, Interface, Endpoints
-               //LE_WORD(67),             //   overall configuration length, including Config, Interface, Endpoints
+               //LE_WORD(32),             //   overall configuration length, including Config, Interface, Endpoints
+               LE_WORD(67),             //   overall configuration length, including Config, Interface, Endpoints
                0x01,                    // NumInterfaces
                0x01,                    // bConfigurationValue  - should be nonzero
                0x00,                    // iConfiguration
