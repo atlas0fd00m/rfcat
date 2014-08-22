@@ -1307,28 +1307,30 @@ void debugEP0Req(u8 *pReq)
 // all numbers are lsb.  modify this for your own use.
 
 __code u8 USBDESCBEGIN [] = 
-#ifndef VCOMTEST
+#ifdef VCOMTEST
 {
+    // not class, VID/PID, bcdUSB, bcdDevice, power, attributes
 // Device descriptor
                18,                      // bLength 
                USB_DESC_DEVICE,         // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
-               0x00,                    // bDeviceClass - defined at interface
+               LE_WORD(0x0110),              // bcdUSB
+               0x00, //0x02, //0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
                EP0_MAX_PACKET_SIZE,     //   EP0_PACKET_SIZE
                LE_WORD(ID_VENDOR),      // idVendor
                LE_WORD(ID_PRODUCT),      // idProduct
-               LE_WORD(0x0100),         // bcdDevice             (change to hardware version)
+               LE_WORD(0x0010),         // bcdDevice             (change to hardware version)
                0x01,                    // iManufacturer
                0x02,                    // iProduct
-               USB_SERIAL_STRIDX_BYTE,  // iSerialNumber
+               //USB_SERIAL_STRIDX_BYTE,  // iSerialNumber
+               0x03,
                0x01,                    // bNumConfigurations
 
 // Device Qualifier
                10,                      // bLength 
                USB_DESC_DEVICE_QUALIFIER,  // bDescriptorType
-               LE_WORD(0x0200),              // bcdUSB
+               LE_WORD(0x0110),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1340,11 +1342,12 @@ __code u8 USBDESCBEGIN [] =
                9,                       // bLength
                USB_DESC_CONFIG,         // bDescriptorType
                LE_WORD(32),             //   overall configuration length, including Config, Interface, Endpoints
+               //LE_WORD(67),             //   overall configuration length, including Config, Interface, Endpoints
                0x01,                    // NumInterfaces
                0x01,                    // bConfigurationValue  - should be nonzero
                0x00,                    // iConfiguration
-               0x80,                    // bmAttributes
-               0xfa,                    // MaxPower
+               0xc0, //0x80,                    // bmAttributes
+               0x32,//0xfa,                    // MaxPower
 
 // Interface descriptor
                9,                       // bLength
@@ -1352,9 +1355,9 @@ __code u8 USBDESCBEGIN [] =
                0x00,                    // bInterfaceNumber
                0x00,                    // bAlternateSetting
                0x02,                    // bNumEndpoints
-               0xff,                    // bInterfaceClass
-               0xff,                    // bInterfaceSubClass
-               0x01,                    // bInterfaceProcotol
+               0x00,                    // bInterfaceClass
+               0x00,                    // bInterfaceSubClass
+               0x00,                    // bInterfaceProcotol
                0x00,                    // iInterface
 
 // Endpoint descriptor (EP5 IN)
@@ -1363,19 +1366,63 @@ __code u8 USBDESCBEGIN [] =
                0x85,                    // bEndpointAddress
                0x02,                    // bmAttributes - bits 0-1 Xfer Type (0=Ctrl, 1=Isoc, 2=Bulk, 3=Intrpt);      2-3 Isoc-SyncType (0=None, 1=FeedbackEndpoint, 2=Adaptive, 3=Synchronous);       4-5 Isoc-UsageType (0=Data, 1=Feedback, 2=Explicit)
                LE_WORD(EP5IN_MAX_PACKET_SIZE),// wMaxPacketSize
-               0x01,                    // bInterval
+               0x00,                    // bInterval
 // Endpoint descriptor (EP5 OUT)
                7,                       // bLength
                USB_DESC_ENDPOINT,       // bDescriptorType
                0x05,                    // bEndpointAddress
                0x02,                    // bmAttributes
                LE_WORD(EP5OUT_MAX_PACKET_SIZE),// wMaxPacketSize
-               0x01,                    // bInterval
+               0x00,                    // bInterval
+  // Control class interface
+  0x09,
+  USB_DESC_INTERFACE,
+  0x01,  // bInterfaceNumber
+  0x00,  // bAlternateSetting
+  0x01,  // bNumEndPoints
+  0x02,  // bInterfaceClass
+  0x02,  // bInterfaceSubClass
+  0x01,  // bInterfaceProtocol, linux requires value of 1 for the cdc_acm module
+  0x00,  // iInterface
+
+  // Header functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x00,             // bDescriptor SubType Header
+  LE_WORD(0x0110),  // CDC version 1.1
+
+  // Call management functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x01,  // bDescriptor SubType Call Management
+  0x01,  // bmCapabilities = device handles call management
+  0x01,  // bDataInterface call management interface number
+
+  // ACM functional descriptor
+  0x04,
+  CS_INTERFACE,
+  0x02,  // bDescriptor SubType Abstract Control Management
+  0x02,  // bmCapabilities = D1 (Set_line_Coding, Set_Control_Line_State, Get_Line_Coding and Serial_State)
+
+  // Union functional descriptor
+  0x05,
+  CS_INTERFACE,
+  0x06,  // bDescriptor SubType Union Functional descriptor
+  0x00,  // bMasterInterface
+  0x01,  // bSlaveInterface0
+
+  // Notification EP
+  0x07,
+  USB_DESC_ENDPOINT,
+  USB_INT_EP|0x80,  // bEndpointAddress
+  0x03,             // bmAttributes = intr
+  LE_WORD(8),       // wMaxPacketSize
+  0x0A,             // bInterval
+
 // Language ID
                4,                       // bLength
                USB_DESC_STRING,         // bDescriptorType
-               0x09,                    // US-EN
-               0x04,
+               LE_WORD(0x0409),         // US-en
 // Manufacturer
                MANU_LEN,                // bLength
                USB_DESC_STRING,         // bDescriptorType
@@ -1402,8 +1449,8 @@ __code u8 USBDESCBEGIN [] =
   0x00,             // bDeviceSubClass
   0x00,             // bDeviceProtocol
   USB_CONTROL_SIZE, // bMaxPacketSize
-  LE_WORD(USB_VID), // idVendor
-  LE_WORD(USB_PID), // idProduct
+  LE_WORD(ID_VENDOR), // idVendor
+  LE_WORD(ID_PRODUCT), // idProduct
   LE_WORD(0x010),   // bcdDevice
   0x01,             // iManufacturer
   0x02,             // iProduct
