@@ -318,7 +318,7 @@ installRfCatChronosDongle: RfCatChronos.hex
 	goodfet.cc info
 
 installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_C erase_all
 	bootload.py /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
@@ -331,7 +331,7 @@ installRfCat24DonsDongle: RfCatDons24.hex
 	goodfet.cc info
 
 installRfCat24DonsDongleCCBootloader: RfCatDons24CCBootloader.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_D erase_all
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatDons24CCBootloader.hex
@@ -344,7 +344,7 @@ installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc info
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_D erase_all
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
@@ -357,7 +357,7 @@ installRfCatYS1: RfCatYS1.hex
 	goodfet.cc info
 
 installRfCatYS1CCBootloader: RfCatYS1CCBootloader.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_D erase_all
 	bootload.py /dev/RFCAT_BL_D download bins/RfCatYS1CCBootloader.hex
@@ -455,7 +455,7 @@ installchronostestrecvusbfw: chronostestrecvusb.hex
 	goodfet.cc info
 
 installchronostestrecvusbfwCC: chronostestrecvusbCC.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_C erase_all
 	bootload.py /dev/RFCAT_BL_C download bins/testrecv.hex
@@ -468,7 +468,7 @@ installdonstestrecvusbfw: donstestrecvusb.hex
 	goodfet.cc info
 
 installdonstestrecvusbfwCC: donstestrecvusbCC.hex
-	rfcat --bootloader --force
+	../rfcat --bootloader --force
 	@sleep 1
 	bootload.py /dev/RFCAT_BL_D erase_all
 	bootload.py /dev/RFCAT_BL_D download bins/testrecv.hex
