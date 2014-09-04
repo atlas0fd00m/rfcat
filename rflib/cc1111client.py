@@ -250,6 +250,23 @@ MARC_STATE_MAPPINGS = [
 def keystop(delay=0):
     return len(select.select([sys.stdin],[],[],delay)[0])
 
+def getRfCatDevices():
+    '''
+    returns a list of USB device objects for any rfcats that are plugged in
+    NOTE: if any rfcats are in bootloader mode, this will cause python to Exit
+    '''
+    rfcats = []
+    for bus in usb.busses():
+        for dev in bus.devices:
+            # OpenMoko assigned or Legacy TI
+            if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or dev.idProduct == 0x6048 or dev.idProduct == 0x605b)):
+                rfcats.append(dev)
+
+            elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x604a)):
+                print "Already in Bootloader Mode... exiting"
+                exit(0)
+
+    return rfcats
 
 class ChipconUsbTimeoutException(Exception):
     def __str__(self):
@@ -337,18 +354,12 @@ class USBDongle:
         dongles = []
         self.ep5timeout = EP_TIMEOUT_ACTIVE
 
-        for bus in usb.busses():
-            for dev in bus.devices:
-                # OpenMoko assigned or Legacy TI
-                if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or dev.idProduct == 0x6048 or dev.idProduct == 0x605b)):
-                    if self._debug: print >>sys.stderr,(dev)
-                    do = dev.open()
-                    iSN = do.getDescriptor(1,0,50)[16]
-                    devnum = dev.devnum
-                    dongles.append((devnum, dev, do))
-                elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x604a)):
-                    print "Already in Bootloader Mode... exiting"
-                    exit(0)
+        for dev in getRfCatDevices():
+            if self._debug: print >>sys.stderr,(dev)
+            do = dev.open()
+            iSN = do.getDescriptor(1,0,50)[16]
+            devnum = dev.devnum
+            dongles.append((devnum, dev, do))
 
         dongles.sort()
         if len(dongles) == 0:
