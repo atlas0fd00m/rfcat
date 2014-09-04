@@ -1767,6 +1767,12 @@ class USBDongle:
         dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
         return dev
 
+    def getMdmSyncWord(self, radiocfg=None):
+        if radiocfg==None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        return (radiocfg.sync1 << 8) + radiocfg.sync0
 
     def setMdmSyncWord(self, word, radiocfg=None):
         if radiocfg==None:
