@@ -112,6 +112,14 @@ RF_MAX_TX_BLOCK                 = 255
 RF_MAX_RX_BLOCK                 = 512
 
 
+
+CHIPS = {
+    0x91: "CC2511",
+    0x81: "CC2510",
+    0x11: "CC1111",
+    0x01: "CC1110",
+    }
+
 MODES = {}
 lcls = locals()
 for lcl in lcls.keys():
@@ -393,20 +401,12 @@ class USBDongle:
 
         self.getRadioConfig()
         chip = self.getPartNum()
+        chipstr = CHIPS.get(chip)
 
-        if chip == 0x91:        # cc2511
-            #print "CC2511"
-            self.chipstr = "CC2511"
-        elif chip == 0x81:      # cc2510
-            #print "CC2510"
-            self.chipstr = "CC2510"
-        elif chip == 0x11:      # cc1111
-            #print "CC1111"
-            self.chipstr = "CC1111"
-        elif chip == 0x01:      # cc1110
-            #print "CC1110"
-            self.chipstr = "CC1110"
-        elif chip == None:
+        self.chipnum = chip
+        self.chipstr = chipstr
+
+        if chip == None:
             print "Older firmware, consider upgrading."
         else:
             self.chipstr = "unrecognized dongle: %s" % chip
