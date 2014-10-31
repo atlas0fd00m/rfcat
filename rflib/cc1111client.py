@@ -395,13 +395,21 @@ class USBDongle:
         chip = self.getPartNum()
 
         if chip == 0x91:        # cc2511
-            print "CC2511"
+            #print "CC2511"
+            self.chipstr = "CC2511"
         elif chip == 0x81:      # cc2510
-            print "CC2510"
+            #print "CC2510"
+            self.chipstr = "CC2510"
         elif chip == 0x11:      # cc1111
-            print "CC1111"
+            #print "CC1111"
+            self.chipstr = "CC1111"
         elif chip == 0x01:      # cc1110
-            print "CC1110"
+            #print "CC1110"
+            self.chipstr = "CC1110"
+        elif chip == None:
+            print "Older firmware, consider upgrading."
+        else:
+            self.chipstr = "unrecognized dongle: %s" % chip
 
         if self._init_on_reconnect:
             if self._radio_configured:
