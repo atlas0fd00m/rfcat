@@ -1440,7 +1440,6 @@ class USBDongle:
             radiocfg.pktlen = flen
         self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
         self.setRFRegister(PKTLEN, (radiocfg.pktlen))
-	print 'sending flen', flen
 
     def getPktLEN(self):
         '''
