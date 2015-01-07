@@ -141,9 +141,13 @@ def printSyncWords(syncworddict):
     tmp.sort()
     for y,x in tmp:
         print("0x%.4x: %d" % (x,y))
-
-
-class FHSSNIC(USBDongle):
+class NICxx11(USBDongle):
+    '''
+    NICxx11 implements radio-specific code for CCxx11 chips (2511, 1111),
+    as the xx11 chips keep a relatively consistent radio interface and use
+    the same radio concepts (frequency, channels, etc) and functionality
+    (AES, Manchester Encoding, etc).
+    '''
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
         self.endec = None
@@ -281,105 +285,6 @@ class FHSSNIC(USBDongle):
         sys.stdin.read(1)
         return capture
 
-    def FHSSxmit(self, data):
-        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
-
-    def changeChannel(self, chan):
-        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
-
-    def getChannels(self, channels=[]):
-        return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
-
-    def setChannels(self, channels=[]):
-        chans = ''.join(["%c" % chan for chan in channels])
-        length = struct.pack("<H", len(chans))
-        
-        return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
-
-    def nextChannel(self):
-        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '' )
-
-    def startHopping(self):
-        return self.send(APP_NIC, FHSS_START_HOPPING, '')
-
-    def stopHopping(self):
-        return self.send(APP_NIC, FHSS_STOP_HOPPING, '')
-
-    def setMACperiod(self, dwell_ms, mhz=24):
-        macdata = self.getMACdata()
-        cycles_per_channel = macdata[1]
-        ticks_per_cycle = 256
-        tick_ms = dwell_ms / (ticks_per_cycle * cycles_per_channel)
-        val = calculateT2(tick_ms, mhz)
-        T, tickidx, tipidx, PR = val
-        print "Setting MAC period to %f secs (%x %x %x)" % (val)
-        t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
-        clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx<<3)
-        
-        self.poke(X_T2PR, chr(PR))
-        self.poke(X_T2CTL, chr(t2ctl))
-        self.poke(X_CLKCON, chr(clkcon))
-        
-    def setMACdata(self, data):
-        datastr = ''.join([chr(d) for x in data])
-        return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
-
-    def getMACdata(self):
-        datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
-        print (repr(datastr))
-        data = struct.unpack("<BHHHHHHHHBBH", datastr)
-        return data
-
-    def reprMACdata(self):
-        data = self.getMACdata()
-        return """\
-u8 mac_state                %x
-u32 MAC_threshold           %x
-u32 MAC_ovcount             %x
-u16 NumChannels             %x
-u16 NumChannelHops          %x
-u16 curChanIdx              %x
-u16 tLastStateChange        %x
-u16 tLastHop                %x
-u16 desperatelySeeking      %x
-u8  txMsgIdx                %x
-u8  txMsgIdxDone            %x
-u16 synched_chans           %x
-
-""" % data
-    """
-        
-        
-    u8 mac_state;
-    // MAC parameters (FIXME: make this all cc1111fhssmac.c/h?)
-    u32 g_MAC_threshold;              // when the T2 clock as overflowed this many times, change channel
-    u16 g_NumChannels;                // in case of multiple paths through the available channels 
-    u16 g_NumChannelHops;             // total number of channels in pattern (>= g_MaxChannels)
-    u16 g_curChanIdx;                 // indicates current channel index of the hopping pattern
-    u16 g_tLastStateChange;
-    u16 g_tLastHop;
-    u16 g_desperatelySeeking;
-    u8  g_txMsgIdx;
-    """
-    
-    def getMACthreshold(self):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
-
-    def setMACthreshold(self, value):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
-
-    def setFHSSstate(self, state):
-        return self.send(APP_NIC, FHSS_SET_STATE, struct.pack("<I",state))
-        
-    def getFHSSstate(self):
-        state = self.send(APP_NIC, FHSS_GET_STATE, '')
-        #print repr(state)
-        state = ord(state[0])
-        return FHSS_STATES[state], state
-                                
-    def mac_SyncCell(self, CellID=0x0000):
-        return self.send(APP_NIC, FHSS_START_SYNC, struct.pack("<H",CellID))
-                
     def setPktAddr(self, addr):
         return self.poke(ADDR, chr(addr))
 
@@ -491,6 +396,109 @@ u16 synched_chans           %x
         sys.stdin.read(1)
 
 
+class FHSSNIC(NICxx11):
+    '''
+    advanced NIC implementation for CCxx11 chips, including Frequency Hopping
+    '''
+    def FHSSxmit(self, data):
+        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
+
+    def changeChannel(self, chan):
+        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
+
+    def getChannels(self, channels=[]):
+        return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
+
+    def setChannels(self, channels=[]):
+        chans = ''.join(["%c" % chan for chan in channels])
+        length = struct.pack("<H", len(chans))
+        
+        return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
+
+    def nextChannel(self):
+        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '' )
+
+    def startHopping(self):
+        return self.send(APP_NIC, FHSS_START_HOPPING, '')
+
+    def stopHopping(self):
+        return self.send(APP_NIC, FHSS_STOP_HOPPING, '')
+
+    def setMACperiod(self, dwell_ms, mhz=24):
+        macdata = self.getMACdata()
+        cycles_per_channel = macdata[1]
+        ticks_per_cycle = 256
+        tick_ms = dwell_ms / (ticks_per_cycle * cycles_per_channel)
+        val = calculateT2(tick_ms, mhz)
+        T, tickidx, tipidx, PR = val
+        print "Setting MAC period to %f secs (%x %x %x)" % (val)
+        t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
+        clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx<<3)
+        
+        self.poke(X_T2PR, chr(PR))
+        self.poke(X_T2CTL, chr(t2ctl))
+        self.poke(X_CLKCON, chr(clkcon))
+        
+    def setMACdata(self, data):
+        datastr = ''.join([chr(d) for x in data])
+        return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
+
+    def getMACdata(self):
+        datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
+        print (repr(datastr))
+        data = struct.unpack("<BHHHHHHHHBBH", datastr)
+        return data
+
+    def reprMACdata(self):
+        data = self.getMACdata()
+        return """\
+u8 mac_state                %x
+u32 MAC_threshold           %x
+u32 MAC_ovcount             %x
+u16 NumChannels             %x
+u16 NumChannelHops          %x
+u16 curChanIdx              %x
+u16 tLastStateChange        %x
+u16 tLastHop                %x
+u16 desperatelySeeking      %x
+u8  txMsgIdx                %x
+u8  txMsgIdxDone            %x
+u16 synched_chans           %x
+
+""" % data
+    """
+        
+        
+    u8 mac_state;
+    // MAC parameters (FIXME: make this all cc1111fhssmac.c/h?)
+    u32 g_MAC_threshold;              // when the T2 clock as overflowed this many times, change channel
+    u16 g_NumChannels;                // in case of multiple paths through the available channels 
+    u16 g_NumChannelHops;             // total number of channels in pattern (>= g_MaxChannels)
+    u16 g_curChanIdx;                 // indicates current channel index of the hopping pattern
+    u16 g_tLastStateChange;
+    u16 g_tLastHop;
+    u16 g_desperatelySeeking;
+    u8  g_txMsgIdx;
+    """
+    
+    def getMACthreshold(self):
+        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+
+    def setMACthreshold(self, value):
+        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+
+    def setFHSSstate(self, state):
+        return self.send(APP_NIC, FHSS_SET_STATE, struct.pack("<I",state))
+        
+    def getFHSSstate(self):
+        state = self.send(APP_NIC, FHSS_GET_STATE, '')
+        #print repr(state)
+        state = ord(state[0])
+        return FHSS_STATES[state], state
+                                
+    def mac_SyncCell(self, CellID=0x0000):
+        return self.send(APP_NIC, FHSS_START_SYNC, struct.pack("<H",CellID))
+                
 def unittest(dongle):
     import cc1111client
     cc1111client.unittest(dongle)
