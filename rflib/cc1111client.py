@@ -299,7 +299,6 @@ class USBDongle:
         self.radiocfg = RadioConfig()
         self._rfmode = RfMode
         self._radio_configured = False
-        self.freq_offset_accumulator= 0
 
         self.ctrl_thread = threading.Thread(target=self.run_ctrl)
         self.ctrl_thread.setDaemon(True)
@@ -1230,6 +1229,7 @@ class USBDongle:
             radiocfg = self.radiocfg
 
         self.freq_offset_accumulator += self.getFreqEst(radiocfg)
+        self.freq_offset_accumulator &= 0xff
         self.setFsOffset(self.freq_offset_accumulator, mhz, radiocfg)
 
     # set 'standard' power - for more complex power shaping this will need to be done manually
