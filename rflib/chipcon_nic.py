@@ -147,6 +147,7 @@ class FHSSNIC(USBDongle):
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
         self.endec = None
+        self.freq_offset_accumulator = 0
 
     def setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
         '''
