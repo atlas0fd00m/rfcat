@@ -296,6 +296,7 @@ class NICxx11(USBDongle):
         self.max_packet_size = RF_MAX_RX_BLOCK
         self.endec = None
         self.mhz = CHIPmhz.get(self.chipnum)
+        self.freq_offset_accumulator = 0
 
     ######## RADIO METHODS #########
     def setRfMode(self, rfmode, parms=''):
@@ -484,6 +485,26 @@ class NICxx11(USBDongle):
         num = (radiocfg.freq2<<16) + (radiocfg.freq1<<8) + radiocfg.freq0
         freq = num / freqmult
         return freq, hex(num)
+
+    def getFreqEst(self, radiocfg=None):
+        if radiocfg==None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        return radiocfg.freqest
+
+    # auto-adjust frequency offset based on internal estimate from last received packet (FSK/MSK modes only)
+    # note radio must be in IDLE mode when called for this to have any effect
+    # the TI design note for this is missing from TI's main website but can be found here:
+    # http://e2e.ti.com/cfs-file/__key/telligent-evolution-components-attachments/00-155-01-00-00-73-46-38/DN015_5F00_Permanent_5F00_Frequency_5F00_Offset_5F00_Compensation.pdf
+    def adjustFreqOffset(self, mhz=24, radiocfg=None):
+        if radiocfg==None:
+            self.getRadioConfig()
+            radiocfg = self.radiocfg
+
+        self.freq_offset_accumulator += self.getFreqEst(radiocfg)
+        self.freq_offset_accumulator &= 0xff
+        self.setFsOffset(self.freq_offset_accumulator, mhz, radiocfg)
 
     # set 'standard' power - for more complex power shaping this will need to be done manually
     def setPower(self, power=None, radiocfg=None, invert=False):
@@ -1480,9 +1501,11 @@ class NICxx11(USBDongle):
 
         freq_if = self.getFsIF(mhz, radiocfg)
         freqoff = self.getFsOffset(mhz, radiocfg)
+        freqest = self.getFreqEst(radiocfg)
         
         output.append("Intermediate freq:   %d hz" % freq_if)
         output.append("Frequency Offset:    %d +/-" % freqoff)
+        output.append("Est. Freq Offset:    %d" % freqest)
 
         return "\n".join(output)
 
