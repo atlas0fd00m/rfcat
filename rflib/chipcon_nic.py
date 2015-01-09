@@ -8,7 +8,7 @@ import struct
 import pickle
 import threading
 #from chipcondefs import *
-from cc1111client import *
+from chipcon_usb import *
 
 # band limits in Hz
 FREQ_MIN_300  = 281000000
@@ -277,6 +277,13 @@ def printSyncWords(syncworddict):
     for y,x in tmp:
         print("0x%.4x: %d" % (x,y))
 
+CHIPmhz = {
+    0x91: 24,
+    0x81: 26,
+    0x11: 24,
+    0x01: 26,
+}
+
 class NICxx11(USBDongle):
     '''
     NICxx11 implements radio-specific code for CCxx11 chips (2511, 1111),
@@ -288,6 +295,7 @@ class NICxx11(USBDongle):
         USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
         self.max_packet_size = RF_MAX_RX_BLOCK
         self.endec = None
+        self.mhz = CHIPmhz.get(self.chipnum)
 
     ######## RADIO METHODS #########
     def setRfMode(self, rfmode, parms=''):
@@ -1926,9 +1934,168 @@ u16 synched_chans           %x
         return self.send(APP_NIC, FHSS_START_SYNC, struct.pack("<H",CellID))
                 
 def unittest(dongle):
-    import cc1111client
-    cc1111client.unittest(dongle)
+    import chipcon_usb
+    chipcon_usb.unittest(dongle)
 
+    print "\nTesting getValueFromReprString()"
+    starry = dongle.reprRadioConfig().split('\n')
+    print repr(getValueFromReprString(starry, 'hz'))
+
+    print "\nTesting reprRadioConfig()"
+    print dongle.reprRadioConfig()
+
+    print "\nTesting Frequency Get/Setters"
+    # FREQ
+    freq0,freq0str = dongle.getFreq()
+
+    testfreq = 902000000
+    dongle.setFreq(testfreq)
+    freq,freqstr = dongle.getFreq()
+    if abs(testfreq - freq) < 1024:
+        print "  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+    else:
+        print " *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+
+    testfreq = 868000000
+    dongle.setFreq(testfreq)
+    freq,freqstr = dongle.getFreq()
+    if abs(testfreq - freq) < 1024:
+        print "  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+    else:
+        print " *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+
+    testfreq = 433000000
+    dongle.setFreq(testfreq)
+    freq,freqstr = dongle.getFreq()
+    if abs(testfreq - freq) < 1024:
+        print "  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+    else:
+        print " *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq)
+   
+    dongle.checkRepr("Frequency:", float(testfreq), 1024)
+    dongle.setFreq(freq0)
+
+    # CHANNR
+    channr0 = dongle.getChannel()
+    for x in range(15):
+        dongle.setChannel(x)
+        channr = dongle.getChannel()
+        if channr != x:
+            print " *FAILED* get/setChannel():  %d : %d" % (x, channr)
+        else:
+            print "  passed: get/setChannel():  %d : %d" % (x, channr)
+    dongle.checkRepr("Channel:", channr)
+    dongle.setChannel(channr0)
+
+    # IF and FREQ_OFF
+    freq_if = dongle.getFsIF()
+    freqoff = dongle.getFsOffset()
+    for fif, foff in ((164062,1),(140625,2),(187500,3)):
+        dongle.setFsIF(fif)
+        dongle.setFsOffset(foff)
+        nfif  = dongle.getFsIF()
+        nfoff = dongle.getFsOffset()
+        if abs(nfif - fif) > 5:
+            print " *FAILED* get/setFsIFandOffset():  %d : %f (diff: %f)" % (fif,nfif,nfif-fif)
+        else:
+            print "  passed: get/setFsIFandOffset():  %d : %f (diff: %f)" % (fif,nfif,nfif-fif)
+
+        if foff != nfoff:
+            print " *FAILED* get/setFsIFandOffset():  %d : %d (diff: %d)" % (foff,nfoff,nfoff-foff)
+        else:
+            print "  passed: get/setFsIFandOffset():  %d : %d (diff: %d)" % (foff,nfoff,nfoff-foff)
+    dongle.checkRepr("Intermediate freq:", fif, 11720)
+    dongle.checkRepr("Frequency Offset:", foff)
+    
+    dongle.setFsIF(freq_if)
+    dongle.setFsOffset(freqoff)
+
+    ### continuing with more simple tests.  add completeness later?
+    # Modem tests
+
+    mod = dongle.getMdmModulation(dongle.radiocfg)
+    dongle.setMdmModulation(mod, dongle.radiocfg)
+    modcheck = dongle.getMdmModulation(dongle.radiocfg)
+    if mod != modcheck:
+        print " *FAILED* get/setMdmModulation():  %d : %d " % (mod, modcheck)
+    else:
+        print "  passed: get/setMdmModulation():  %d : %d " % (mod, modcheck)
+
+    chanspc = dongle.getMdmChanSpc(dongle.mhz, dongle.radiocfg)
+    dongle.setMdmChanSpc(chanspc, dongle.mhz, dongle.radiocfg)
+    chanspc_check = dongle.getMdmChanSpc(dongle.mhz, dongle.radiocfg)
+    if chanspc != chanspc_check:
+        print " *FAILED* get/setMdmChanSpc():  %d : %d" % (chanspc, chanspc_check)
+    else:
+        print "  passed: get/setMdmChanSpc():  %d : %d" % (chanspc, chanspc_check)
+
+    chanbw = dongle.getMdmChanBW(dongle.mhz, dongle.radiocfg)
+    dongle.setMdmChanBW(chanbw, dongle.mhz, dongle.radiocfg)
+    chanbw_check = dongle.getMdmChanBW(dongle.mhz, dongle.radiocfg)
+    if chanbw != chanbw_check:
+        print " *FAILED* get/setMdmChanBW():  %d : %d" % (chanbw, chanbw_check)
+    else:
+        print "  passed: get/setMdmChanBW():  %d : %d" % (chanbw, chanbw_check)
+
+    drate = dongle.getMdmDRate(dongle.mhz, dongle.radiocfg)
+    dongle.setMdmDRate(drate, dongle.mhz, dongle.radiocfg)
+    drate_check = dongle.getMdmDRate(dongle.mhz, dongle.radiocfg)
+    if drate != drate_check:
+        print " *FAILED* get/setMdmDRate():  %d : %d" % (drate, drate_check)
+    else:
+        print "  passed: get/setMdmDRate():  %d : %d" % (drate, drate_check)
+
+    deviatn = dongle.getMdmDeviatn(dongle.mhz, dongle.radiocfg)
+    dongle.setMdmDeviatn(deviatn, dongle.mhz, dongle.radiocfg)
+    deviatn_check = dongle.getMdmDeviatn(dongle.mhz, dongle.radiocfg)
+    if deviatn != deviatn_check:
+        print " *FAILED* get/setMdmdeviatn():  %d : %d" % (deviatn, deviatn_check)
+    else:
+        print "  passed: get/setMdmdeviatn():  %d : %d" % (deviatn, deviatn_check)
+
+    syncm = dongle.getMdmSyncMode(dongle.radiocfg)
+    dongle.setMdmSyncMode(syncm, dongle.radiocfg)
+    syncm_check = dongle.getMdmSyncMode(dongle.radiocfg)
+    if syncm != syncm_check:
+        print " *FAILED* get/setMdmSyncMode():  %d : %d" % (syncm, syncm_check)
+    else:
+        print "  passed: get/setMdmSyncMode():  %d : %d" % (syncm, syncm_check)
+
+    mchstr = dongle.getEnableMdmManchester(dongle.radiocfg)
+    dongle.setEnableMdmManchester(mchstr, dongle.radiocfg)
+    mchstr_check = dongle.getEnableMdmManchester(dongle.radiocfg)
+    if mchstr != mchstr_check:
+        print " *FAILED* get/setMdmManchester():  %d : %d" % (mchstr, mchstr_check)
+    else:
+        print "  passed: get/setMdmManchester():  %d : %d" % (mchstr, mchstr_check)
+
+    fec = dongle.getEnableMdmFEC(dongle.radiocfg)
+    dongle.setEnableMdmFEC(fec, dongle.radiocfg)
+    fec_check = dongle.getEnableMdmFEC(dongle.radiocfg)
+    if fec != fec_check:
+        print " *FAILED* get/setEnableMdmFEC():  %d : %d" % (fec, fec_check)
+    else:
+        print "  passed: get/setEnableMdmFEC():  %d : %d" % (fec, fec_check)
+
+    dcf = dongle.getEnableMdmDCFilter(dongle.radiocfg)
+    dongle.setEnableMdmDCFilter(dcf, dongle.radiocfg)
+    dcf_check = dongle.getEnableMdmDCFilter(dongle.radiocfg)
+    if dcf != dcf_check:
+        print " *FAILED* get/setEnableMdmDCFilter():  %d : %d" % (dcf, dcf_check)
+    else:
+        print "  passed: get/setEnableMdmDCFilter():  %d : %d" % (dcf, dcf_check)
+
+
+    # Pkt tests
+    pqt = dongle.getPktPQT(dongle.radiocfg)
+    dongle.setPktPQT(pqt, dongle.radiocfg)
+    pqt_check = dongle.getPktPQT(dongle.radiocfg)
+    if pqt != pqt_check:
+        print " *FAILED* get/setEnableMdmFEC():  %d : %d" % (pqt, pqt_check)
+    else:
+        print "  passed: get/setEnableMdmFEC():  %d : %d" % (pqt, pqt_check)
+
+    # FHSS tests
     print "\nTesting FHSS State set/get"
     fhssstate = dongle.getFHSSstate()
     print repr(fhssstate)
@@ -1938,6 +2105,23 @@ def unittest(dongle):
 
     print repr(dongle.setFHSSstate(fhssstate[1] ))
     print repr(dongle.getFHSSstate())
+
+def getValueFromReprString(stringarray, line_text):
+    for string in stringarray:
+        if line_text in string:
+            idx = string.find(":")
+            val = string[idx+1:].strip()
+            return (string,val)
+
+def mkFreq(freq=902000000, mhz=24):
+    freqmult = (0x10000 / 1000000.0) / mhz
+    num = int(freq * freqmult)
+    freq2 = num >> 16
+    freq1 = (num>>8) & 0xff
+    freq0 = num & 0xff
+    return (num, freq2,freq1,freq0)
+
+
 
 if __name__ == "__main__":
     idx = 0
