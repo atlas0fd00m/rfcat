@@ -5,6 +5,8 @@ import rflib.bits as rfbits
 RFCAT_START_SPECAN  = 0x40
 RFCAT_STOP_SPECAN   = 0x41
 
+MAX_FREQ = 936e6
+
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
@@ -55,6 +57,9 @@ class RfCat(FHSSNIC):
         '''
         if count>255:
             raise Exception("sorry, only 255 samples per pass... (count)")
+        if (count * inc) + basefreq > MAX_FREQ:
+            raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" %
+                    (basefreq, count, inc))
         self.getRadioConfig()
         self._specan_backup_radiocfg = self.radiocfg
 
