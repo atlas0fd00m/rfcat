@@ -28,15 +28,8 @@ first things first.  using rfcat requires that you either use the python client 
 
 allowing non-root dongle access:
 
-  create a file in /etc/udev/rules.d called 20-rfcat.rules with the following lines in it:
-  (note, we've included this file for your convenience within this repo.  you may simply copy it to /etc/udev/rules.d/)
-
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0666"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6047" MODE:="0666"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6048" MODE:="0666"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="605b" MODE:="0666"
-
-  reboot or run 'sudo udevadm control --reload-rules'
+    sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
+    sudo udevadm control --reload-rules
 
 this tool is created, maintained, and used primarily on linux.  make and sdcc must be installed for creating new firmware and some of the helper functions we provide through make.
 
@@ -145,7 +138,7 @@ your build environment:
 
 = INSTALLING WITH BOOTLOADER = 
 
-Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, a hex file is provided in 
+Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, hex files are provided in 
 the CCBootloader sub-directory in firmware. 
 
 Source can be found here: https://github.com/AdamLaurie/CC-Bootloader
@@ -153,46 +146,48 @@ which is branched from here: https://github.com/fnoble/CC-Bootloader
 
 To install:
 
-We need permanent symlinks to the USB serial devices that will communicate with the CHRONOS and/or DONSDONGLE bootloader 
-when required:
+We need permanent symlinks to the USB serial devices that will communicate with the CHRONOS, DONSDONGLE or YARDSTICKONE
+bootloader when required. If you haven't done this step already (see above), then run:
 
-  edit /etc/udev/rules.d/20-rfcat.rules and add the lines:
-  (note, we've included this file for your convenience within this repo.  you may simply copy it to /etc/udev/rules.d/)
-
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C" ENV{ID_MM_DEVICE_IGNORE}="1"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D" ENV{ID_MM_DEVICE_IGNORE}="1"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="605c" SYMLINK+="RFCAT_BL_YS1" ENV{ID_MM_DEVICE_IGNORE}="1"
-
-  reboot or run 'sudo udevadm control --reload-rules'
+  sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
+  sudo udevadm control --reload-rules
 
 To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
 
-* (install 'bootload.py' from CC-Bootloader somewhere on your execution path)
+(install 'bootload.py' from the CC-Bootloader subdirectory to somewhere on your execution path)
 
-* cd firmware
+cd firmware
 
-for EMK/DONSDONGLE
-  * make installdonsbootloader
+for EMK/DONSDONGLE:
+  make installdonsbootloader
 
 for CHRONOS:
-  * make installchronosbootloader
+  make installchronosbootloader
 
-Now you have the bootloader installed, you can install new versions of rfcat over the USB with no debugger...
+for YARDSTICKONE:
+  make installys1bootloader
 
-If you have just installed the bootloader, the dongle should be in bootloader mode, indicated by a solid LED. If you
-are re-flashing the dongle, you can put it into bootloader mode either by holding down the EMK/DONS button as you plug 
+now unplug the debugger and plug in your USB dongle.
+
+If you have just installed the bootloader, the dongle should be in bootloader mode, indicated by a solid LED. 
+
+If you are re-flashing a dongle that is already running rfcat, the Makefile targets will force it into bootloader
+mode for you, but you can manually put it into bootloader mode either by holding down the EMK/DONS button as you plug 
 it into USB (on the CHRONOS jumper P2_2/DC to GROUND), or by issuing the command 'd.bootloader()' to rfcat in interactive 
 mode ('rfcat -r'), or by issuing the command 'rfcat --bootloader --force' from the command line.
 
-Once you have a solid LED, you can do the following:
+Once you have a solid LED, or if you're running an rfcat dongle, you can do the following:
 
-* cd firmware
+cd firmware
 
 for EMK/DONSDONGLE:
-  * make installRfCatDonsDongleCCBootloader 
+  make installRfCatDonsDongleCCBootloader 
 
 for CHRONOS:
-  * make installRfCatChronosDongleCCBootloader
+  make installRfCatChronosDongleCCBootloader
+
+for YARDSTICKONE:
+  make installRfCatYS1CCBootloader
 
 The new version will be installed, and bootloader exited.
 
