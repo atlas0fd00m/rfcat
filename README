@@ -86,7 +86,7 @@ your build environment:
   * EMK Dongle Details
             --------------------------------
             | 2 4 6 8 10   2 4 6 8 10      |
-            | 1 3 5 7 9    1 3 5 7 9
+            | 1 3 5 7 9    1 3 5 7 9       |
             |-TEST-PINS----DEBUG-PINS------|
             |                              |
        ------                              |
@@ -103,6 +103,28 @@ your build environment:
                   5 <----- RST ----> 7
                   7 <----- DC -----> 3
                   9 <----- GND ----> 1
+
+  * YARD Stick One Details
+
+    Pogo pins on the back are clearly marked, but if you want to use the header...
+
+            -----------------------------------------
+            | YARD Stick One      2 4 6 8 10 12 14  |
+            |                     1 3 5 7 9  11 13  ------
+            |                                        USB |
+            |                                       ------
+            |                                       |
+            -----------------------------------------
+
+    
+               GoodFET           YARD Stick One
+                 PIN                 PIN
+
+                  1 <----- DD -----> 1
+                  2 <----- VCC ----> 2
+                  5 <----- RST ----> 5
+                  7 <----- DC -----> 7
+                  9 <----- GND ----> 9
 
 * install sdcc
 * install make
@@ -137,8 +159,9 @@ when required:
   edit /etc/udev/rules.d/20-rfcat.rules and add the lines:
   (note, we've included this file for your convenience within this repo.  you may simply copy it to /etc/udev/rules.d/)
 
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C"
-    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C" ENV{ID_MM_DEVICE_IGNORE}="1"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D" ENV{ID_MM_DEVICE_IGNORE}="1"
+    SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="605c" SYMLINK+="RFCAT_BL_YS1" ENV{ID_MM_DEVICE_IGNORE}="1"
 
   reboot or run 'sudo udevadm control --reload-rules'
 
