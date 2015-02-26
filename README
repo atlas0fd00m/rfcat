@@ -173,7 +173,7 @@ If you have just installed the bootloader, the dongle should be in bootloader mo
 
 If you are re-flashing a dongle that is already running rfcat, the Makefile targets will force it into bootloader
 mode for you, but you can manually put it into bootloader mode either by holding down the EMK/DONS button as you plug 
-it into USB (on the CHRONOS jumper P2_2/DC to GROUND), or by issuing the command 'd.bootloader()' to rfcat in interactive 
+it into USB (on the CHRONOS or YARDSTICKONE jumper P2_2/DC to GROUND), or by issuing the command 'd.bootloader()' to rfcat in interactive 
 mode ('rfcat -r'), or by issuing the command 'rfcat --bootloader --force' from the command line.
 
 Once you have a solid LED, or if you're running an rfcat dongle, you can do the following:
