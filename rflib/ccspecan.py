@@ -174,9 +174,15 @@ class RenderArea(QtGui.QWidget):
                 
                 # TODO: Wrapped Numpy types with float() to support old (<1.0) PySide API in Ubuntu 10.10
                 path_max.moveTo(float(x_axis[0]), float(y_max[0]))
+                db_tmp = 1000.0
                 for i in bins:
                     path_max.lineTo(float(x_axis[i]), float(y_max[i]))
+                    if float(y_max[i]) < db_tmp:
+                        db_tmp = float(y_max[i])
+                        max_max = i
                 
+                painter.setPen(Qt.red)
+                painter.drawText(QPointF(x_axis[max_max], y_max[max_max] - 2), '%.06f' % (self._x_to_hz(x_axis[max_max]) / 1e6))
                 painter.setPen(Qt.white)
                 painter.drawPath(path_now)
                 self._path_max = path_max
@@ -250,6 +256,12 @@ class RenderArea(QtGui.QWidget):
         normalized = delta / range
         #print "freq: %s \nlow: %s \nhigh: %s \ndelta: %s \nrange: %s \nnormalized: %s" % (frequency_hz, self._low_frequency, self._high_frequency, delta, range, normalized)
         return normalized * self.width()
+
+    def _x_to_hz(self, x):
+        range = self._high_frequency - self._low_frequency
+        tmp = x / self.width()
+        delta = tmp * range
+        return delta + self._low_frequency
                              
     def _dbm_to_y(self, dbm):
         delta = self._high_dbm - dbm
