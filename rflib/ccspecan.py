@@ -182,7 +182,8 @@ class RenderArea(QtGui.QWidget):
                         max_max = i
                 
                 painter.setPen(Qt.red)
-                painter.drawText(QPointF(x_axis[max_max], y_max[max_max] - 2), '%.06f' % (self._x_to_hz(x_axis[max_max]) / 1e6))
+                painter.drawText(QPointF(x_axis[max_max] + 2, y_max[max_max] - 2), '%.06f' % (self._x_to_hz(x_axis[max_max]) / 1e6))
+                painter.drawLine(QPointF(x_axis[max_max], 0), QPointF(x_axis[max_max], self.height()))
                 painter.setPen(Qt.white)
                 painter.drawPath(path_now)
                 self._path_max = path_max
