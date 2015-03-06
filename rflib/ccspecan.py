@@ -177,8 +177,8 @@ class RenderArea(QtGui.QWidget):
                 db_tmp = 1000.0
                 for i in bins:
                     path_max.lineTo(float(x_axis[i]), float(y_max[i]))
-                    if float(y_max[i]) < db_tmp:
-                        db_tmp = float(y_max[i])
+                    if y_max[i] < db_tmp:
+                        db_tmp = y_max[i]
                         max_max = i
                 
                 painter.setPen(Qt.red)
