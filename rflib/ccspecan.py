@@ -272,7 +272,7 @@ class RenderArea(QtGui.QWidget):
 
     def _y_to_dbm(self, y):
         range = self._high_dbm - self._low_dbm
-	tmp = y / self.height()
+        tmp = y / self.height()
         delta = tmp * range
         return self._high_dbm - delta
 
