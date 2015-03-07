@@ -174,11 +174,11 @@ class RenderArea(QtGui.QWidget):
                 
                 # TODO: Wrapped Numpy types with float() to support old (<1.0) PySide API in Ubuntu 10.10
                 path_max.moveTo(float(x_axis[0]), float(y_max[0]))
-                db_tmp = 1000.0
+                db_tmp = self._low_dbm
                 for i in bins:
                     path_max.lineTo(float(x_axis[i]), float(y_max[i]))
-                    if y_max[i] < db_tmp:
-                        db_tmp = y_max[i]
+                    if self._y_to_dbm(y_max[i]) > db_tmp:
+                        db_tmp = self._y_to_dbm(y_max[i])
                         max_max = i
                 
                 painter.setPen(Qt.red)
@@ -269,6 +269,12 @@ class RenderArea(QtGui.QWidget):
         range = self._high_dbm - self._low_dbm
         normalized = delta / range
         return normalized * self.height()
+
+    def _y_to_dbm(self, y):
+        range = self._high_dbm - self._low_dbm
+	tmp = y / self.height()
+        delta = tmp * range
+        return self._high_dbm - delta
 
 class Window(QtGui.QWidget):
     def __init__(self, data, low_freq, high_freq, spacing, delay=.01, parent=None):
