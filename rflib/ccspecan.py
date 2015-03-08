@@ -150,7 +150,7 @@ class RenderArea(QtGui.QWidget):
             self._new_graph()
         elif self._graph.size() != self.size():
             self._new_graph()
-        
+
         painter = QtGui.QPainter(self._graph)
         try:
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -181,10 +181,17 @@ class RenderArea(QtGui.QWidget):
                         db_tmp = self._y_to_dbm(y_max[i])
                         max_max = i
                 
-                painter.setPen(Qt.red)
-                painter.drawText(QPointF(x_axis[max_max] + 2, y_max[max_max] - 2), '%.06f' % (self._x_to_hz(x_axis[max_max]) / 1e6))
+                pen = QtGui.QPen()
+                pen.setBrush(Qt.red)
+                pen.setStyle(Qt.DotLine)
+                painter.setPen(pen)
+                painter.drawText(QPointF(x_axis[max_max] + 4, 30), '%.06f' % (self._x_to_hz(x_axis[max_max]) / 1e6))
+                painter.drawText(QPointF(30, y_max[max_max] - 4), '%d' % (self._y_to_dbm(y_max[max_max])))
                 painter.drawLine(QPointF(x_axis[max_max], 0), QPointF(x_axis[max_max], self.height()))
-                painter.setPen(Qt.white)
+                painter.drawLine(QPointF(0, y_max[max_max]), QPointF(self.width(), y_max[max_max]))
+                pen.setBrush(Qt.white)
+                pen.setStyle(Qt.SolidLine)
+                painter.setPen(pen)
                 painter.drawPath(path_now)
                 self._path_max = path_max
         finally:
