@@ -105,6 +105,9 @@ class RenderArea(QtGui.QWidget):
         self._frequency_step = freq_step #1e6
         self._high_dbm = 0.0
         self._low_dbm = -100.0
+
+        self._mouse_x = None
+        self._mouse_y = None
         
         self._thread = SpecanThread(self._data,
                                     self._low_frequency,
@@ -144,7 +147,7 @@ class RenderArea(QtGui.QWidget):
         self._persisted_frames[self._persisted_frames_next_index] = rssi_values
         self._persisted_frames_next_index = (self._persisted_frames_next_index + 1) % self._persisted_frames.shape[0]
         self.update()
-    
+
     def _draw_graph(self):
         if self._graph is None:
             self._new_graph()
@@ -189,6 +192,13 @@ class RenderArea(QtGui.QWidget):
                 painter.drawText(QPointF(30, y_max[max_max] - 4), '%d' % (self._y_to_dbm(y_max[max_max])))
                 painter.drawLine(QPointF(x_axis[max_max], 0), QPointF(x_axis[max_max], self.height()))
                 painter.drawLine(QPointF(0, y_max[max_max]), QPointF(self.width(), y_max[max_max]))
+                if self._mouse_x:
+                    pen.setBrush(Qt.yellow)
+                    painter.setPen(pen)
+                    painter.drawText(QPointF(self._mouse_x + 4, 44), '%.06f' % (self._x_to_hz(self._mouse_x) / 1e6))
+                    painter.drawText(QPointF(54, self._mouse_y - 4), '%d' % (self._y_to_dbm(self._mouse_y)))
+                    painter.drawLine(QPointF(self._mouse_x, 0), QPointF(self._mouse_x, self.height()))
+                    painter.drawLine(QPointF(0, self._mouse_y), QPointF(self.width(), self._mouse_y))
                 pen.setBrush(Qt.white)
                 pen.setStyle(Qt.SolidLine)
                 painter.setPen(pen)
@@ -323,6 +333,40 @@ class Window(QtGui.QWidget):
     def closeEvent(self, event):
         self.render_area.stop_thread()
         event.accept()
+
+    # handle mouse button clicks
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.render_area._mouse_x = float(event.x())
+            self.render_area._mouse_y = float(event.y())
+        if event.button() == Qt.RightButton:
+            self.render_area._mouse_x = None
+            self.render_area._mouse_y = None
+        event.accept()
+        return
+
+    # handle key presses
+    def keyPressEvent(self, event):
+        try:
+            key= chr(event.key()).upper()
+            event.accept()
+        except:
+            print 'Unknown key pressed: 0x%x' % event.key()
+            event.ignore()
+            return
+        if key == 'H':
+            print 'Key              Action' 
+            print
+            print ' <LEFT MOUSE>    Show frequency / signal strength at pointer'
+            print ' <RIGHT MOUSE>   Hide frequency / signal strength at pointer'
+            print ' H               Print this HELP text'
+            print ' Q               Quit'
+            return
+        if key == 'Q':
+            print 'Quit!'
+            self.close()
+            return
+        print 'Unsupported key pressed:', key
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
