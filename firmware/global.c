@@ -174,7 +174,7 @@ static void io_init(void)
     //CC1111EM_BUTTON = 1;
 
  #elif defined YARDSTICKONE
-    // LED1, LED2, and LED3
+    // USB, LED1, LED2, and LED3
     P1DIR |= 0xf;
     // amplifer configuration pins
     P2DIR |= 0x19;
