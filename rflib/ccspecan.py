@@ -378,20 +378,20 @@ class Window(QtGui.QWidget):
     def keyPressEvent(self, event):
         # test for non-alphanumeric keys first
         # arrow key
-        if event.key() >= 0x1000012 and event.key() <= 0x1000015:
+        if event.key() >= Qt.Key_Left and event.key() <= Qt.Key_Down:
             # left
-            if event.key() == 0x1000012:
+            if event.key() == Qt.Key_Left:
                     self._low_freq -= self._spacing
                     self._high_freq -= self._spacing
             # up
-            if event.key() == 0x1000013:
+            if event.key() == Qt.Key_Up:
                     self._spacing = int(self._spacing * 1.1)
             # right
-            if event.key() == 0x1000014:
+            if event.key() == Qt.Key_Right:
                     self._low_freq += self._spacing
                     self._high_freq += self._spacing
             # down
-            if event.key() == 0x1000015:
+            if event.key() == Qt.Key_Down:
                     self._spacing = int(self._spacing / 1.1)
             # this will redraw window with the correct labels etc., but we also need to re-start
             # specan on the dongle, and I'm not sure how best to do that!
