@@ -495,7 +495,61 @@ def invertBits(data):
     return ''.join(output)
 
 
-def diff_manchester_decode(data):
+def diff_manchester_decode(data, align=False):
+    # FIXME: not validated.  must find reference to validate against
+    '''
+    differential manchester encoding/decoding uses 2 symbols per data bit.
+    there must always be a transition between the first and second symbol of a bit.
+    bit values are determined by the existence/lack of transition between symbol pairs
+
+    set align=True to allow *one* sync of the bits to clock.  ie, either the whole 
+    thing lines up with a transition in the middle of every bit, or shift one, and
+    try again.  one way *must* have transitions, or failure occurs
+    '''
+    syncd = False
+
+    out = []
+    last = 0
+    obyte = 0
+    for bidx in range(len(data)):
+        byte = ord(data[bidx])
+        for y in range(6, -1, -2):
+            if not syncd:
+                diff = last & 1
+                bit0 = (byte >> (y+1)) & 1
+                bit1 = (byte >> y) & 1
+            else:
+                diff = last >> 1
+                bit0 = last & 1
+                bit1 = (byte >> (y+1)) & 1
+
+            if bit0 == bit1:
+                if syncd or not align:
+                    raise Exception("Differential Manchester Decoder cannot work with this data.  Sync fault at index %d,%d" % (bidx, y))
+
+                syncd = 1
+                # redo the last stuff with new info
+                diff = last >> 1
+                bit0 = last & 1
+                bit1 = (byte >> (y+1)) & 1
+
+            obyte <<= 1
+            if diff != bit0:
+                obyte |= 1
+
+            last = (bit0 << 1) | bit1
+        if (bidx & 1): 
+            out.append(chr(obyte))
+            obyte = 0
+
+    if not (bidx & 1):
+        obyte << 4 # pad 0's on end
+        out.append(chr(obyte))
+    return ''.join(out)
+
+
+
+def biphase_mark_coding_encode(data):
     # FIXME: broken?  this looks more like BMC (biphase mark encoding)
     # FIXME: write encoder as well
     out = []
