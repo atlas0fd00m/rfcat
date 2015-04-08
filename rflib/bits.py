@@ -494,3 +494,79 @@ def invertBits(data):
 
     return ''.join(output)
 
+
+def diff_manchester_decode(data):
+    # FIXME: broken?  this looks more like BMC (biphase mark encoding)
+    # FIXME: write encoder as well
+    out = []
+    last = 0
+    for bidx in range(len(data)):
+        byte = ord(data[bidx])
+        obyte = 0
+        for y in range(7, -1, -1):
+            bit = (byte >> y) & 1
+            obyte <<= 1
+            if bit == last:
+                obyte |= 1
+
+            last = bit
+        if bidx & 1:
+            print "%d - write" % bidx
+            out.append(chr(obyte))
+        else:
+            print "%d - skip" % bidx
+    if not (bidx & 1):
+        print "%d - write" % bidx
+        out.append(chr(obyte))
+
+    return ''.join(out)
+
+def manchester_decode(data, hilo=1):
+    out = []
+    last = 0
+    obyte = 0
+    for bidx in range(len(data)):
+        byte = ord(data[bidx])
+        for y in range(7, -1, -1):
+            bit = (byte >> y) & 1
+
+            if not (y & 1):   # every other bit counts
+                obyte <<= 1
+                if bit and not last:
+                    if not hilo:
+                        obyte |= 1
+                elif last and not bit:
+                    if hilo:
+                        obyte |= 1
+
+            last = bit
+        if (bidx & 1): 
+            out.append(chr(obyte))
+            obyte = 0
+
+    if not (bidx & 1):
+        obyte << 4 # pad 0's on end
+        out.append(chr(obyte))
+    return ''.join(out)
+
+def manchester_encode(data, hilo=1):
+    '''
+    for the sake of testing.
+    assumings msb, and 
+    '''
+    if hilo:
+        bits = (0b01, 0b10)
+    else:
+        bits = (0b10, 0b01)
+
+    out = []
+    for bidx in range(len(data)):
+        byte = ord(data[bidx])
+        obyte = 0
+        for bitx in range(7,-1,-1):
+            bit = (byte>>bitx) & 1
+            obyte <<= 2
+            obyte |= bits[bit]
+
+        out.append(struct.pack(">H", obyte))
+    return ''.join(out)
