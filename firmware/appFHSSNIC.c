@@ -145,7 +145,7 @@ u8 transmit_long(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         rfTxInfMode = 1;
         rfTxTotalTXLen = len;
         rfTxBufferEnd = MAX_TX_MSGLEN;
-        rftxbuf = &g_txMsgQueue[0];
+        rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
         rfTxRepeatCounter = 0;
         rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
         macdata.txMsgIdx = 0;
@@ -304,7 +304,7 @@ u8 transmit_long(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     //return 0;
 }
 
-int MAC_tx(__xdata u8* msg, u8 len)
+u8 MAC_tx(__xdata u8* msg, u8 len)
 {
     // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
     // queue data for sending at subsequent time slots.
@@ -941,49 +941,29 @@ int appHandleEP5()
                     // load up macdata queues, follow-on with 
                     //
                     //
-                    // this is duplicating our work in transmit_inf().  pick one.
+                    // this is duplicating our work in transmit_long().  pick one.
                     if (macdata.mac_state != MAC_STATE_NONHOPPING)
                     {
                         debug("NIC_LONG_XMIT: can't work when FHSS hopping");
-                        appReturn( 1, (__xdata u8*)&len);
-                    }
-
-                    macdata.mac_state = MAC_STATE_XMIT_LONG;
-
-                    rfTxInfMode = 1;
-                    rfTxInfLen = *buf++;
-                    rfTxInfLen += (*buf++) << 8;
-                    //offset = *buf++;
-                    //offset += (*buf++) << 8;
-                    //transmit(buf, len, repeat, offset);
-                    //MAC_tx(buf, len);
-                    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
-                    if (len > (MAX_TX_MSGLEN * MAX_TX_MSGS))
-                    {
-                        debug("NIC_LONG_XMIT message too long");
-                                    appReturn( 1, (__xdata u8*)&len);
+                        len = -1;
+                        appReturn( 2, (__xdata u8*)&len);
                         break;
                     }
-
-                    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
-                    {
-                        debug("still waiting on the last packet");
-                                    appReturn( 1, (__xdata u8*)&len);
-                        break;
-                    }
-
-                    g_txMsgQueue[macdata.txMsgIdx][0] = len;
-                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
-
-                    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
-                    {
-                        macdata.txMsgIdx = 0;
-                    }
-
-                    appReturn( 1, (__xdata u8*)&len);
+                    len = *buf++;
+                    len += (*buf++) << 8;
+                    repeat = *buf++;
+                    repeat += (*buf++) << 8;
+                    offset = *buf++;
+                    offset += (*buf++) << 8;
+                    appReturn( 2, (__xdata u8*)&len);
+                    if (transmit_long(buf, len, repeat, offset))
+                        ;
                     break;
 
                 case NIC_LONG_XMIT_MORE:
+                    len = *buf++;
+                    MAC_tx(buf, len);
+                    appReturn( 1, (__xdata u8*)&len);
                     break;
 
                 case FHSS_XMIT:

@@ -13,5 +13,7 @@
 #define NIC_SET_AES_IV          0x8
 #define NIC_SET_AES_KEY         0x9
 
+#define NIC_LONG_XMIT           0xa
+#define NIC_LONG_XMIT_MORE      0xb
 #endif
 

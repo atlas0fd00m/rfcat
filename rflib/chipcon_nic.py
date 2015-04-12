@@ -39,6 +39,7 @@ SYNCM_CARRIER_30_of_32          = 7
 RF_SUCCESS                      = 0
 
 RF_MAX_TX_BLOCK                 = 255
+RF_MAX_TX_CHUNK                 = 50
 # RF_MAX_BLOCK must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 RF_MAX_RX_BLOCK                 = 512
 
@@ -53,6 +54,8 @@ NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
 NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
+NIC_XMIT_LONG =                 0xa
+NIC_XMIT_LONG_MORE =            0xb
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -1245,6 +1248,24 @@ class NICxx11(USBDongle):
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+
+    def RFxmitLong(self, data, repeat=0, offset=0):
+        # encode, if necessary
+        if self.endec is not None:
+            data = self.endec.encode(data)
+        # calculate wait time
+        waitlen = len(data)
+        waitlen += repeat * (len(data) - offset)
+        wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
+
+        chunks = []
+        while len(data):
+            chunks.append(data[:RF_MAX_TX_CHUNK])
+            data = data[RF_MAX_TX_CHUNK:]
+
+        self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=wait)
+        for chunk in chunks:
+            self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B",len(chunk))+chunk, wait=wait)
 
     # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
