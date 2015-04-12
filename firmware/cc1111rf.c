@@ -15,7 +15,12 @@ volatile __xdata u16 rfRxLargeLen = 0;
 
 
 /* Tx buffers */
+// point and details about potentially multiple buffers for infinite mode transfers
+//
 volatile __xdata u8 *rftxbuf;
+volatile __xdata u8 rfTxBufCount = 1;
+volatile __xdata u8 rfTxCurBufIdx = 0;
+
 volatile __xdata u16 rfTxCounter = 0;
 volatile __xdata u16 rfTxRepeatCounter = 0;
 volatile __xdata u16 rfTxBufferEnd = 0;
@@ -311,7 +316,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     }
 
     // point tx buffer at userdata //
-    rftxbuf= buf;
+    rftxbuf = buf;
 
     // Reset byte pointer //
     rfTxCounter = 0;
@@ -340,9 +345,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     }
 #endif
 
-    // FIXME: why are we using waitRSSI()? and why all the NOP();s?
     // FIXME: nops should be "while (!(DMAIRQ & DMAARM1));"
-    // FIXME: waitRSSI()?  not sure about that one.
     // FIXME: doublecheck CCA enabled and that we're in RX mode
     /* Strobe to rx */
     //RFRX;
@@ -393,7 +396,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         while (MARCSTATE == MARC_STATE_TX)
         {
             LED = !LED;
-#ifndef IMME
+#ifdef USBDEVICE
             usbProcessEvents();
 #endif
         }
@@ -409,82 +412,6 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     //return 0;
 }
 
-u8 transmit_inf(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
-    /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
-     * ([0] == 0
-     * */
-{
-    __xdata u16 countdown;
-    __xdata u8 encoffset= 0;
-    __xdata u8 original_pktlen= PKTLEN;
-
-    while (MARCSTATE == MARC_STATE_TX)
-    {
-            LED = !LED;
-#ifdef USBDEVICE
-            usbProcessEvents();
-#endif
-    }
-    // Leave LED in a known state (off)
-    LED = 0;
-
-//////// WORK IS GOING ON HERE IN THE MIDDLE....  look into the interrupt handler for RF
-
-
-
-#ifdef RFDMA
-        {
-            /* Arm DMA channel */
-            DMAIRQ &= ~DMAARM0;
-            DMAARM |= (0x80 | DMAARM0);
-            NOP(); NOP(); NOP(); NOP();
-            NOP(); NOP(); NOP(); NOP();
-            DMAARM = DMAARM0;
-            NOP(); NOP(); NOP(); NOP();
-            NOP(); NOP(); NOP(); NOP();
-        }
-#endif
-        /* Put radio into tx state */
-#ifdef YARDSTICKONE
-        SET_TX_AMP;
-#endif
-        RFST = RFST_STX;
-
-        // wait until we're safely in TX mode
-        countdown = 60000;
-        while (MARCSTATE != MARC_STATE_TX && --countdown)
-        {
-            // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
-            LED = !LED;
-#ifdef USBDEVICE
-            usbProcessEvents(); 
-#endif
-        }
-        // LED on - we're transmitting
-        LED = 1;
-        if (!countdown)
-        {
-            lastCode[1] = LCE_RFTX_NEVER_TX;
-        }
-
-        while (MARCSTATE == MARC_STATE_TX)
-        {
-            LED = !LED;
-#ifndef IMME
-            usbProcessEvents();
-#endif
-        }
-
-        // LED off - we're done
-        LED = 0;
-
-        // reset PKTLEN as we may have messed with it
-        PKTLEN = original_pktlen;
-
-        return 1;
-    }
-    //return 0;
-}
 
 
 // prepare for RF RX
@@ -576,7 +503,7 @@ void RepeaterStop()
 //void dmaIntHandler(void) __interrupt DMA_VECTOR // Interrupt handler for DMA */
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
-{   // dormant, in favor of DMA transfers (ifdef RFDMA)
+{
     lastCode[0] = LC_RFTXRX_VECTOR;
         
 
@@ -606,24 +533,50 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
           PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
           }
     }
+
     else if(MARCSTATE == MARC_STATE_TX)
     {   // Transmit Byte
         // maintain infinite mode
-        if(rfTxInfMode)
+        if (rfTxInfMode)
         {
-            if(rfTxCounter == rfTxBufferEnd)
-                if(rfTxRepeatCounter)
+            // rfTxCounter will always be the index in the current buffer
+            // rfTxBufferEnd will always be the length of the current buffer
+            if (rfTxCounter == rfTxBufferEnd)
+                if (rfTxRepeatCounter)
                 {
                     if(rfTxRepeatCounter != 0xff)
                         rfTxRepeatCounter--;
                     rfTxCounter = rfTxRepeatOffset;
+                }
+                else
+                {
+                    // arbitrary length packets flowing from one buffer to another
+                    // first we mark the first byte of the current packet to 0
+                    rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd)] = 0;
+
+                    if (++rfTxCurBufIdx > rfTxBufCount)
+                        rfTxCurBufIdx = 0;
+                    if (rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd)] == 0)
+                    {
+                        // we should bail here, because the next buffer starts with 0
+                        RFST = RFST_SIDLE;  // is this too harsh?  or should we do something more elegant?
+                    }
+
+                    // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
+                    rfTxCounter = 1;
+                    // debug:
+                    // if (! rfTxTotalTXLen)
+                    //     RFST = RFST_SIDLE;
+                    //     // to kick back to transmit mode completion which will finish?
+                    // should just flow through until we're done.
                 }
             // radio to leave infinite mode?
             if(rfTxTotalTXLen-- < 256)
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
         }
         rf_status = RFST_STX;
-        RFD = rftxbuf[rfTxCounter++];
+        // rftxbuf is a pointer, not a static buffer, could be an array
+        RFD = rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd) + rfTxCounter++];
     }
 }
 
