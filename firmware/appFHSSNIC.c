@@ -17,9 +17,38 @@
  * */
 
 
+/* todo:  NIC_LONG_XMIT:
+ * usb cycles (appHandleEP5()):
+ *    case NIC_LONG_XMIT:
+ *      set macdata.txMsgIdx = 0
+ *      set macdata.txMsgIdxDone = 0
+ *      clear all buffer lengths
+ *      set macdata.macstate = MAC_STATE_XMIT_LONG  (rly? should just stay at NONHOPPING?)
+ *      write into g_txMsgQueue[macdata.txMsgIdx]
+ *      need to indicate that the buffer if filled  (buffer[0] = len)
+ *      need to indicate that there's data to RF TRANSMIT
+ *
+ *    case NIC_LONG_XMIT_MORE:
+ *      if g_txMsgQueue[macdata.txMsgIdx+1][0] != 0 (we've looped and caught up with RFtx)
+ *          return 1 (meaning, don't release the USB IN buffer for writing)
+ *      macdata.txMsgIdx ++
+ *      write into g_txMsgQueuepmacdata.txMsgIdx], [0]=len, [1:]=data
+ *
+ * rf cycles:
+ *      some indicator of Infinite Transmit mode  (rfTxInfMode)
+ *      start writing g_txMsgQueue[macdata.txMsgIdxDone]
+ *      when done with g_txMsgQueue[macdata.txMsgIdxDone]:
+ *          macdata.txMsgIdxDone++ (wrap if == MAX...)
+ *          if g_txMsgQueue[macdata.txMsgIdxDone][0] == 0:
+ *              signal "done with transmitting"
+ *      
+ *
+*/
 ////  turn this on to enable TX of CARRIER at each hop instead of normal RX/TX
 //#define DEBUG_HOPPING 1
 
+
+#define RFCAT
 
 __xdata MAC_DATA_t macdata;
 __xdata u8 g_Channels[MAX_CHANNELS];
@@ -27,7 +56,9 @@ __xdata u8 g_Channels[MAX_CHANNELS];
 __xdata u16 g_NIC_ID;
 
 
-__xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN];
+// queue of messages to transmit.  may be used for FHSS, or to send LONG messages
+// first byte of each message indicates its length
+__xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt T2_VECTOR;
@@ -79,7 +110,201 @@ void stop_hopping(void)
     
 }
 
-void MAC_tx(__xdata u8* msg, u8 len)
+
+u8 transmit_long(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
+    /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
+     * ([0] == 0)
+     * */
+{
+    __xdata u16 countdown;
+    __xdata u8 encoffset= 0;
+    __xdata u8 original_pktlen = PKTLEN;
+
+    if (macdata.mac_state != MAC_STATE_NONHOPPING)
+    {
+        debug("Cannot call transmit_long while FHSS Hopping!");
+        return -1;
+    }
+
+    while (MARCSTATE == MARC_STATE_TX)
+    {
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents();
+#endif
+    }
+    // Leave LED in a known state (off)
+    LED = 0;
+
+    // Reset buffer index //
+    rfTxCounter = 0;
+
+    // Set up repeat / large blocks
+    if (len > RF_MAX_TX_BLOCK)
+    {
+        rfTxInfMode = 1;
+        rfTxTotalTXLen = len;
+        rfTxBufferEnd = MAX_TX_MSGLEN;
+        rftxbuf = &g_txMsgQueue[0];
+        rfTxRepeatCounter = 0;
+        rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
+        macdata.txMsgIdx = 0;
+
+        countdown = len;
+        // copy user data into first buffer, up to MAX_TX_MSGLEN
+        // and then fill next buffer, etc...
+        while (countdown)
+        {
+            if (countdown > MAX_TX_MSGLEN)
+            {
+                MAC_tx(buf, MAX_TX_MSGLEN);
+                countdown -= (MAX_TX_MSGLEN);
+            }
+            else
+            {
+                MAC_tx(buf, (u8)countdown);
+            }
+        }
+    }
+    else
+    {
+        rfTxInfMode = 0;
+        rfTxRepeatCounter = repeat;
+        rfTxRepeatOffset = offset;
+        rfTxBufferEnd = len;
+        rfTxRepeatLen = len - offset;
+        // calculate total bytes to be transmitted including repeat
+        rfTxTotalTXLen = len + (rfTxRepeatLen * repeat);
+        // point tx buffer at userdata //
+        rftxbuf = buf;
+    }
+
+    // If len is zero, assume first byte is the length
+    // if we're in FIXED mode, skip the first byte
+    // if we're in VARIABLE mode, make sure we copy the length byte + packet
+    if (len == 0)
+    {
+        len = buf[0];
+
+        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
+        {
+            case PKTCTRL0_LENGTH_CONFIG_VAR:
+                len++;  // we need to send the length byte too...
+                break;
+            case PKTCTRL0_LENGTH_CONFIG_FIX:
+                buf++;  // skip sending the length byte
+                PKTLEN = len;
+                break;
+            default:
+                break;
+        }
+    } else
+    {
+        // If len is nonzero, use that as the length, and make sure the tx buffer is setup appropriately
+        // if we're in FIXED mode, all is well
+        // if we're in VARIABLE mode, must insert that length byte first.
+        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
+        {
+            case PKTCTRL0_LENGTH_CONFIG_VAR:
+                // shuffle buffer up 1 byte to make room for length
+                byte_shuffle(buf, len, 1);
+                buf[0] = (u8) len;
+                break;
+            case PKTCTRL0_LENGTH_CONFIG_FIX:
+                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
+                // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
+                // note that repeat length of 0xFF means 'forever'
+                if(repeat || len > RF_MAX_TX_BLOCK)
+                {
+                    // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
+                    // ISR will trigger exit once rfTxTotalTXLen < 256
+                    PKTLEN = (u8) (rfTxTotalTXLen % 256);
+                    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    rfTxInfMode = 1;
+                }
+                else
+                    PKTLEN= len;
+                break;
+            default:
+                break;
+        }
+    }
+
+    // CRYPTO if required //
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
+            encoffset= 1;
+        // pad and set new length
+        len= padAES(buf + encoffset, len);
+        // do the encrypt or decrypt
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
+        else
+            decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
+        // packet length may have changed due to padding so reset
+        if(encoffset)
+        {
+            // if we are in CBC-MAC mode, only transmit the MAC or we will send
+            // part of our plaintext (as we are encrypting in-place)!
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                buf[0] = 16;
+            else
+                buf[0] = (u8) len;
+        }
+        else
+        {
+            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
+                PKTLEN = 16;
+            else
+                PKTLEN = (u8) len;
+        }
+    }
+
+    {
+        /* Put radio into tx state */
+#ifdef YARDSTICKONE
+        SET_TX_AMP;
+#endif
+        RFST = RFST_STX;
+
+        // wait until we're safely in TX mode
+        countdown = 60000;
+        while (MARCSTATE != MARC_STATE_TX && --countdown)
+        {
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents(); 
+#endif
+        }
+        // LED on - we're transmitting
+        LED = 1;
+        if (!countdown)
+        {
+            lastCode[1] = LCE_RFTX_NEVER_TX;
+        }
+
+        while (MARCSTATE == MARC_STATE_TX)
+        {
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents();
+#endif
+        }
+
+        // LED off - we're done
+        LED = 0;
+
+        // reset PKTLEN as we may have messed with it
+        PKTLEN = original_pktlen;
+
+        return 1;
+    }
+    //return 0;
+}
+
+int MAC_tx(__xdata u8* msg, u8 len)
 {
     // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
     // queue data for sending at subsequent time slots.
@@ -88,17 +313,29 @@ void MAC_tx(__xdata u8* msg, u8 len)
     if (len > MAX_TX_MSGLEN)
     {
         debug("FHSSxmit message too long");
-        return;
+        return -1;
     }
 
-    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    if (g_txMsgQueue[macdata.txMsgIdx][0])
+    {
+        // can't add to the next queue
+        return -2;
+    }
+
+    // mark the queue msg as filling:
+    g_txMsgQueue[macdata.txMsgIdx][0] = 0xff;
+    // copy data
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+    // place data len in first byte
+    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    // [0] means:  0xff=writing, 0=avail, !0=ready_to_send/datalen
 
     if (++macdata.txMsgIdx >= MAX_TX_MSGS)
     {
         macdata.txMsgIdx = 0;
     }
 
+    return 0;
 }
 
 void MAC_sync(u16 CellID)
@@ -700,6 +937,55 @@ int appHandleEP5()
                     appReturn( 1, buf);
                     break;
 
+                case NIC_LONG_XMIT:
+                    // load up macdata queues, follow-on with 
+                    //
+                    //
+                    // this is duplicating our work in transmit_inf().  pick one.
+                    if (macdata.mac_state != MAC_STATE_NONHOPPING)
+                    {
+                        debug("NIC_LONG_XMIT: can't work when FHSS hopping");
+                        appReturn( 1, (__xdata u8*)&len);
+                    }
+
+                    macdata.mac_state = MAC_STATE_XMIT_LONG;
+
+                    rfTxInfMode = 1;
+                    rfTxInfLen = *buf++;
+                    rfTxInfLen += (*buf++) << 8;
+                    //offset = *buf++;
+                    //offset += (*buf++) << 8;
+                    //transmit(buf, len, repeat, offset);
+                    //MAC_tx(buf, len);
+                    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
+                    if (len > (MAX_TX_MSGLEN * MAX_TX_MSGS))
+                    {
+                        debug("NIC_LONG_XMIT message too long");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
+
+                    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
+                    {
+                        debug("still waiting on the last packet");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
+
+                    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+
+                    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+                    {
+                        macdata.txMsgIdx = 0;
+                    }
+
+                    appReturn( 1, (__xdata u8*)&len);
+                    break;
+
+                case NIC_LONG_XMIT_MORE:
+                    break;
+
                 case FHSS_XMIT:
                     len = *buf++;
                     //len += (*buf++) << 8;
@@ -709,27 +995,28 @@ int appHandleEP5()
                     //offset += (*buf++) << 8;
                     //transmit(buf, len, repeat, offset);
                     //MAC_tx(buf, len);
-    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
-    if (len > MAX_TX_MSGLEN)
-    {
-        debug("FHSSxmit message too long");
-                    appReturn( 1, (__xdata u8*)&len);
-        break;
-    }
+                    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
+                    if (len > MAX_TX_MSGLEN)
+                    {
+                        debug("FHSSxmit message too long");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
 
-    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
-    {
-        debug("still waiting on the last packet");
-                    appReturn( 1, (__xdata u8*)&len);
-        break;
-    }
-    g_txMsgQueue[macdata.txMsgIdx][0] = len;
-    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+                    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
+                    {
+                        debug("still waiting on the last packet");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
 
-    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
-    {
-        macdata.txMsgIdx = 0;
-    }
+                    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+
+                    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+                    {
+                        macdata.txMsgIdx = 0;
+                    }
 
                     appReturn( 1, (__xdata u8*)&len);
                     break;

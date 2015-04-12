@@ -5,7 +5,7 @@
 
 
 /*************************************************************************************************
- * welcome to the cc1111usb library.
+ * welcome to the chipcon_usb library.
  * this lib was designed to be the basis for your usb-app on the cc1111 radio.  hack fun!
  *
  * 
@@ -1000,20 +1000,20 @@ void processOUTEP5(void)
                 break;
 
             case CMD_POKE:
-                    loop =  *ptr++;
-                    loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;
+                loop =  *ptr++;
+                loop += *ptr++ << 8;
+                ep5.dptr = (__xdata u8*) loop;
 
-                    loop = ep5.OUTlen - 2;
+                loop = ep5.OUTlen - 2;
 
-                    for (;loop>0;loop--)
-                    {
-                        *ep5.dptr++ = *ptr++;
-                    }
+                for (;loop>0;loop--)
+                {
+                    *ep5.dptr++ = *ptr++;
+                }
 
-                    //if (ep5.OUTbytesleft == 0)
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
-                    break;
+                //if (ep5.OUTbytesleft == 0)
+                txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
+                break;
 
             case CMD_POKE_REG:
                 if (!(ep5.flags & EP_OUTBUF_CONTINUED))
@@ -1112,9 +1112,17 @@ void processOUTEP5(void)
     {
         if (cb_ep5)
         {
-            cb_ep5();
+            if (! cb_ep5())
+            {
+                // if the callback returns 0, we're done.  
+                // if non-zero, we can't handle it right now, keep it around
+                ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+            }
         }
-        ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+        else
+        {
+            ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+        }
     }
 
 }
@@ -1198,8 +1206,9 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        switch (handleOUTEP5() == 1)                    // handles the immediate read into ep5
+        switch (handleOUTEP5())                         // handles the immediate read into ep5
         {
+            case -2:
             case -1:                                    // we failed to send.  still waiting on our OUT_BUF.  still a message waiting in queue.
                 break;
             case 1:

@@ -409,6 +409,83 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     //return 0;
 }
 
+u8 transmit_inf(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
+    /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
+     * ([0] == 0
+     * */
+{
+    __xdata u16 countdown;
+    __xdata u8 encoffset= 0;
+    __xdata u8 original_pktlen= PKTLEN;
+
+    while (MARCSTATE == MARC_STATE_TX)
+    {
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents();
+#endif
+    }
+    // Leave LED in a known state (off)
+    LED = 0;
+
+//////// WORK IS GOING ON HERE IN THE MIDDLE....  look into the interrupt handler for RF
+
+
+
+#ifdef RFDMA
+        {
+            /* Arm DMA channel */
+            DMAIRQ &= ~DMAARM0;
+            DMAARM |= (0x80 | DMAARM0);
+            NOP(); NOP(); NOP(); NOP();
+            NOP(); NOP(); NOP(); NOP();
+            DMAARM = DMAARM0;
+            NOP(); NOP(); NOP(); NOP();
+            NOP(); NOP(); NOP(); NOP();
+        }
+#endif
+        /* Put radio into tx state */
+#ifdef YARDSTICKONE
+        SET_TX_AMP;
+#endif
+        RFST = RFST_STX;
+
+        // wait until we're safely in TX mode
+        countdown = 60000;
+        while (MARCSTATE != MARC_STATE_TX && --countdown)
+        {
+            // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents(); 
+#endif
+        }
+        // LED on - we're transmitting
+        LED = 1;
+        if (!countdown)
+        {
+            lastCode[1] = LCE_RFTX_NEVER_TX;
+        }
+
+        while (MARCSTATE == MARC_STATE_TX)
+        {
+            LED = !LED;
+#ifndef IMME
+            usbProcessEvents();
+#endif
+        }
+
+        // LED off - we're done
+        LED = 0;
+
+        // reset PKTLEN as we may have messed with it
+        PKTLEN = original_pktlen;
+
+        return 1;
+    }
+    //return 0;
+}
+
 
 // prepare for RF RX
 void startRX(void)

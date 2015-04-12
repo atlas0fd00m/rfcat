@@ -5,7 +5,8 @@
 #include "global.h"
 
 // use DMA for RF?
-//#define RFDMA
+//#define RFDMA  - nope.  this has now died for InfiniteMode TX/RX.  we need to 
+//                  switch buffers mid-stream
 
 #define DMA_CFG_SIZE 8
 // BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
@@ -62,7 +63,15 @@ extern volatile __xdata u16 rfRxTotalRXLen;
 extern volatile __xdata u16 rfRxLargeLen;
 /* Tx buffers */
 extern volatile __xdata u8 *rftxbuf;
+extern volatile __xdata u8 rfTxBufCount;
+extern volatile __xdata u8 rfTxCurBufIdx;
 extern volatile __xdata u16 rfTxCounter;
+extern volatile __xdata u16 rfTxRepeatCounter;
+extern volatile __xdata u16 rfTxBufferEnd;
+extern volatile __xdata u16 rfTxRepeatLen;
+extern volatile __xdata u16 rfTxRepeatOffset;
+extern volatile __xdata u16 rfTxTotalTXLen;
+extern volatile __xdata u8 rfTxInfMode;
 
 extern volatile __xdata u16 rf_MAC_timer;
 extern volatile __xdata u16 rf_tLastRecv;
