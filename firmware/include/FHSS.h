@@ -58,7 +58,7 @@ void PHY_set_channel(u16 chan);
 void MAC_initChannels();
 void MAC_sync(u16 netID);
 void MAC_set_chanidx(u16 chanidx);
-void MAC_tx(__xdata u8* message, u8 len);
+u8 MAC_tx(__xdata u8* message, u8 len);
 void MAC_rx_handle(u8 len, __xdata u8* message);
 u8 MAC_getNextChannel();
 
