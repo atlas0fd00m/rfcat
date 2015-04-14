@@ -732,7 +732,7 @@ class USBDongle:
         return self.recv(app, cmd, wait)
 
     def getDebugCodes(self, timeout=100):
-        x = self._recvEP0(timeout=timeout)
+        x = self._recvEP0(request=EP0_CMD_GET_DEBUG_CODES, timeout=timeout)
         if (x != None and len(x)==2):
             return struct.unpack("BB", x)
         else:
