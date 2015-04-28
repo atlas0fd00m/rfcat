@@ -1,4 +1,9 @@
-#include "cc1110-ext.h"
+#ifdef CC1111
+ #include "cc1110-ext.h"
+#elif defined CC2531
+ #include "cc2530-ext.h"
+#endif
+
 #include "chipcon_dma.h"
 #include "global.h"
 #include <string.h>

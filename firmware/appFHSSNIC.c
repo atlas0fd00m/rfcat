@@ -1,5 +1,11 @@
-#include "cc1111rf.h"
-#include "cc1111_aes.h"
+
+#ifdef CC1111
+ #include "cc1111rf.h"
+ #include "cc1111_aes.h"
+#elif defined CC2531
+ #include "cc2531.h"
+#endif
+
 #include "chipcon_dma.h"
 #include "global.h"
 #include "FHSS.h"

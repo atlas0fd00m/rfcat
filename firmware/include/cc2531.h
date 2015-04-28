@@ -1,7 +1,7 @@
 #ifndef CC2531_H
 #define CC2531_H
 
-#include <cc2430.h>
+#include <cc2530.h>
 #include "cc2530-ext.h"
 
 
@@ -42,6 +42,8 @@ SFRX(USBF5,     0x622A);        // Endpoint 5 FIFO
 //#define P0IFG_USB_RESUME        0x80    //rw0
 
 //   SBIT(USBIF,    0xE8, 0); // USB Interrupt Flag
+
+#define SLEEP SLEEPCMD  // fucktards at sdcc, wut?
 
 // USB activities
 #define USB_ENABLE_PIN              P1_0
