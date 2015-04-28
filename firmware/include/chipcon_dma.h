@@ -2,8 +2,12 @@
 #define CHIPCON_DMA_H
 
 #include "types.h"
-#include "cc1111.h"
-#include "cc1111rf.h"
+#ifdef CC1111
+ #include "cc1111.h"
+ #include "cc1111rf.h"
+#elif defined CC2531
+ #include "cc2531.h"
+#endif
 
 // define number of required DMA channels here
 // RF (maybe)

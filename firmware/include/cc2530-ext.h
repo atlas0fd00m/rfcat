@@ -1275,15 +1275,16 @@
 #define PKTSTATUS_CRCOK					0x80
 
 
+/*
 #ifdef CC2531
- #define OPAMPMC     0x61A6
+ SFRX(OPAMPMC     , 0x61A6)
 #elif defined CC2533
- #define MONMUX      0x61A6
+ SFRX(MONMUX      , 0x61A6)
 #elif defined CC2541
- #define OPAMPMC     0x61AD
+ SFRX(OPAMPMC     , 0x61AD)
 #endif
 
-/*#define T3CC1   0xEA
+#define T3CC1   0xEA
 #define T4CTL   0xEB
 #define T4CCTL0 0xEC
 #define T4CC0   0xED
@@ -1306,58 +1307,60 @@
 
 
 // 0x6200–0x622B —
-#define I2CCFG      0x6230
-#define I2CSTAT     0x6231
-#define I2CDATA     0x6232
-#define I2CADDR     0x6233
-#define I2CWC       0x6234
-#define I2CIO       0x6235
-#define OBSSEL0     0x6243
-#define OBSSEL1     0x6244
-#define OBSSEL2     0x6245
-#define OBSSEL3     0x6246
-#define OBSSEL4     0x6247
-#define OBSSEL5     0x6248
-#define CHVER       0x6249
-#define CHIPID      0x624A
-#define TR0         0x624B
-#define DBGDATA     0x6260
-#define SRCRC       0x6262
-#define BATTMON     0x6264
-#define IVCTRL      0x6265
-#define FCTL        0x6270
-#define FADDRL      0x6271
-#define FADDRH      0x6272
-#define FWDATA      0x6273
-#define CHIPINFO0   0x6276
-#define CHIPINFO1   0x6277
-#define IRCTL       0x6281
-#define CLD         0x6290
-#define T1CCTL0     0x62A0
-#define T1CCTL1     0x62A1
-#define T1CCTL2     0x62A2
-#define T1CCTL3     0x62A3
-#define T1CCTL4     0x62A4
-#define T1CC0L      0x62A6
-#define T1CC0H      0x62A7
+/*
+#include<compiler.h>
+SFRX(I2CCFG      , 0x6230)
+SFRX(I2CSTAT     , 0x6231)
+SFRX(I2CDATA     , 0x6232)
+SFRX(I2CADDR     , 0x6233)
+SFRX(I2CWC       , 0x6234)
+SFRX(I2CIO       , 0x6235)
+SFRX(OBSSEL0     , 0x6243)
+SFRX(OBSSEL1     , 0x6244)
+SFRX(OBSSEL2     , 0x6245)
+SFRX(OBSSEL3     , 0x6246)
+SFRX(OBSSEL4     , 0x6247)
+SFRX(OBSSEL5     , 0x6248)
+SFRX(CHVER       , 0x6249)
+SFRX(CHIPID      , 0x624A)
+SFRX(TR0         , 0x624B)
+SFRX(DBGDATA     , 0x6260)
+SFRX(SRCRC       , 0x6262)
+SFRX(BATTMON     , 0x6264)
+SFRX(IVCTRL      , 0x6265)
+SFRX(FCTL        , 0x6270)
+SFRX(FADDRL      , 0x6271)
+SFRX(FADDRH      , 0x6272)
+SFRX(FWDATA      , 0x6273)
+SFRX(CHIPINFO0   , 0x6276)
+SFRX(CHIPINFO1   , 0x6277)
+SFRX(IRCTL       , 0x6281)
+SFRX(CLD         , 0x6290)
+SFRX(T1CCTL0     , 0x62A0)
+SFRX(T1CCTL1     , 0x62A1)
+SFRX(T1CCTL2     , 0x62A2)
+SFRX(T1CCTL3     , 0x62A3)
+SFRX(T1CCTL4     , 0x62A4)
+SFRX(T1CC0L      , 0x62A6)
+SFRX(T1CC0H      , 0x62A7)
 
 
-#define T1CC1L      0x62A8
-#define T1CC1H      0x62A9
-#define T1CC2L      0x62AA
-#define T1CC2H      0x62AB
-#define T1CC3L      0x62AC
-#define T1CC3H      0x62AD
-#define T1CC4L      0x62AE
-#define T1CC4H      0x62AF
-#define STCC        0x62B0
-#define STCS        0x62B1
-#define STCV0       0x62B2
-#define STCV1       0x62B3
-#define STCV2       0x62B4
-#define OPAMPC      0x62C0
-#define OPAMPS      0x62C1
-#define CMPCTL      0x62D0
-
-
+SFRX(T1CC1L      , 0x62A8)
+SFRX(T1CC1H      , 0x62A9)
+SFRX(T1CC2L      , 0x62AA)
+SFRX(T1CC2H      , 0x62AB)
+SFRX(T1CC3L      , 0x62AC)
+SFRX(T1CC3H      , 0x62AD)
+SFRX(T1CC4L      , 0x62AE)
+SFRX(T1CC4H      , 0x62AF)
+SFRX(STCC        , 0x62B0)
+SFRX(STCS        , 0x62B1)
+SFRX(STCV0       , 0x62B2)
+SFRX(STCV1       , 0x62B3)
+SFRX(STCV2       , 0x62B4)
+SFRX(OPAMPC      , 0x62C0)
+SFRX(OPAMPS      , 0x62C1)
+SFRX(CMPCTL      , 0x62D0)
+*/
+#include <cc2530.h>
 #endif

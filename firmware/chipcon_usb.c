@@ -1086,7 +1086,11 @@ void processOUTEP5(void)
             case CMD_PARTNUM:
                 ep5.OUTbytesleft = 1;
 
+#ifdef CC1111
                 ptr = (__xdata u8*) &PARTNUM;
+#elif defined CC2531
+                ptr = (__xdata u8*) &CHIPID;
+#endif
 
                 txdata(ep5.OUTapp, ep5.OUTcmd, ep5.OUTbytesleft, ptr);
                 ep5.OUTbytesleft = 0;
