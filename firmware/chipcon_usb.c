@@ -220,8 +220,8 @@ void usb_init(void)
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
     // set usb interrupt priority to 3
-    IP0 |= 2;
-    IP1 |= 2;
+    IP0 |= BIT1;
+    IP1 |= BIT1;
 
 
     // usb dma
@@ -948,7 +948,7 @@ int handleOUTEP5(void)
     DMAARM |= usbdmaarm;
     DMAREQ |= usbdmaarm;
 
-    // update out OUTlen.  this is vital for determining when we're done
+    // update OUTlen.  this is vital for determining when we're done
     ep5.OUTlen += len;
 
     while (!(DMAIRQ & usbdmaarm));
@@ -961,13 +961,13 @@ int handleOUTEP5(void)
         ep5.OUTbytesleft = 0;
         USBINDEX = 5;
         usb_data.event &= ~USBD_OIF_OUTEP5IF;       // this indicates that we have more processing to do.  clear so we can reset in the interrupt handler...
-        USBCSOL &= ~USBCSOL_OUTPKT_RDY;
+        USBCSOL &= ~USBCSOL_OUTPKT_RDY;             // indicates to the USB controller that we're ready for another packet in the EP5 buffer
         return 1;                                               // this return value is what gets processOUTEP5 to kick
     }
 
     USBINDEX = 5;
     usb_data.event &= ~USBD_OIF_OUTEP5IF;       // this indicates that we have more processing to do.  clear so we can reset in the interrupt handler...
-    USBCSOL &= ~USBCSOL_OUTPKT_RDY;
+    USBCSOL &= ~USBCSOL_OUTPKT_RDY;             // indicates to the USB controller that we're ready for another packet in the EP5 buffer
     return 0;
 }
 
@@ -1042,6 +1042,7 @@ void processOUTEP5(void)
 
                 break;
             case CMD_PING:
+                blink(2,2);
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 

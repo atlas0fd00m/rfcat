@@ -145,8 +145,8 @@ void init_RF()
 
     // interrupt priority settings.  RF interrupts needs to be priority 2 since tx needs to happen from Timer interrupts
     // however, usb will rank above RF
-    IP0 |= 0;       // grp0 is RF/RFTXRX/DMA
-    IP1 |= 1;
+    IP0 |= 0;//BIT0;       // grp0 is RF/RFTXRX/DMA
+    IP1 |= BIT0;
 
     // RF state
     rf_status = RFST_SIDLE;
@@ -195,6 +195,12 @@ int waitRSSI()
 //***********************************************************************/
 /** FIXME: how can i fail thee?  let me count the ways... and put them into the contract...
  */
+/*
+ * FAIL on CCA - return EFAIL_CCA
+ * FAIL on wait - return EFAIL_RFST_STATE_TX
+ * FAIL on args - return EFAIL_ARGS_FUKT
+ */
+
 u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
 {
     __xdata u16 countdown;
@@ -567,6 +573,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         RFIF &= ~RFIF_IRQ_SFD;
     }
 
+    // FIXME: if (RFIF & RFIF_CCA)  ...  communicate back to transmit function that we never made it into TX...
+    //
     if (RFIF & ( RFIF_IRQ_DONE | RFIF_IRQ_RXOVF | RFIF_IRQ_TIMEOUT ))
     {
         // we want *all zee bytezen!*

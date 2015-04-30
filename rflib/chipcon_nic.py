@@ -444,6 +444,34 @@ class NICxx11(USBDongle):
 
         self.setRFRegister(addr, temp, suppress=suppress)
 
+    def setEnableCCA(self, mode=3, absthresh=0, relthresh=1, magn=3, radiocfg=None):
+        '''
+        4 modes of CCA:
+            0 - ALWAYS, no CCA
+            1 - If RSSI below threshold
+            2 - Unless currently receiving a packet
+            3 - If RSSI below threshold unless currently receiving a packet
+        '''
+        if radiocfg is None:
+            radiocfg = self.radiocfg
+        else:
+            applyConfig = False
+
+        mcsm1 = radiocfg.mcsm1 & 0xf
+        mcsm1 |= (mode << 4)
+        radiocfg.mcsm1 = mcsm1
+
+        agcctrl2 = radiocfg.agcctrl2 & 0xf8
+        agcctrl2 |= magn
+
+        agcctrl1 = radiocfg.agcctrl1 & 0xc0
+        agcctrl1 |= (absthresh & 0xf)
+        agcctrl1 |= ((relthresh << 4) & 0x3)
+
+        self.setRFRegister(MCSM1, mcsm1)
+        self.setRFRegister(AGCCTRL1, agcctrl1)
+        self.setRFRegister(AGCCTRL2, agcctrl2)
+
     def setFreq(self, freq=902000000, mhz=24, radiocfg=None, applyConfig=True):        
         if radiocfg is None:
             radiocfg = self.radiocfg

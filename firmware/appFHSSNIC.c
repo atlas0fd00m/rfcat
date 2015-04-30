@@ -956,7 +956,7 @@ static void appInitRf(void)
     MDMCFG0     = 0x11;
     DEVIATN     = 0x36;
     MCSM2       = 0x07;             // RX_TIMEOUT
-    MCSM1       = 0x3f;             // CCA_MODE RSSI below threshold unless currently recvg pkt - always end up in RX mode
+    MCSM1       = 0x0f;             // was 'CCA_MODE RSSI below threshold unless currently recvg pkt'-3, now 'Always'-0 - always end up in RX mode
     MCSM0       = 0x18;             // fsautosync when going from idle to rx/tx/fstxon
     FOCCFG      = 0x17;
     BSCFG       = 0x6c;
