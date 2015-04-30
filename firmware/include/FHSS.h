@@ -51,14 +51,14 @@
 #define DEFAULT_NUM_CHANS       83
 #define DEFAULT_NUM_CHANHOPS    83
 
-void begin_hopping(u8 T2_offset);
+void begin_hopping(__xdata u8 T2_offset);
 void stop_hopping(void);
 
-void PHY_set_channel(u16 chan);
+void PHY_set_channel(__xdata u16 chan);
 void MAC_initChannels();
-void MAC_sync(u16 netID);
-void MAC_set_chanidx(u16 chanidx);
-u8 MAC_tx(__xdata u8* message, u8 len);
+void MAC_sync(__xdata u16 netID);
+void MAC_set_chanidx(__xdata u16 chanidx);
+u8 MAC_tx(__xdata u8* message, __xdata u8 len);
 void MAC_rx_handle(u8 len, __xdata u8* message);
 u8 MAC_getNextChannel();
 
