@@ -92,7 +92,7 @@ void MAC_initChannels()
     //macdata.MAC_threshold = 0;
 }
 
-void begin_hopping(u8 T2_offset)
+void begin_hopping(__xdata u8 T2_offset)
 {
     // reset the T2 clock settings based on T1 clock an offset
     T2CT -= T2_offset;
@@ -111,7 +111,7 @@ void stop_hopping(void)
 }
 
 
-u8 transmit_long(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
+__xdata u8 transmit_long(__xdata u8* buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
     /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
      * ([0] == 0)
      * */
@@ -304,7 +304,7 @@ u8 transmit_long(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     //return 0;
 }
 
-u8 MAC_tx(__xdata u8* msg, u8 len)
+__xdata u8 MAC_tx(__xdata u8* msg, __xdata u8 len)
 {
     // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
     // queue data for sending at subsequent time slots.
@@ -338,7 +338,7 @@ u8 MAC_tx(__xdata u8* msg, u8 len)
     return 0;
 }
 
-void MAC_sync(u16 CellID)
+void MAC_sync(__xdata u16 CellID)
 {
     // this should be implemented for a specific MAC/PHY.  too many details are left out here.
     // what are we synching to?  need to determine if we have a network id to sync with?
@@ -412,13 +412,13 @@ void MAC_set_chanidx(u16 chanidx)
 }
 
 
-void MAC_set_NIC_ID(u16 NIC_ID)
+void MAC_set_NIC_ID(__xdata u16 NIC_ID)
 {
     // this function is a placeholder for more functionality, if it makes sense... perhaps cut it.
     g_NIC_ID = NIC_ID;
 }
 
-void MAC_rx_handle(u8 len, __xdata u8* message)
+void MAC_rx_handle(__xdata u8 len, __xdata u8* message)
 {
     len;
     message;
@@ -427,7 +427,7 @@ void MAC_rx_handle(u8 len, __xdata u8* message)
 }
 
 
-u8 MAC_getNextChannel()
+__xdata u8 MAC_getNextChannel()
 {
     macdata.curChanIdx++;
     if (macdata.curChanIdx >= MAX_CHANNELS)
@@ -653,6 +653,8 @@ void init_MAC(void)
 /*************************************************************************************************
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
+__xdata u8 processbuffer;
+__xdata u8 *chan_table;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -661,14 +663,16 @@ void appMainInit(void)
     clock = 0;
 
     init_MAC();
+
+    processbuffer = 0;
+    chan_table = rfrxbuf[0];
+
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
-    __xdata u8 processbuffer;
-    __xdata u8 *chan_table;
 
     switch  (macdata.mac_state)
     {
@@ -1149,7 +1153,7 @@ void appHandleEP0OUT(void)
  * data is sent back through calls to either setup_send_ep0 or setup_sendx_ep0 for xdata vars    *
  * theoretically you can process stuff without the IN-direction bit, but we've found it is better*
  * to handle OUT packets in appHandleEP0OUTdone, which is called when the last packet is complete*/
-int appHandleEP0(USB_Setup_Header* pReq)
+int appHandleEP0(__xdata USB_Setup_Header* pReq)
 {
 #ifdef VIRTUAL_COM
     pReq = 0;
