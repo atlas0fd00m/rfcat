@@ -654,7 +654,7 @@ void init_MAC(void)
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
 __xdata u8 processbuffer;
-__xdata u8 *chan_table;
+__xdata u8 *__xdata chan_table;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -740,7 +740,7 @@ void appMainLoop(void)
                 }
             }
 
-            rfif = 0;
+            __critical { rfif = 0; }
             IEN2 |= IEN2_RFIE;
             break;
 
@@ -773,11 +773,11 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~RFIF_IRQ_DONE;
+                    __critical { rfif &= ~RFIF_IRQ_DONE; }
                 }
             }
 
-            rfif = 0;
+            __critical{ rfif = 0; }
             IEN2 |= IEN2_RFIE;
             break;
 
@@ -814,7 +814,7 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );           // FIXME: rfif is way too easily tossed aside here...
+                    __critical { rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );  }          // FIXME: rfif is way too easily tossed aside here...
                 }
 
                 //LED = !LED;
@@ -825,7 +825,7 @@ void appMainLoop(void)
 
 
 
-void appReturn(__xdata u8 len, __xdata u8* response)
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
 {
     ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
     txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
