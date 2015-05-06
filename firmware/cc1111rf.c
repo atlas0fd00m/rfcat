@@ -17,7 +17,7 @@ volatile __xdata u16 rfRxLargeLen = 0;
 /* Tx buffers */
 // point and details about potentially multiple buffers for infinite mode transfers
 //
-volatile __xdata u8 *rftxbuf;
+volatile __xdata u8 * __xdata rftxbuf;
 volatile __xdata u8 rfTxBufCount = 1;
 volatile __xdata u8 rfTxCurBufIdx = 0;
 
@@ -34,7 +34,7 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
 //volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
 
-u8 rfif;
+volatile u8 rfif;
 volatile __xdata u8 rf_status;
 volatile __xdata u16 rf_MAC_timer;
 volatile __xdata u16 rf_tLastRecv;
@@ -206,7 +206,7 @@ int waitRSSI()
  * FAIL on args - return EFAIL_ARGS_FUKT
  */
 
-u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
+u8 transmit(__xdata u8* __xdata  buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
 {
     __xdata u16 countdown;
     __xdata u8 encoffset= 0;
@@ -216,7 +216,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     {
             LED = !LED;
 #ifdef USBDEVICE
-            usbProcessEvents();
+            //usbProcessEvents();
 #endif
     }
     // Leave LED in a known state (off)
@@ -389,7 +389,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
             LED = !LED;
 #ifdef USBDEVICE
-            usbProcessEvents(); 
+            //usbProcessEvents(); 
 #endif
         }
         // LED on - we're transmitting
@@ -403,7 +403,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         {
             LED = !LED;
 #ifdef USBDEVICE
-            usbProcessEvents();
+            //usbProcessEvents();
 #endif
         }
 
@@ -558,11 +558,11 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                 {
                     // arbitrary length packets flowing from one buffer to another
                     // first we mark the first byte of the current packet to 0
-                    rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd)] = 0;
+                    rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = 0;
 
                     if (++rfTxCurBufIdx > rfTxBufCount)
                         rfTxCurBufIdx = 0;
-                    if (rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd)] == 0)
+                    if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)
                     {
                         // we should bail here, because the next buffer starts with 0
                         RFST = RFST_SIDLE;  // is this too harsh?  or should we do something more elegant?
@@ -582,7 +582,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         }
         rf_status = RFST_STX;
         // rftxbuf is a pointer, not a static buffer, could be an array
-        RFD = rftxbuf[(rfTxCurBufIdx*rfTxBufferEnd) + rfTxCounter++];
+        RFD = rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + rfTxCounter++];
     }
 }
 
@@ -698,7 +698,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
 }
 
 // move data within a buffer
-void byte_shuffle(__xdata u8* buf, u16 len, u16 offset)
+void byte_shuffle(__xdata u8* __xdata  buf, u16 len, u16 offset)
 {
     while(len--)
         buf[len + offset] = buf[len];

@@ -266,9 +266,9 @@ typedef struct {
 } USB_STATE;
 
 typedef struct {
-    u8*  INbuf;
+    u8* INbuf;
     u16  INbytesleft;
-    u8*  OUTbuf;
+    u8* OUTbuf;
     u16  OUTlen;
     u8   OUTapp;
     u8   OUTcmd;
@@ -371,12 +371,12 @@ extern __xdata u16  ep0value;
 
 // provided by cc1111usb.c
 void clock_init(void);
-int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
-int setup_send_ep0(u8* payload, u16 length);
-int setup_sendx_ep0(__xdata u8* payload, u16 length);
+int txdata(u8 app, u8 cmd, u16 len, __xdata u8* __xdata  dataptr);
+int setup_send_ep0(u8* __xdata  payload, u16 length);
+int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length);
 u16 usb_recv_ep0OUT();
 
-u16 usb_recv_epOUT(u8 epnum, USB_EP_IO_BUF* epiobuf);
+u16 usb_recv_epOUT(u8 epnum, USB_EP_IO_BUF* __xdata  epiobuf);
 void initUSB(void);
 void usb_up(void);
 void usb_down(void);
@@ -386,7 +386,7 @@ void usbProcessEvents(void);
 
 void registerCb_ep0OutDone(int (*callback)(void));
 void registerCb_ep0Out(int (*callback)(void));
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* pReq));
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
 void registerCb_ep5(int (*callback)(void));
 
 
