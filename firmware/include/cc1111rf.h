@@ -79,7 +79,7 @@ extern volatile __xdata u16 rf_tLastRecv;
 // AES
 extern volatile __xdata u8 rfAESMode;
 
-extern u8 rfif;
+extern volatile u8 rfif;
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
 void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
