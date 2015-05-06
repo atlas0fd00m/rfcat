@@ -6,7 +6,7 @@
  * AES helpers                                                                                   *
  ************************************************************************************************/
 
-__xdata DMA_DESC *aesdmai, *aesdmao;
+__xdata DMA_DESC * __xdata aesdmai, * __xdata aesdmao;
 __xdata u8 aesdmachani, aesdmaarmi, aesdmachano, aesdmaarmo;
 
 // initialise DMA
@@ -38,7 +38,7 @@ void initAES(void)
 }
 
 // set the AES 128 bit key or IV
-void setAES(__xdata u8* buf, __xdata u8 command, __xdata u8 mode)
+void setAES(__xdata u8* __xdata buf, __xdata u8 command, __xdata u8 mode)
 {
     // wait for co-processor to be ready
     while(!(ENCCS & ENCCS_RDY))
@@ -60,7 +60,7 @@ void setAES(__xdata u8* buf, __xdata u8 command, __xdata u8 mode)
 
 // pad a buffer to multiple of 128 bits. caller must ensure
 // enough space exists in buffer.
-__xdata u16 padAES(__xdata u8* buf, __xdata u16 len)
+__xdata u16 padAES(__xdata u8* __xdata buf, __xdata u16 len)
 {
     while(len % 16)
         buf[len++]= '\0';
@@ -69,19 +69,19 @@ __xdata u16 padAES(__xdata u8* buf, __xdata u16 len)
 }
 
 // encrypt a buffer
-void encAES(__xdata u8* inbuf, __xdata u8* outbuf, __xdata u16 len, __xdata u8 mode)
+void encAES(__xdata u8* __xdata inbuf, __xdata u8* __xdata outbuf, __xdata u16 len, __xdata u8 mode)
 {
     doAES(inbuf, outbuf, len, ENCCS_CMD_ENC, mode);
 }
 
 // decrypt a buffer
-void decAES(__xdata u8* inbuf, __xdata u8* outbuf, __xdata u16 len, __xdata u8 mode)
+void decAES(__xdata u8* __xdata inbuf, __xdata u8* __xdata outbuf, __xdata u16 len, __xdata u8 mode)
 {
     doAES(inbuf, outbuf, len, ENCCS_CMD_DEC, mode);
 }
 
 // process a buffer
-void doAES(__xdata u8* inbuf, __xdata u8* outbuf, __xdata u16 len, __xdata u8 command, __xdata u8 mode)
+void doAES(__xdata u8* __xdata inbuf, __xdata u8* __xdata outbuf, __xdata u16 len, __xdata u8 command, __xdata u8 mode)
 {
     __xdata u16 bufp;
 
