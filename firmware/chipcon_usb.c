@@ -104,7 +104,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq);
  * return:  0 on success
  *          -1 on failure
  */
-int txdata(__xdata u8 app, __xdata u8 cmd, __xdata u16 len, __xdata u8* __xdata dataptr)      // assumed EP5 for application use
+int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for application use
     // gonna try this direct this time, and ignore all the "state tracking" for the endpoint.
     // wish me luck!  this could horribly crash and burn.
 {

@@ -34,7 +34,7 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
 //volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
 
-volatile u8 rfif;
+u8 rfif;
 volatile __xdata u8 rf_status;
 volatile __xdata u16 rf_MAC_timer;
 volatile __xdata u16 rf_tLastRecv;
@@ -206,7 +206,7 @@ int waitRSSI()
  * FAIL on args - return EFAIL_ARGS_FUKT
  */
 
-u8 transmit(__xdata u8* __xdata  buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
+u8 transmit(__xdata u8* __xdata  buf, u16 len, u16 repeat, u16 offset)
 {
     __xdata u16 countdown;
     __xdata u8 encoffset= 0;

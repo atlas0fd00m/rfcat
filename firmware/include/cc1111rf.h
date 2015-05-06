@@ -62,7 +62,7 @@ extern volatile __xdata u8 rfRxInfMode;
 extern volatile __xdata u16 rfRxTotalRXLen;
 extern volatile __xdata u16 rfRxLargeLen;
 /* Tx buffers */
-extern volatile __xdata u8 * __xdata rftxbuf;
+extern volatile __xdata u8 *__xdata rftxbuf;
 extern volatile __xdata u8 rfTxBufCount;
 extern volatile __xdata u8 rfTxCurBufIdx;
 extern volatile __xdata u16 rfTxCounter;
@@ -79,7 +79,7 @@ extern volatile __xdata u16 rf_tLastRecv;
 // AES
 extern volatile __xdata u8 rfAESMode;
 
-extern volatile u8 rfif;
+extern u8 rfif;
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
 void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
@@ -117,9 +117,9 @@ void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 
 int waitRSSI(void);
 
-u8 transmit(__xdata u8* __xdata , __xdata u16 len, __xdata u16 repeat, __xdata u16 offset);   // sends data out the radio using the current RF settings
+u8 transmit(__xdata u8*, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset);   // sends data out the radio using the current RF settings
 void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
-void byte_shuffle(__xdata u8* __xdata  buf, __xdata u16 len, __xdata u16 offset);
+void byte_shuffle(__xdata u8* buf, __xdata u16 len, __xdata u16 offset);
 void startRX(void);
 #endif
