@@ -266,9 +266,9 @@ typedef struct {
 } USB_STATE;
 
 typedef struct {
-    u8* INbuf;
+    u8*  INbuf;
     u16  INbytesleft;
-    u8* OUTbuf;
+    u8*  OUTbuf;
     u16  OUTlen;
     u8   OUTapp;
     u8   OUTcmd;

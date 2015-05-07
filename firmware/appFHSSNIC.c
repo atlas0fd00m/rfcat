@@ -123,7 +123,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
         debug("Cannot call transmit_long while FHSS Hopping!");
-        return -1;
+        return LCE_RF_MODE_INCOMPAT;
     }
 
     while (MARCSTATE == MARC_STATE_TX)
@@ -313,17 +313,17 @@ __xdata u8 MAC_tx(__xdata u8* msg, __xdata u8 len)
     if (len > MAX_TX_MSGLEN)
     {
         debug("FHSSxmit message too long");
-        return -1;
+        return ERR_BUFFER_SIZE_EXCEEDED;
     }
 
-    if (g_txMsgQueue[macdata.txMsgIdx][0])
+    if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
-        return -2;
+        return ERR_BUFFER_NOT_AVAILABLE;
     }
 
     // mark the queue msg as filling:
-    g_txMsgQueue[macdata.txMsgIdx][0] = 0xff;
+    g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_FILLING;
     // copy data
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
     // place data len in first byte
@@ -335,7 +335,7 @@ __xdata u8 MAC_tx(__xdata u8* msg, __xdata u8 len)
         macdata.txMsgIdx = 0;
     }
 
-    return 0;
+    return LCE_NO_ERROR;
 }
 
 void MAC_sync(__xdata u16 CellID)
@@ -444,6 +444,7 @@ __xdata u8 MAC_getNextChannel()
 void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigger on T2 overflow
 {
     __xdata u8 packet[28];
+
     // timer2 controls hopping.
     // if the system is not supposed to be hopping, T2 Interrupt should be disabled
     // otherwise....
@@ -846,7 +847,7 @@ int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;
-    __xdata u8 *buf = &ep5.OUTbuf[0];
+    __xdata u8 * __xdata buf = &ep5.OUTbuf[0], blen;
 
     switch (ep5.OUTapp)
     {
@@ -937,6 +938,7 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_ID:
+                    // fixme: sending 8 bit to 16 bit function???
                     MAC_set_NIC_ID(*buf);
                     appReturn( 1, buf);
                     break;
