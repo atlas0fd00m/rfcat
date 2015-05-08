@@ -141,50 +141,26 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     // Reset buffer index //
     rfTxCounter = 0;
 
-    // Set up repeat / large blocks
-                    debughex16(len);
-                    debughex16(RF_MAX_TX_BLOCK);
-    //if (len > RF_MAX_TX_BLOCK)
-    if (len>>8)
-    {
-        rfTxInfMode = 1;
-        rfTxTotalTXLen = len;
-                    debughex16(rfTxTotalTXLen);
-        rfTxBufferEnd = MAX_TX_MSGLEN;
-                    debughex16(rfTxBufferEnd);
-        rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
-        rfTxRepeatCounter = 0;
-        rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
-        macdata.txMsgIdx = 0;
+    debughex16(len);
+    debughex16(RF_MAX_TX_BLOCK);
 
-        countdown = len;
-        // copy user data into first buffer, up to MAX_TX_MSGLEN
-        // and then fill next buffer, etc...
-        while (countdown)
-        {
-            if (countdown > MAX_TX_MSGLEN)
-            {
-                MAC_tx(buf, MAX_TX_MSGLEN);
-                countdown -= (MAX_TX_MSGLEN);
-            }
-            else
-            {
-                MAC_tx(buf, (u8)countdown);
-            }
-        }
-    }
-    else
+    // setup infinite mode, length, and the variables that will last for and manage the whole transmission
+    rfTxInfMode = 1;
+    rfTxTotalTXLen = len;
+                debughex16(rfTxTotalTXLen);
+    rfTxBufferEnd = MAX_TX_MSGLEN;
+                debughex16(rfTxBufferEnd);
+    rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
+    rfTxRepeatCounter = 0;
+    rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
+    macdata.txMsgIdx = 0;
+
+    // copy user data into first buffer, up to MAX_TX_MSGLEN
+    // and then fill next buffer, etc...
+    if (countdown = MAC_tx(buf, MAX_TX_MSGLEN) != LCE_NO_ERROR)
     {
-        debug("non-infinite");
-        rfTxInfMode = 0;
-        rfTxRepeatCounter = repeat;
-        rfTxRepeatOffset = offset;
-        rfTxBufferEnd = len;
-        rfTxRepeatLen = len - offset;
-        // calculate total bytes to be transmitted including repeat
-        rfTxTotalTXLen = len + (rfTxRepeatLen * repeat);
-        // point tx buffer at userdata //
-        rftxbuf = buf;
+        debug("MAC_tx() returned error");
+        debughex(countdown);
     }
 
     // If len is zero, assume first byte is the length
@@ -290,6 +266,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     if (!countdown)
     {
         lastCode[1] = LCE_RFTX_NEVER_TX;
+        debug("never entered TX");
     }
     debug("done with transmit_long");
     return 1;
