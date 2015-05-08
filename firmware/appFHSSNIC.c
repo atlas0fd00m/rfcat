@@ -111,7 +111,7 @@ void stop_hopping(void)
 }
 
 
-__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
+__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
      * ([0] == 0)
      * */
@@ -140,9 +140,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
 
     // Reset buffer index //
     rfTxCounter = 0;
-
-    debughex16(len);
-    debughex16(RF_MAX_TX_BLOCK);
 
     // setup infinite mode, length, and the variables that will last for and manage the whole transmission
     rfTxInfMode = 1;
@@ -198,7 +195,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
                 // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
                 // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
                 // note that repeat length of 0xFF means 'forever'
-                if(repeat || len > RF_MAX_TX_BLOCK)
+                if(len > RF_MAX_TX_BLOCK)
                 {
                     // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
                     // ISR will trigger exit once rfTxTotalTXLen < 256
@@ -815,7 +812,7 @@ int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;
-    __xdata u8 * __xdata buf = &ep5.OUTbuf[0], blen;
+    __xdata u8 * __xdata buf = &ep5.OUTbuf[0];
 
     switch (ep5.OUTapp)
     {
@@ -925,14 +922,10 @@ int appHandleEP5()
                     }
                     len = *buf++;
                     len += (*buf++) << 8;
-                    repeat = *buf++;
-                    repeat += (*buf++) << 8;
-                    offset = *buf++;
-                    offset += (*buf++) << 8;
                     debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
-                    len = transmit_long(buf, len, repeat, offset);
+                    len = transmit_long(buf, len);
                     appReturn( 2, (__xdata u8*)&len);
                     debughex16(rfTxTotalTXLen);
                     break;
@@ -1036,6 +1029,8 @@ int appHandleEP5()
                     break;
 
                 case FHSS_SET_MAC_DATA:
+                    debugx(buf);
+                    debughex(*buf);
                     memcpy((__xdata u8*)&macdata, (__xdata u8*)*buf, sizeof(macdata));
                     appReturn( sizeof(macdata), buf);
                     break;
