@@ -560,8 +560,9 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // first we mark the first byte of the current packet to 0
                     rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = 0;
 
-                    if (++rfTxCurBufIdx > rfTxBufCount)
+                    if (++rfTxCurBufIdx >= rfTxBufCount)
                         rfTxCurBufIdx = 0;
+
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)
                     {
                         // we should bail here, because the next buffer starts with 0
