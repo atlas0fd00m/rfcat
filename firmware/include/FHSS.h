@@ -23,6 +23,8 @@
 #define MAC_STATE_SYNCHED           3
 #define MAC_STATE_SYNC_MASTER       4
 #define MAC_STATE_SYNCINGMASTER     5
+#define MAC_STATE_LONG_XMIT         6
+#define MAC_STATE_LONG_XMIT_FAIL    7
 
 
 // spectrum analysis defines

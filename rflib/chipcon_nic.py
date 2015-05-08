@@ -1281,6 +1281,9 @@ class NICxx11(USBDongle):
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
+
+        datalen = len(data)
+
         # calculate wait time
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
@@ -1291,11 +1294,15 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=0)
-        sys.stderr.write('=')
-        for chunk in chunks:
-            self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B",len(chunk))+chunk, wait=wait)
-            sys.stderr.write('.')
+        #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",datalen,repeat,offset)+chunks[0], wait=1000)
+        sys.stderr.write('=' + repr(retval))
+
+        chlen = len(chunks)
+        for chidx in range(1, chlen):
+            chunk = chunks[chidx]
+            retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("BB", len(chunk), (chidx==chlen-1))+chunk, wait=wait)
+            sys.stderr.write('.' + repr(retval))
 
     # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):

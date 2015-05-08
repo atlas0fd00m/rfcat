@@ -123,9 +123,11 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
         debug("Cannot call transmit_long while FHSS Hopping!");
+        debughex(macdata.mac_state);
         return LCE_RF_MODE_INCOMPAT;
     }
 
+    macdata.mac_state = MAC_STATE_LONG_XMIT;
     while (MARCSTATE == MARC_STATE_TX)
     {
             LED = !LED;
@@ -140,11 +142,16 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     rfTxCounter = 0;
 
     // Set up repeat / large blocks
-    if (len > RF_MAX_TX_BLOCK)
+                    debughex16(len);
+                    debughex16(RF_MAX_TX_BLOCK);
+    //if (len > RF_MAX_TX_BLOCK)
+    if (len>>8)
     {
         rfTxInfMode = 1;
         rfTxTotalTXLen = len;
+                    debughex16(rfTxTotalTXLen);
         rfTxBufferEnd = MAX_TX_MSGLEN;
+                    debughex16(rfTxBufferEnd);
         rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
         rfTxRepeatCounter = 0;
         rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
@@ -168,6 +175,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     }
     else
     {
+        debug("non-infinite");
         rfTxInfMode = 0;
         rfTxRepeatCounter = repeat;
         rfTxRepeatOffset = offset;
@@ -262,46 +270,29 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
         }
     }
 
-    {
-        /* Put radio into tx state */
+    /* Put radio into tx state */
 #ifdef YARDSTICKONE
-        SET_TX_AMP;
+    SET_TX_AMP;
 #endif
-        RFST = RFST_STX;
+    RFST = RFST_STX;
 
-        // wait until we're safely in TX mode
-        countdown = 60000;
-        while (MARCSTATE != MARC_STATE_TX && --countdown)
-        {
-            LED = !LED;
+    // wait until we're safely in TX mode
+    countdown = 60000;
+    while (MARCSTATE != MARC_STATE_TX && --countdown)
+    {
+        //LED = !LED;
 #ifdef USBDEVICE
-            usbProcessEvents(); 
+    //    usbProcessEvents(); 
 #endif
-        }
-        // LED on - we're transmitting
-        LED = 1;
-        if (!countdown)
-        {
-            lastCode[1] = LCE_RFTX_NEVER_TX;
-        }
-
-        while (MARCSTATE == MARC_STATE_TX)
-        {
-            LED = !LED;
-#ifdef USBDEVICE
-            usbProcessEvents();
-#endif
-        }
-
-        // LED off - we're done
-        LED = 0;
-
-        // reset PKTLEN as we may have messed with it
-        PKTLEN = original_pktlen;
-
-        return 1;
     }
-    //return 0;
+    // LED on - we're transmitting
+    //LED = 1;
+    if (!countdown)
+    {
+        lastCode[1] = LCE_RFTX_NEVER_TX;
+    }
+    debug("done with transmit_long");
+    return 1;
 }
 
 __xdata u8 MAC_tx(__xdata u8* msg, __xdata u8 len)
@@ -961,15 +952,29 @@ int appHandleEP5()
                     repeat += (*buf++) << 8;
                     offset = *buf++;
                     offset += (*buf++) << 8;
+                    debughex16(len);
+                    //appReturn( 2, (__xdata u8*)&len);
+                    //if (transmit_long(buf, len, repeat, offset)) ;
+                    len = transmit_long(buf, len, repeat, offset);
                     appReturn( 2, (__xdata u8*)&len);
-                    if (transmit_long(buf, len, repeat, offset))
-                        ;
+                    debughex16(rfTxTotalTXLen);
                     break;
 
                 case NIC_LONG_XMIT_MORE:
                     len = *buf++;
-                    MAC_tx(buf, len);
-                    appReturn( 1, (__xdata u8*)&len);
+                    MAC_tx(buf+1, len);
+                    if (*(buf+1))
+                    {
+                        // this is the last chunk, wait and return results
+                        // while still length in TxTotalLen and no errors have occurred (like running into an uninitialized queue message before running out of TxTotalLen)
+                            debughex16(rfTxTotalTXLen);
+                        //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
+                        {
+                            //LED = !LED;
+                        }
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                    }
+                    appReturn( 2, (__xdata u8*)&len);
                     break;
 
                 case FHSS_XMIT:

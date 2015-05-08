@@ -579,6 +579,8 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
             // radio to leave infinite mode?
             if(rfTxTotalTXLen-- < 256)
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+
+            LED = !LED;
         }
         rf_status = RFST_STX;
         // rftxbuf is a pointer, not a static buffer, could be an array
