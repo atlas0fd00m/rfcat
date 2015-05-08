@@ -1304,6 +1304,19 @@ class NICxx11(USBDongle):
             retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("BB", len(chunk), (chidx==chlen-1))+chunk, wait=wait)
             sys.stderr.write('.' + repr(retval))
 
+    def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
+        datalen = len(data)
+
+        chunks = []
+        while len(data):
+            chunks.append(data[:RF_MAX_TX_CHUNK])
+            data = data[RF_MAX_TX_CHUNK:]
+
+        #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",datalen,0,0)+chunks[0], wait=1000)
+        sys.stderr.write('=' + repr(retval))
+
+
     # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
         if not blocksize == None:

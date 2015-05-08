@@ -566,6 +566,10 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     {
                         // we should bail here, because the next buffer starts with 0
                         RFST = RFST_SIDLE;  // is this too harsh?  or should we do something more elegant?
+                        // DEBUGGING::::::  SHOULD BAIL HERE 
+                        BLOCK();
+                        ////////////////////////////////////
+
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
@@ -694,6 +698,10 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         resetRFSTATE();
 
         LED = !LED;
+
+        // DEBUGGING::::::  SHOULD BAIL HERE 
+        BLOCK();
+        ////////////////////////////////////
 
         RFIF &= ~RFIF_IRQ_TXUNF;
     }
