@@ -1,0 +1,16 @@
+many thanks to Adam Laurie (Major Malfunction) for providing an elegant udev
+rules file to make a stock RFCAT device have user-permissions.
+
+this translates as "i don't have to 'sudo rfcat'"
+
+i had considered making this auto-install, but since i would feel weird about
+anyone dumping stuff into my device configuration areas without asking, i'm 
+simply writing this README.
+
+to allow automatic non-root access, run:
+
+  sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
+  sudo udevadm control --reload-rules
+
+hack fun!
+@
