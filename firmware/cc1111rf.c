@@ -600,6 +600,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     // note: S1CON should be cleared before handling the RFIF flags.
     lastCode[0] = LC_RF_VECTOR;
     S1CON &= ~(S1CON_RFIF_0 | S1CON_RFIF_1);
+
+    // store the data from RFIF for main loop code to access and deal with.
     rfif |= RFIF;
 
     if (RFIF & RFIF_IRQ_SFD)
@@ -616,7 +618,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     {
         // we want *all zee bytezen!*
         if(rf_status == RFST_STX)
-        {
+        {   // FIXME: if this, we have a state engine problem.  RXOVF should not be set when RFST_STX!
 #ifdef RFDMA
             // rearm the DMA?  not sure this is a good thing.
             DMAARM |= (0x80 | DMAARM0);

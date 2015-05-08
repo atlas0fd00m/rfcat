@@ -1295,7 +1295,7 @@ class NICxx11(USBDongle):
             data = data[RF_MAX_TX_CHUNK:]
 
         #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",datalen,repeat,offset)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         sys.stderr.write('=' + repr(retval))
 
         chlen = len(chunks)
@@ -1313,7 +1313,7 @@ class NICxx11(USBDongle):
             data = data[RF_MAX_TX_CHUNK:]
 
         #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",datalen,0,0)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         sys.stderr.write('=' + repr(retval))
 
 
@@ -1966,14 +1966,24 @@ class FHSSNIC(NICxx11):
         self.poke(X_T2PR, chr(PR))
         self.poke(X_T2CTL, chr(t2ctl))
         self.poke(X_CLKCON, chr(clkcon))
-        
+    def _setMACmode(self, _mode):
+        '''
+        internal debugging use only
+        '''
+        macdata = self.getMACdata()
+        print repr(macdata)
+        macdata = (_mode,) +  macdata[1:]
+        print repr(macdata)
+        self.setMACdata(macdata)
+
     def setMACdata(self, data):
-        datastr = ''.join([chr(d) for x in data])
+        #datastr = ''.join([chr(x) for x in data])
+        datastr = struct.pack("<BHHHHHHHHBBH", *data)
         return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
 
     def getMACdata(self):
         datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
-        print (repr(datastr))
+        #print (repr(datastr))
         data = struct.unpack("<BHHHHHHHHBBH", datastr)
         return data
 
@@ -1981,8 +1991,8 @@ class FHSSNIC(NICxx11):
         data = self.getMACdata()
         return """\
 u8 mac_state                %x
-u32 MAC_threshold           %x
-u32 MAC_ovcount             %x
+u16 MAC_threshold           %x
+u16 MAC_ovcount             %x
 u16 NumChannels             %x
 u16 NumChannelHops          %x
 u16 curChanIdx              %x
