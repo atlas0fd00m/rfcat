@@ -508,6 +508,11 @@ void RepeaterStop()
 
 //void dmaIntHandler(void) __interrupt DMA_VECTOR // Interrupt handler for DMA */
 
+
+
+// DEBUGGING...
+#include "FHSS.h"
+
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
 {
     lastCode[0] = LC_RFTXRX_VECTOR;
@@ -547,6 +552,11 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         {
             // rfTxCounter will always be the index in the current buffer
             // rfTxBufferEnd will always be the length of the current buffer
+            //
+            //
+            //DEBUGGING
+            macdata.tLastHop ++;
+            //
             if (rfTxCounter == rfTxBufferEnd)
                 if (rfTxRepeatCounter)
                 {

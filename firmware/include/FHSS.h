@@ -81,3 +81,5 @@ typedef struct MAC_DATA_s
     u8  txMsgIdxDone;
     u16 synched_chans;
 } MAC_DATA_t;
+
+extern __xdata MAC_DATA_t macdata;
