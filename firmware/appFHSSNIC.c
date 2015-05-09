@@ -144,9 +144,9 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     // setup infinite mode, length, and the variables that will last for and manage the whole transmission
     rfTxInfMode = 1;
     rfTxTotalTXLen = len;
-                debughex16(rfTxTotalTXLen);
+                //debughex16(rfTxTotalTXLen);
     rfTxBufferEnd = MAX_TX_MSGLEN;
-                debughex16(rfTxBufferEnd);
+                //debughex16(rfTxBufferEnd);
     rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
     rfTxRepeatCounter = 0;
     rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
@@ -265,7 +265,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
         lastCode[1] = LCE_RFTX_NEVER_TX;
         debug("never entered TX");
     }
-    debug("done with transmit_long");
+    //debug("done with transmit_long");
     return 1;
 }
 
@@ -927,7 +927,6 @@ int appHandleEP5()
                     //if (transmit_long(buf, len, repeat, offset)) ;
                     len = transmit_long(buf, len);
                     appReturn( 2, (__xdata u8*)&len);
-                    debughex16(rfTxTotalTXLen);
                     break;
 
                 case NIC_LONG_XMIT_MORE:
@@ -937,10 +936,10 @@ int appHandleEP5()
                     {
                         // this is the last chunk, wait and return results
                         // while still length in TxTotalLen and no errors have occurred (like running into an uninitialized queue message before running out of TxTotalLen)
-                            debughex16(rfTxTotalTXLen);
+                            //debughex16(rfTxTotalTXLen);
                         //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
                         {
-                            //LED = !LED;
+                            LED = !LED;
                         }
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                     }

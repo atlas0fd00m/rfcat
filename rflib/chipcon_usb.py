@@ -94,8 +94,15 @@ LCE_USB_EP5_LEN_TOO_BIG               = 0x6
 LCE_USB_EP5_GOT_CRAP                  = 0x7
 LCE_USB_EP5_STALL                     = 0x8
 LCE_USB_DATA_LEFTOVER_FLAGS           = 0x9
+
 LCE_RF_RXOVF                          = 0x10
 LCE_RF_TXUNF                          = 0x11
+LCE_DROPPED_PACKET                    = 0x12
+LCE_RFTX_NEVER_TX                     = 0x13
+LCE_RFTX_NEVER_LEAVE_TX               = 0x14
+LCE_RF_MODE_INCOMPAT                  = 0x15
+LCE_RF_BLOCKSIZE_INCOMPAT             = 0x16
+LCE_RF_MULTI_BUFFER_NOT_INIT          = 0x17
 
 LCS = {}
 LCES = {}
