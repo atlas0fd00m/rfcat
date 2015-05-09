@@ -576,11 +576,9 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)
                     {
                         // we should bail here, because the next buffer starts with 0
-                        RFST = RFST_SIDLE;  // is this too harsh?  or should we do something more elegant?
-                        // DEBUGGING::::::  SHOULD BAIL HERE 
-                        BLOCK();
-                        ////////////////////////////////////
-
+                        // when MAC_tx writes to the buffer, it marks the first byte with the msg length
+                        rfTxTotalTXLen = 1;
+                        lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
