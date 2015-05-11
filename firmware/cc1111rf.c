@@ -18,7 +18,6 @@ volatile __xdata u16 rfRxLargeLen = 0;
 // point and details about potentially multiple buffers for infinite mode transfers
 //
 volatile __xdata u8 * __xdata rftxbuf;
-volatile __xdata u8 rfTxBufCount = 1;
 volatile __xdata u8 rfTxCurBufIdx = 0;
 
 volatile __xdata u16 rfTxCounter = 0;
@@ -570,7 +569,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // first we mark the first byte of the current packet to 0
                     rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = 0;
 
-                    if (++rfTxCurBufIdx >= rfTxBufCount)
+                    if (++rfTxCurBufIdx == MAX_TX_MSGS)
                         rfTxCurBufIdx = 0;
 
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)

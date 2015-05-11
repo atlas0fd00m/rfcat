@@ -145,12 +145,13 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     rfTxInfMode = 1;
     rfTxTotalTXLen = len;
                 //debughex16(rfTxTotalTXLen);
-    rfTxBufferEnd = MAX_TX_MSGLEN;
+    rfTxBufferEnd = MAX_TX_MSGLEN + 1; // add 1 for length byte
                 //debughex16(rfTxBufferEnd);
-    rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0];
+    rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0][0];
     rfTxRepeatCounter = 0;
     rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
     macdata.txMsgIdx = 0;
+    rfTxCounter = 1;
 
     // copy user data into first buffer, up to MAX_TX_MSGLEN
     // and then fill next buffer, etc...
