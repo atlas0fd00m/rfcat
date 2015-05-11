@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+import sys
+import readline
+import rlcompleter
+readline.parse_and_bind("tab: complete")
+
+from rflib import *
+
+
+
+intro = """'RfCat, the greatest thing since Frequency Hopping!'
+
+Research Mode: enjoy the raw power of rflib
+
+currently your environment has an object called "d" for dongle.  this is how 
+you interact with the rfcat dongle:
+    >>> d.ping()
+    >>> d.setFreq(433000000)
+    >>> d.setMdmModulation(MOD_ASK_OOK)
+    >>> d.makePktFLEN(250)
+    >>> d.RFxmit("HALLO")
+    >>> d.RFrecv()
+    >>> print d.reprRadioConfig()
+
+"""
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
+    parser.add_argument('-i', '--index', default=0, type=int) 
+    parser.add_argument('-s', '--specan', default=False, action="store_true", help='start spectrum analyzer')
+    parser.add_argument('-f', '--basefreq', default=902e6, type=float) 
+    parser.add_argument('-c', '--inc', default=250e3, type=float) 
+    parser.add_argument('-n', '--specchans', default=104, type=int) 
+    parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order to flash the dongle)')
+    parser.add_argument('--force', default=False, action="store_true", help='use this to make sure you want to set bootloader mode (you *must* flash after setting --bootloader)')
+
+    ifo = parser.parse_args()
+
+    if ifo.bootloader:
+        if not ifo.force:
+            print "Protecting you from yourself.  If you want to trigger Bootloader mode (you will then *have* to flash a new RfCat image on it) use the --force argument as well"
+            exit(-1)
+
+        print "Entering RfCat Bootloader mode, ready for new image..."
+        RfCat(ifo.index).bootloader()
+        exit(0)
+
+    elif ifo.specan:
+        RfCat(ifo.index).specan(ifo.basefreq,ifo.inc,ifo.specchans)
+
+    elif ifo.research:
+        interactive(ifo.index, DongleClass=RfCat, intro=intro)
+
+    else:
+        # do the full-rfcat thing
+        d = RfCat(ifo.index, debug=False)
+        d.rf_configure(**ifo.__dict__)
+        d.rf_redirection((sys.stdin, sys.stdout))
+
