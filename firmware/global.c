@@ -85,7 +85,7 @@ void blink_binary_baby_msb(u16 num, char bits)
     sleepMillis(1500);
 }*/
 
-int strncmp(const char *s1, const char *s2, u16 n)
+int strncmp(const char * __xdata s1, const char * __xdata s2, u16 n)
 {
     char tst;
 
@@ -127,7 +127,7 @@ void clock_init(void)
 
 
 /* initialize the IO subsystems for the appropriate dongles */
-static void io_init(void)
+void io_init(void)
 {
 #ifdef IMME
     

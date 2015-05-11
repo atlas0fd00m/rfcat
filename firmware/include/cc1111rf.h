@@ -117,9 +117,9 @@ void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 
 int waitRSSI(void);
 
-u8 transmit(__xdata u8*, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset);   // sends data out the radio using the current RF settings
+u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset);   // sends data out the radio using the current RF settings
 void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
-void byte_shuffle(__xdata u8* buf, __xdata u16 len, __xdata u16 offset);
+void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset);
 void startRX(void);
 #endif

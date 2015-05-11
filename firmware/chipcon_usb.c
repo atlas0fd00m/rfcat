@@ -46,10 +46,11 @@ __xdata int (*cb_ep0out)(void);
 __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
 
-__code u8 sdccver[] = {
-    'S','D','C','C','v',
-    LE_WORD(SDCC)
-};
+//__code u8 sdccver[] = {
+//    'S','D','C','C','v',
+//    LE_WORD(SDCC)
+//};
+
 // BUILD_VERSION is passed in -D from Makefile
 __code u8 buildname[] = {
 #ifdef DONSDONGLES
@@ -453,7 +454,8 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* ))
 {
     cb_ep0vendor = callback;
 }

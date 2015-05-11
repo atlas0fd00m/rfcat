@@ -386,7 +386,8 @@ void usbProcessEvents(void);
 
 void registerCb_ep0OutDone(int (*callback)(void));
 void registerCb_ep0Out(int (*callback)(void));
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*  pReq));
 void registerCb_ep5(int (*callback)(void));
 
 
