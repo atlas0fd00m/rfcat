@@ -46,10 +46,13 @@ __xdata int (*cb_ep0out)(void);
 __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
 
-//__code u8 sdccver[] = {
-//    'S','D','C','C','v',
-//    LE_WORD(SDCC)
-//};
+#ifdef SDCC
+  __code u8 sdccver[] = "SDCCv"QUOTE(SDCC);
+#else 
+  #ifdef __SDCC
+    __code u8 sdccver[] = "SDCCv"QUOTE(__SDCC);
+  #endif
+#endif
 
 // BUILD_VERSION is passed in -D from Makefile
 __code u8 buildname[] = {

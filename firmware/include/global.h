@@ -161,6 +161,8 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR;
 #define BLOCK()     { while (1) { REALLYFASTBLINK() ; usbProcessEvents(); }  }
 #define LE_WORD(x) ((x)&0xFF),((u8) (((u16) (x))>>8))
 #define ASCII_LONG(x) '0' + x / 1000 % 10,'0' + x / 100 % 10, '0' + x / 10 % 10, '0' + x % 10
+#define QUOTE(x) XQUOTE(x)
+#define XQUOTE(x) #x
 
 /* function declarations */
 void sleepMillis(int ms);

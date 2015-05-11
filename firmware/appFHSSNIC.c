@@ -152,6 +152,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
     macdata.txMsgIdx = 0;
     rfTxCounter = 1;
+    rfTxBufCount = MAX_TX_MSGS;
 
     // copy user data into first buffer, up to MAX_TX_MSGLEN
     // and then fill next buffer, etc...
