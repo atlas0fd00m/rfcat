@@ -403,6 +403,7 @@ void registerCb_ep5(int (*callback)(void));
 #define     CMD_BUILDTYPE   0x86
 #define     CMD_BOOTLOADER  0x87
 #define     CMD_RFMODE      0x88
+#define     CMD_COMPILER    0x89
 #define     CMD_PARTNUM     0x8e
 #define     CMD_RESET       0x8f
 

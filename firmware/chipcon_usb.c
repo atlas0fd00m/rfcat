@@ -1070,6 +1070,10 @@ void processOUTEP5(void)
                 sleepMillis(200);
                 run_bootloader();
                 break;
+
+            case CMD_COMPILER:
+                txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(sdccver), (__xdata u8*)&sdccver[0]);
+                break;
                 
             case CMD_RFMODE:
                 switch (*ptr++)

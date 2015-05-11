@@ -56,6 +56,7 @@ SYS_CMD_GET_CLOCK               = 0x85
 SYS_CMD_BUILDTYPE               = 0x86
 SYS_CMD_BOOTLOADER              = 0x87
 SYS_CMD_RFMODE                  = 0x88
+SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
 
@@ -866,6 +867,10 @@ class USBDongle:
         r, t = self.send(APP_SYSTEM, SYS_CMD_BUILDTYPE, '')
         return r
             
+    def getCompilerInfo(self):
+        r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, '')
+        return r
+            
     def getInterruptRegisters(self):
         regs = {}
         # IEN0,1,2
@@ -895,12 +900,17 @@ class USBDongle:
     def reprHardwareConfig(self):
         output= []
 
-        hardware= self.getBuildInfo()
+        hardware = self.getBuildInfo()
         output.append("Dongle:              %s" % hardware.split(' ')[0])
         try:
             output.append("Firmware rev:        %s" % hardware.split('r')[1])
         except:
             output.append("Firmware rev:        Not found! Update needed!")
+        try:
+            compiler = self.getCompilerInfo()
+            output.append("Compiler:            %s" % compiler)
+        except:
+            output.append("Compiler:            Not found! Update needed!")
         # see if we have a bootloader by loooking for it's recognition semaphores
         # in SFR I2SCLKF0 & I2SCLKF1
         if(self.peek(0xDF46,1) == '\xF0' and self.peek(0xDF47,1) == '\x0D'):
