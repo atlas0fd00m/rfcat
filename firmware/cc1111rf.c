@@ -19,6 +19,7 @@ volatile __xdata u16 rfRxLargeLen = 0;
 //
 volatile __xdata u8 * __xdata rftxbuf;
 volatile __xdata u8 rfTxCurBufIdx = 0;
+volatile __xdata u8 rfTxBufCount = 1; // this must be set by the tx routine to match the number of buffer blocks available
 
 volatile __xdata u16 rfTxCounter = 0;
 volatile __xdata u16 rfTxRepeatCounter = 0;
@@ -569,7 +570,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // first we mark the first byte of the current packet to 0
                     rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = 0;
 
-                    if (++rfTxCurBufIdx == MAX_TX_MSGS)
+                    if (++rfTxCurBufIdx == rfTxBufCount)
                         rfTxCurBufIdx = 0;
 
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)
