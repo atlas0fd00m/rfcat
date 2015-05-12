@@ -47,10 +47,12 @@ __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
 
 #ifdef SDCC
-  __code u8 sdccver[] = "SDCCv"QUOTE(SDCC);
+  __code u8 sdccver[] = "SDCCv" QUOTE(SDCC);
 #else 
   #ifdef __SDCC
-    __code u8 sdccver[] = "SDCCv"QUOTE(__SDCC);
+    __code u8 sdccver[] = "SDCCv" QUOTE(__SDCC);
+  #else
+    __code u8 sdccver[] = "NON-SDCC";
   #endif
 #endif
 
