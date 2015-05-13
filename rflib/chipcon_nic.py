@@ -1306,7 +1306,7 @@ class NICxx11(USBDongle):
 
 
         chlen = len(chunks)
-        print "DEBUG: sending %d buffer chunks" % chlen
+        print "DBG: sending %d buffer chunks" % chlen
         count = 1
         for chidx in range(1, chlen):
             chunk = chunks[chidx]
@@ -1324,7 +1324,7 @@ class NICxx11(USBDongle):
 
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
-        print "DEBUG: sent %d buffer chunks" % count
+        print "DBG: sent %d buffer chunks" % count
         error, = struct.unpack("<B", retval[0])
         errstr = RCS.get(error)
         return count, retval, errstr
