@@ -122,7 +122,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
-        debug("Cannot call transmit_long while FHSS Hopping!");
+        debug("Cannot call transmit_long while FHSS Hopping or already processing transmit_long!");
         debughex(macdata.mac_state);
         return RC_RF_MODE_INCOMPAT;
     }
@@ -159,7 +159,8 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
 
     // copy user data into first buffer, up to MAX_TX_MSGLEN
     // and then fill next buffer, etc...
-    if (countdown = MAC_tx(buf, MAX_TX_MSGLEN) != RC_NO_ERROR)
+    countdown = MAC_tx(buf, MAX_TX_MSGLEN);
+    if (countdown != RC_NO_ERROR)
     {
         debug("MAC_tx() returned error");
         debughex(countdown);
@@ -301,6 +302,18 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
         return RC_NO_ERROR;
     }
 
+    switch (macdata.mac_state)
+    {
+        case MAC_STATE_LONG_XMIT:
+            if (macdata.txMsgIdx && MARCSTATE != MARC_STATE_TX)
+            {
+                macdata.mac_state = MAC_STATE_LONG_XMIT_FAIL;
+                return RC_TX_ERROR;
+            }
+            break;
+        case MAC_STATE_NONHOPPING:
+            return RC_TX_ERROR;
+    }
     if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
