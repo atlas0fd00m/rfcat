@@ -37,7 +37,6 @@ SYNCM_CARRIER_16_of_16          = 6
 SYNCM_CARRIER_30_of_32          = 7
 
 RF_SUCCESS                      = 0
-ERR_BUFFER_NOT_AVAILABLE        = -2
 
 RF_MAX_TX_BLOCK                 = 255
 RF_MAX_TX_CHUNK                 = 50
@@ -1300,15 +1299,24 @@ class NICxx11(USBDongle):
         sys.stderr.write('=' + repr(retval))
 
         chlen = len(chunks)
+        print "DEBUG: sending %d buffer chunks" % chlen
+        count = 1
         for chidx in range(1, chlen):
             chunk = chunks[chidx]
-            error = ERR_BUFFER_NOT_AVAILABLE
-            while error == ERR_BUFFER_NOT_AVAILABLE:
+            error = RC_ERR_BUFFER_NOT_AVAILABLE
+            while error == RC_ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
-                error = struct.unpack("<b", retval[0])
-                sys.stderr.write('.' + repr(retval))
+                error, = struct.unpack("<B", retval[0])
+                errstr = RCS.get(error)
+                sys.stderr.write('\n.%d'%chidx + repr(retval) + " " + repr(error) + repr(errstr))
+            count += 1
+
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        print "DEBUG: sent %d buffer chunks" % count
+        error, = struct.unpack("<B", retval[0])
+        errstr = RCS.get(error)
+        return retval, errstr
 
     def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
