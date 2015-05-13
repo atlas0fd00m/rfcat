@@ -1298,8 +1298,8 @@ class NICxx11(USBDongle):
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         if len(retval) == 2:
             error, = struct.unpack("<H", retval)
-            errstr = RCS.get(error)
-            sys.stderr.write('=' + repr(retval)+repr(error)+repr(errstr))
+            #errstr = RCS.get(error)
+            #sys.stderr.write('=' + repr(retval)+repr(error)+repr(errstr))
 
             if error == 0xffff:
                 return retval, "FAIL"
@@ -1314,8 +1314,8 @@ class NICxx11(USBDongle):
             while error == RC_ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error, = struct.unpack("<B", retval[0])
-                errstr = RCS.get(error)
                 if error:
+                    errstr = RCS.get(error)
                     sys.stderr.write('.%x'%error)
                 #sys.stderr.write('\n.%d'%chidx + repr(retval) + " " + repr(error) + repr(errstr))
             count += 1
