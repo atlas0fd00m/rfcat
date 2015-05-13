@@ -138,9 +138,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     // Leave LED in a known state (off)
     LED = 0;
 
-    // Reset buffer index //
-    rfTxCounter = 0;
-
     // setup infinite mode, length, and the variables that will last for and manage the whole transmission
     rfTxInfMode = 1;
     rfTxTotalTXLen = len;
@@ -151,7 +148,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     rfTxRepeatCounter = 0;
     rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
     macdata.txMsgIdx = 0;
-    rfTxCounter = 1;
+    rfTxCounter = 1; // don't transmit length byte
     rfTxBufCount = MAX_TX_MSGS;
 
     // clear buffer
@@ -268,7 +265,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
 #endif
     }
     // LED on - we're transmitting
-    //LED = 1;
+    LED = 1;
     if (!countdown)
     {
         lastCode[1] = LCE_RFTX_NEVER_TX;
@@ -293,6 +290,7 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     // len of 0 means clear buffer
     if(len == 0)
     {
+        //debug("clearing queue");
         for(macdata.txMsgIdx = 0 ; macdata.txMsgIdx < rfTxBufCount ; ++macdata.txMsgIdx)
         {
             g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_AVAILABLE;
@@ -304,6 +302,8 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
+        //debug("buffer not available");
+        //debughex(macdata.txMsgIdx);
         return ERR_BUFFER_NOT_AVAILABLE;
     }
 
@@ -313,6 +313,10 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
     // place data len in first byte
     g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    //debug("writing block");
+    //debughex(macdata.txMsgIdx);
+    //debug("writing length");
+    //debughex(g_txMsgQueue[macdata.txMsgIdx][0]);
     // [0] means:  0xff=writing, 0=avail, !0=ready_to_send/datalen
 
     if (++macdata.txMsgIdx == rfTxBufCount)
@@ -945,7 +949,7 @@ int appHandleEP5()
                     len = buf[0];
                     len += (buf[1]) << 8;
                     blocks = buf[2];
-                    debughex16(len);
+                    //debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
                     buf[0] = transmit_long(&buf[3], len, blocks);
@@ -964,8 +968,11 @@ int appHandleEP5()
                             LED = 0;
                         }
                         macdata.mac_state = MAC_STATE_NONHOPPING;
+                        buf[0] = LCE_NO_ERROR;
+                        appReturn( 1, buf);
+                        break;
                     }
-                    buf[0] = MAC_tx(&buf[1], len);
+                    buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
                     appReturn( 1, buf);
                     break;
 
