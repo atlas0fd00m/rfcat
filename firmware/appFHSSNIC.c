@@ -944,8 +944,8 @@ int appHandleEP5()
                     }
                     len = buf[0];
                     len += (buf[1]) << 8;
-                    debughex16(len);
                     blocks = buf[2];
+                    debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
                     buf[0] = transmit_long(&buf[3], len, blocks);

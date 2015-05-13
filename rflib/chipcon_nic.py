@@ -1290,10 +1290,13 @@ class NICxx11(USBDongle):
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
 
+
+        # load chunk buffers
         chunks = []
-        while len(data):
-            chunks.append(data[:RF_MAX_TX_CHUNK])
-            data = data[RF_MAX_TX_CHUNK:]
+        for x in range(datalen / RF_MAX_TX_CHUNK):
+            chunks.append(data[x * RF_MAX_TX_CHUNK:(x + 1) * RF_MAX_TX_CHUNK])
+        if datalen % RF_MAX_TX_CHUNK:
+            chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
         preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
