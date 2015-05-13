@@ -1296,7 +1296,14 @@ class NICxx11(USBDongle):
 
         #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
-        sys.stderr.write('=' + repr(retval))
+        if len(retval) == 2:
+            error, = struct.unpack("<H", retval)
+            errstr = RCS.get(error)
+            sys.stderr.write('=' + repr(retval)+repr(error)+repr(errstr))
+
+            if error == 0xffff:
+                return retval, "FAIL"
+
 
         chlen = len(chunks)
         print "DEBUG: sending %d buffer chunks" % chlen
@@ -1308,15 +1315,19 @@ class NICxx11(USBDongle):
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error, = struct.unpack("<B", retval[0])
                 errstr = RCS.get(error)
-                sys.stderr.write('\n.%d'%chidx + repr(retval) + " " + repr(error) + repr(errstr))
+                if error:
+                    sys.stderr.write('.%x'%error)
+                #sys.stderr.write('\n.%d'%chidx + repr(retval) + " " + repr(error) + repr(errstr))
             count += 1
+            if error != RC_NO_ERROR:
+                return count, retval, errstr
 
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
         print "DEBUG: sent %d buffer chunks" % count
         error, = struct.unpack("<B", retval[0])
         errstr = RCS.get(error)
-        return retval, errstr
+        return count, retval, errstr
 
     def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
