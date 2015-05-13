@@ -89,6 +89,7 @@ LC_USB_EP5OUT                 = 0xc
 LC_RF_VECTOR                  = 0x10
 LC_RFTXRX_VECTOR              = 0x11
 
+LCE_NO_ERROR                          = 0x00
 LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN    = 0x1
 LCE_USB_EP0_SENT_STALL                = 0x4
 LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN  = 0x5
@@ -107,6 +108,14 @@ LCE_RF_BLOCKSIZE_INCOMPAT             = 0x16
 LCE_RF_MULTI_BUFFER_NOT_INIT          = 0x17
 LCE_RF_MULTI_BUFFER_NOT_FREE          = 0x18
 
+RC_NO_ERROR                            = 0x0
+RC_ERR_BUFFER_SIZE_EXCEEDED            = 0xff
+RC_ERR_BUFFER_NOT_AVAILABLE            = 0xfe
+RC_RF_MODE_INCOMPAT                    = 0xef
+RC_RF_BLOCKSIZE_INCOMPAT               = 0xee
+
+
+RCS = {}
 LCS = {}
 LCES = {}
 lcls = locals()
@@ -117,6 +126,9 @@ for lcl in lcls.keys():
     if lcl.startswith("LC_"):
         LCS[lcl] = lcls[lcl]
         LCS[lcls[lcl]] = lcl
+    if lcl.startswith("RC_"):
+        RCS[lcl] = lcls[lcl]
+        RCS[lcls[lcl]] = lcl
 
 CHIPS = {
     0x91: "CC2511",
