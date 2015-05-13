@@ -37,6 +37,7 @@ SYNCM_CARRIER_16_of_16          = 6
 SYNCM_CARRIER_30_of_32          = 7
 
 RF_SUCCESS                      = 0
+ERR_BUFFER_NOT_AVAILABLE        = -2
 
 RF_MAX_TX_BLOCK                 = 255
 RF_MAX_TX_CHUNK                 = 50
@@ -1301,8 +1302,13 @@ class NICxx11(USBDongle):
         chlen = len(chunks)
         for chidx in range(1, chlen):
             chunk = chunks[chidx]
-            retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("BB", len(chunk), (chidx==chlen-1))+chunk, wait=wait)
-            sys.stderr.write('.' + repr(retval))
+            error = ERR_BUFFER_NOT_AVAILABLE
+            while error == ERR_BUFFER_NOT_AVAILABLE:
+                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                error = struct.unpack("<b", retval[0])
+                sys.stderr.write('.' + repr(retval))
+        # tell dongle we've finished
+        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
 
     def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
