@@ -40,7 +40,7 @@ RF_SUCCESS                      = 0
 ERR_BUFFER_NOT_AVAILABLE        = -2
 
 RF_MAX_TX_BLOCK                 = 255
-RF_MAX_TX_CHUNK                 = 50
+RF_MAX_TX_CHUNK                 = 125
 # RF_MAX_BLOCK must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 RF_MAX_RX_BLOCK                 = 512
 
@@ -1295,18 +1295,19 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
+        preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         sys.stderr.write('=' + repr(retval))
 
         chlen = len(chunks)
-        for chidx in range(1, chlen):
+        for chidx in range(preload, chlen):
             chunk = chunks[chidx]
             error = ERR_BUFFER_NOT_AVAILABLE
             while error == ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<b", retval[0])
-                sys.stderr.write('.' + repr(retval))
+                sys.stderr.write('.')
+            sys.stderr.write('+')
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
 

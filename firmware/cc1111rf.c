@@ -214,7 +214,7 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
     while (MARCSTATE == MARC_STATE_TX)
     {
-            LED = !LED;
+            //LED = !LED;
 #ifdef USBDEVICE
             //usbProcessEvents();
 #endif
@@ -387,7 +387,7 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         while (MARCSTATE != MARC_STATE_TX && --countdown)
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
-            LED = !LED;
+            //LED = !LED;
 #ifdef USBDEVICE
             //usbProcessEvents(); 
 #endif
@@ -401,7 +401,7 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
         while (MARCSTATE == MARC_STATE_TX)
         {
-            LED = !LED;
+            //LED = !LED;
 #ifdef USBDEVICE
             //usbProcessEvents();
 #endif
@@ -567,13 +567,13 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                 else
                 {
                     // arbitrary length packets flowing from one buffer to another
-                    // first we mark the first byte of the current packet to 0
-                    rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = 0;
+                    // first we mark the first byte of the current packet
+                    rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = BUFFER_AVAILABLE;
 
                     if (++rfTxCurBufIdx == rfTxBufCount)
                         rfTxCurBufIdx = 0;
 
-                    if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == 0)
+                    if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == BUFFER_AVAILABLE)
                     {
                         // we should bail here, because the next buffer starts with 0
                         // when MAC_tx writes to the buffer, it marks the first byte with the msg length
@@ -584,6 +584,10 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
                     rfTxCounter = 1;
                     // debug:
+                    LED = 1;
+                    while(42)
+                        ;
+                    //IdleMode();
                     // if (! rfTxTotalTXLen)
                     //     RFST = RFST_SIDLE;
                     //     // to kick back to transmit mode completion which will finish?
@@ -592,8 +596,8 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
             // radio to leave infinite mode?
             if(rfTxTotalTXLen-- < 256)
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-
-            LED = !LED;
+            // debug
+            //LED = !LED;
         }
         rf_status = RFST_STX;
         // rftxbuf is a pointer, not a static buffer, could be an array
@@ -675,9 +679,9 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 // contingency - Packet Not Handled!
                 /* Main app didn't process previous packet yet, drop this one */
                 lastCode[1] = LCE_DROPPED_PACKET;
-                LED = !LED;
+                //LED = !LED;
                 rfRxCounter[rfRxCurrentBuffer] = 0;
-                LED = !LED;
+                //LED = !LED;
             }
             // LED off - we're done receiving
             LED = 0;
@@ -692,11 +696,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         // RX overflow, only way to get out of this is to restart receiver //
         //resetRf();
         lastCode[1] = LCE_RF_RXOVF;
-        LED = !LED;
+        //LED = !LED;
 
         resetRFSTATE();
 
-        LED = !LED;
+        //LED = !LED;
         RFIF &= ~RFIF_IRQ_RXOVF;
     }
     // contingency - TX Underflow
@@ -704,11 +708,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     {
         // Put radio into idle state //
         lastCode[1] = LCE_RF_TXUNF;
-        LED = !LED;
+        //LED = !LED;
 
         resetRFSTATE();
 
-        LED = !LED;
+        //LED = !LED;
 
         // DEBUGGING::::::  SHOULD BAIL HERE 
         BLOCK();

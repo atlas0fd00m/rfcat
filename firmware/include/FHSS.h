@@ -44,7 +44,7 @@
 // MAC layer defines
 #define MAX_CHANNELS                880
 #define MAX_TX_MSGS                 6
-#define MAX_TX_MSGLEN               50
+#define MAX_TX_MSGLEN               125
 #define MAX_SYNC_WAIT               10    //seconds... need to true up with T1/clock
 
 #define MAC_TIMER_STATIC_DIFF   6

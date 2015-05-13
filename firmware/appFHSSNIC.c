@@ -111,13 +111,13 @@ void stop_hopping(void)
 }
 
 
-__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
+__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 blocks)
     /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
      * ([0] == 0)
      * */
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0;
+    __xdata u8 encoffset= 0, err;
     __xdata u8 original_pktlen = PKTLEN;
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
@@ -130,7 +130,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     macdata.mac_state = MAC_STATE_LONG_XMIT;
     while (MARCSTATE == MARC_STATE_TX)
     {
-            LED = !LED;
+            //LED = !LED;
 #ifdef USBDEVICE
             //usbProcessEvents();
 #endif
@@ -157,12 +157,16 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     // clear buffer
     MAC_tx(NULL, 0);
 
-    // copy user data into first buffer, up to MAX_TX_MSGLEN
-    // and then fill next buffer, etc...
-    if (countdown = MAC_tx(buf, MAX_TX_MSGLEN) != LCE_NO_ERROR)
+    // pre-load 1st blocks into message queue
+    for(countdown = 0 ; countdown < blocks ; ++countdown)
     {
-        debug("MAC_tx() returned error");
-        debughex(countdown);
+        err = MAC_tx(buf + (u8) (countdown * MAX_TX_MSGLEN), (u8) MAX_TX_MSGLEN);
+        if(err)
+            {
+            debug("MAC_tx() returned error");
+            debughex(err);
+            return err;
+            }
     }
 
     // If len is zero, assume first byte is the length
@@ -459,7 +463,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
             debug("hop");
             RFOFF;
             RFTX;        // for debugging purposes, we'll just transmit carrier at each hop
-            LED = !LED;
+            //LED = !LED;
             while(MARCSTATE != MARC_STATE_TX);
             return();
     
@@ -532,7 +536,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
 
                     if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
                     {
-                        LED = !LED;
+                        //LED = !LED;
                         sleepMillis(FHSS_TX_SLEEP_DELAY);
                         transmit(&g_txMsgQueue[macdata.txMsgIdxDone][!(PKTCTRL0&1)], g_txMsgQueue[macdata.txMsgIdxDone][0], 0, 0);
                         // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
@@ -830,6 +834,7 @@ int appHandleEP5()
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;
     __xdata u8 * __xdata buf = &ep5.OUTbuf[0];
+    __xdata u8 blocks;
 
     switch (ep5.OUTapp)
     {
@@ -859,13 +864,13 @@ int appHandleEP5()
                         debug("crap, please use FHSSxmit() instead!");
                         break;
                     }
-                    len = *buf++;
-                    len += (*buf++) << 8;
-                    repeat = *buf++;
-                    repeat += (*buf++) << 8;
-                    offset = *buf++;
-                    offset += (*buf++) << 8;
-                    transmit(buf, len, repeat, offset);
+                    len = buf[0];
+                    len += (buf[1]) << 8;
+                    repeat = buf[2];
+                    repeat += (buf[3]) << 8;
+                    offset = buf[4];
+                    offset += (buf[5]) << 8;
+                    transmit(&buf[6], len, repeat, offset);
                     appReturn( 1, (__xdata u8*)&len);
                     break;
 
@@ -940,9 +945,10 @@ int appHandleEP5()
                     len = buf[0];
                     len += (buf[1]) << 8;
                     debughex16(len);
+                    blocks = buf[2];
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
-                    buf[0] = transmit_long(&buf[2], len);
+                    buf[0] = transmit_long(&buf[3], len, blocks);
                     appReturn( 1, buf);
                     break;
 
