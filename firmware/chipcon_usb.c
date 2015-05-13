@@ -1114,6 +1114,13 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
+            case CMD_CLEAR_CODES:
+                lastCode[0] = 0;
+                lastCode[1] = 0;
+                //txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);   // FIXME: need to reorient all these to return LCE_NO_ERROR unless error.
+                appReturn(2, ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
@@ -1146,6 +1153,13 @@ void processOUTEP5(void)
 //    // change state so the firmware knows that the packet has been picked up and can be overwritten.
 //    ep5.flags &= ~EP_INBUF_WRITTEN;
 //}
+
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
+    // use this to easily 
+{
+    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
+    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
+}
 
 void usbProcessEvents(void)
 {

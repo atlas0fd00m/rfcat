@@ -54,6 +54,7 @@ extern __xdata u32 clock;
 #define LCE_RF_MODE_INCOMPAT                    0x15
 #define LCE_RF_BLOCKSIZE_INCOMPAT               0x16
 #define LCE_RF_MULTI_BUFFER_NOT_INIT            0x17
+#define LCE_RF_MULTI_BUFFER_NOT_FREE            0x18
 
 // USB activities
 #ifdef CHRONOSDONGLE

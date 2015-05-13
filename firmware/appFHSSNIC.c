@@ -286,6 +286,7 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
+        lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_FREE;
         return ERR_BUFFER_NOT_AVAILABLE;
     }
 
@@ -793,12 +794,6 @@ void appMainLoop(void)
 
 
 
-void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
-{
-    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
-    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
-}
-
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
  * main handler routine for the application as endpoint 0 is normally used for system stuff.
  *
@@ -933,7 +928,7 @@ int appHandleEP5()
 
                 case NIC_LONG_XMIT_MORE:
                     len = *buf++;
-                    MAC_tx(buf+1, len);
+                    len = MAC_tx(buf+1, len);
                     if (*(buf+1))
                     {
                         // this is the last chunk, wait and return results
