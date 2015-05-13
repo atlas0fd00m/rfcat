@@ -59,6 +59,7 @@ SYS_CMD_RFMODE                  = 0x88
 SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
+SYS_CMD_CLEAR_CODES             = 0x90
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
 EP0_CMD_GET_ADDRESS             = 0x01
@@ -104,6 +105,7 @@ LCE_RFTX_NEVER_LEAVE_TX               = 0x14
 LCE_RF_MODE_INCOMPAT                  = 0x15
 LCE_RF_BLOCKSIZE_INCOMPAT             = 0x16
 LCE_RF_MULTI_BUFFER_NOT_INIT          = 0x17
+LCE_RF_MULTI_BUFFER_NOT_FREE          = 0x18
 
 LCS = {}
 LCES = {}
@@ -739,12 +741,24 @@ class USBDongle:
         if self._debug: print "Sent Msg",msg.encode("hex")
         return self.recv(app, cmd, wait)
 
+    def reprDebugCodes(self, timeout=100):
+        codes = self.getDebugCodes(timeout)
+        if (codes != None and len(codes) == 2):
+            rc1 = LCS.get(codes[0])
+            rc2 = LCES.get(codes[0])
+            return 'last position: %s\nlast error: %s' % (rc1, rc2)
+        return codes
+
     def getDebugCodes(self, timeout=100):
         x = self._recvEP0(request=EP0_CMD_GET_DEBUG_CODES, timeout=timeout)
         if (x != None and len(x)==2):
             return struct.unpack("BB", x)
         else:
             return x
+
+    def clearDebugCodes(self):
+        retval = self.send(APP_SYSTEM, SYS_CMD_CLEAR_CODES, "  ", 1000)
+        return LCES.get(retval)
 
     def ep0GetAddr(self):
         addr = self._recvEP0(request=EP0_CMD_GET_ADDRESS)
