@@ -154,6 +154,9 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     rfTxCounter = 1;
     rfTxBufCount = MAX_TX_MSGS;
 
+    // clear buffer
+    MAC_tx(NULL, 0);
+
     // copy user data into first buffer, up to MAX_TX_MSGLEN
     // and then fill next buffer, etc...
     if (countdown = MAC_tx(buf, MAX_TX_MSGLEN) != LCE_NO_ERROR)
@@ -283,6 +286,17 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
         return ERR_BUFFER_SIZE_EXCEEDED;
     }
 
+    // len of 0 means clear buffer
+    if(len == 0)
+    {
+        for(macdata.txMsgIdx = 0 ; macdata.txMsgIdx < rfTxBufCount ; ++macdata.txMsgIdx)
+        {
+            g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_AVAILABLE;
+        }
+        macdata.txMsgIdx = 0;
+        return LCE_NO_ERROR;
+    }
+
     if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
@@ -298,7 +312,7 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     g_txMsgQueue[macdata.txMsgIdx][0] = len;
     // [0] means:  0xff=writing, 0=avail, !0=ready_to_send/datalen
 
-    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+    if (++macdata.txMsgIdx == rfTxBufCount)
     {
         macdata.txMsgIdx = 0;
     }
@@ -658,7 +672,8 @@ void appMainLoop(void)
             chan_table = rfrxbuf[0];
 
         case MAC_STATE_SPECAN:
-            for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
+            for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++)
+            {
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
                 RFRX;
@@ -917,30 +932,30 @@ int appHandleEP5()
                         appReturn( 2, (__xdata u8*)&len);
                         break;
                     }
-                    len = *buf++;
-                    len += (*buf++) << 8;
+                    len = buf[0];
+                    len += (buf[1]) << 8;
                     debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
-                    len = transmit_long(buf, len);
-                    appReturn( 2, (__xdata u8*)&len);
+                    buf[0] = transmit_long(&buf[2], len);
+                    appReturn( 1, buf);
                     break;
 
                 case NIC_LONG_XMIT_MORE:
-                    len = *buf++;
-                    len = MAC_tx(buf+1, len);
-                    if (*(buf+1))
+                    len = buf[0];
+                    if (len == 0)
                     {
-                        // this is the last chunk, wait and return results
+                        // this is after the last chunk, wait and return results
                         // while still length in TxTotalLen and no errors have occurred (like running into an uninitialized queue message before running out of TxTotalLen)
                             //debughex16(rfTxTotalTXLen);
                         //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
                         {
-                            LED = !LED;
+                            LED = 0;
                         }
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                     }
-                    appReturn( 2, (__xdata u8*)&len);
+                    buf[0] = MAC_tx(&buf[1], len);
+                    appReturn( 1, buf);
                     break;
 
                 case FHSS_XMIT:
