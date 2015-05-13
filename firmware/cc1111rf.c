@@ -584,9 +584,9 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
                     rfTxCounter = 1;
                     // debug:
-                    LED = 1;
-                    while(42)
-                        ;
+                    //LED = 1;
+                    //while(42)
+                    //    ;
                     //IdleMode();
                     // if (! rfTxTotalTXLen)
                     //     RFST = RFST_SIDLE;
