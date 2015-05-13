@@ -13,7 +13,6 @@ volatile __xdata u8 rfRxInfMode = 0;
 volatile __xdata u16 rfRxTotalRXLen = 0;
 volatile __xdata u16 rfRxLargeLen = 0;
 
-
 /* Tx buffers */
 // point and details about potentially multiple buffers for infinite mode transfers
 //
@@ -558,6 +557,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
             macdata.tLastHop ++;
             //
             if (rfTxCounter == rfTxBufferEnd)
+            {
                 if (rfTxRepeatCounter)
                 {
                     if(rfTxRepeatCounter != 0xff)
@@ -567,32 +567,43 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                 else
                 {
                     // arbitrary length packets flowing from one buffer to another
-                    // first we mark the first byte of the current packet
+                    // first we mark the first byte of the current block
                     rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = BUFFER_AVAILABLE;
+                    //debug("sent block");
+                    //debughex(rfTxCurBufIdx);
 
                     if (++rfTxCurBufIdx == rfTxBufCount)
+                    {
+                        //debug("resetting idx");
                         rfTxCurBufIdx = 0;
+                    }
 
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == BUFFER_AVAILABLE)
                     {
                         // we should bail here, because the next buffer starts with 0
                         // when MAC_tx writes to the buffer, it marks the first byte with the msg length
-                        rfTxTotalTXLen = 1;
-                        lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                        //debug("empty block!");
+                        //debughex(rfTxCurBufIdx);
+                        //debughex16(rfTxTotalTXLen);
+                        //debughex(rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)]);
+                        //debughex(rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + 1]);
+                        //rfTxTotalTXLen = 1;
+                        //lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                        // debug:
+                        LED = 1;
+                        while(42)
+                            ;
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
                     rfTxCounter = 1;
-                    // debug:
-                    //LED = 1;
-                    //while(42)
-                    //    ;
                     //IdleMode();
                     // if (! rfTxTotalTXLen)
                     //     RFST = RFST_SIDLE;
                     //     // to kick back to transmit mode completion which will finish?
                     // should just flow through until we're done.
                 }
+            }
             // radio to leave infinite mode?
             if(rfTxTotalTXLen-- < 256)
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
