@@ -28,6 +28,8 @@ volatile __xdata u16 rfTxRepeatOffset = 0;
 volatile __xdata u16 rfTxTotalTXLen = 0;
 volatile __xdata u8 rfTxInfMode = 0;
 
+extern __xdata u16 txTotal; // debugger
+
 // AES
 volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
@@ -569,8 +571,6 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                     // arbitrary length packets flowing from one buffer to another
                     // first we mark the first byte of the current block
                     rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = BUFFER_AVAILABLE;
-                    //debug("sent block");
-                    //debughex(rfTxCurBufIdx);
 
                     if (++rfTxCurBufIdx == rfTxBufCount)
                     {
@@ -580,28 +580,14 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
                     if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == BUFFER_AVAILABLE)
                     {
-                        // we should bail here, because the next buffer starts with 0
-                        // when MAC_tx writes to the buffer, it marks the first byte with the msg length
-                        //debug("empty block!");
-                        //debughex(rfTxCurBufIdx);
-                        //debughex16(rfTxTotalTXLen);
-                        //debughex(rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)]);
-                        //debughex(rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + 1]);
-                        //rfTxTotalTXLen = 1;
-                        //lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
-                        // debug:
-                        LED = 1;
-                        while(42)
-                            ;
+                        // we should bail here, because the next buffer is empty, so we've had a usb buff fill underrun
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        lastCode[1] = LCE_DROPPED_PACKET;
+                        IdleMode();
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
                     rfTxCounter = 1;
-                    //IdleMode();
-                    // if (! rfTxTotalTXLen)
-                    //     RFST = RFST_SIDLE;
-                    //     // to kick back to transmit mode completion which will finish?
-                    // should just flow through until we're done.
                 }
             }
             // radio to leave infinite mode?
@@ -613,6 +599,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
         rf_status = RFST_STX;
         // rftxbuf is a pointer, not a static buffer, could be an array
         RFD = rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + rfTxCounter++];
+        txTotal++;
     }
 }
 
