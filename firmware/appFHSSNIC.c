@@ -59,6 +59,7 @@ __xdata u16 g_NIC_ID;
 // queue of messages to transmit.  may be used for FHSS, or to send LONG messages
 // first byte of each message indicates its length
 __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
+__xdata u16 txTotal; // debugger to confirm long transmit number of bytes tx'd
 
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt T2_VECTOR;
@@ -111,13 +112,13 @@ void stop_hopping(void)
 }
 
 
-__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
+__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 blocks)
     /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
      * ([0] == 0)
      * */
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0;
+    __xdata u8 encoffset= 0, err;
     __xdata u8 original_pktlen = PKTLEN;
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
@@ -130,16 +131,13 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     macdata.mac_state = MAC_STATE_LONG_XMIT;
     while (MARCSTATE == MARC_STATE_TX)
     {
-            LED = !LED;
+            //LED = !LED;
 #ifdef USBDEVICE
             //usbProcessEvents();
 #endif
     }
     // Leave LED in a known state (off)
     LED = 0;
-
-    // Reset buffer index //
-    rfTxCounter = 0;
 
     // setup infinite mode, length, and the variables that will last for and manage the whole transmission
     rfTxInfMode = 1;
@@ -151,19 +149,22 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
     rfTxRepeatCounter = 0;
     rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
     macdata.txMsgIdx = 0;
-    rfTxCounter = 1;
+    rfTxCounter = 1; // don't transmit length byte
     rfTxBufCount = MAX_TX_MSGS;
 
     // clear buffer
     MAC_tx(NULL, 0);
 
-    // copy user data into first buffer, up to MAX_TX_MSGLEN
-    // and then fill next buffer, etc...
-    countdown = MAC_tx(buf, MAX_TX_MSGLEN);
-    if (countdown != RC_NO_ERROR)
+    // pre-load 1st blocks into message queue
+    for(countdown = 0 ; countdown < blocks ; ++countdown)
     {
-        debug("MAC_tx() returned error");
-        debughex(countdown);
+        err = MAC_tx(buf + (u8) (countdown * MAX_TX_MSGLEN), (u8) MAX_TX_MSGLEN);
+        if(err)
+            {
+            debug("MAC_tx() returned error");
+            debughex(err);
+            return err;
+            }
     }
 
     // If len is zero, assume first byte is the length
@@ -265,14 +266,14 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len)
 #endif
     }
     // LED on - we're transmitting
-    //LED = 1;
+    LED = 1;
     if (!countdown)
     {
         lastCode[1] = LCE_RFTX_NEVER_TX;
         debug("never entered TX");
     }
     //debug("done with transmit_long");
-    return 1;
+    return RC_NO_ERROR;
 }
 
 __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
@@ -294,6 +295,7 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     // len of 0 means clear buffer
     if(len == 0)
     {
+        //debug("clearing queue");
         for(macdata.txMsgIdx = 0 ; macdata.txMsgIdx < rfTxBufCount ; ++macdata.txMsgIdx)
         {
             g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_AVAILABLE;
@@ -327,6 +329,10 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
     // place data len in first byte
     g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    //debug("writing block");
+    //debughex(macdata.txMsgIdx);
+    //debug("writing length");
+    //debughex(g_txMsgQueue[macdata.txMsgIdx][0]);
     // [0] means:  0xff=writing, 0=avail, !0=ready_to_send/datalen
 
     if (++macdata.txMsgIdx == rfTxBufCount)
@@ -477,7 +483,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
             debug("hop");
             RFOFF;
             RFTX;        // for debugging purposes, we'll just transmit carrier at each hop
-            LED = !LED;
+            //LED = !LED;
             while(MARCSTATE != MARC_STATE_TX);
             return();
     
@@ -550,7 +556,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
 
                     if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
                     {
-                        LED = !LED;
+                        //LED = !LED;
                         sleepMillis(FHSS_TX_SLEEP_DELAY);
                         transmit(&g_txMsgQueue[macdata.txMsgIdxDone][!(PKTCTRL0&1)], g_txMsgQueue[macdata.txMsgIdxDone][0], 0, 0);
                         // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
@@ -842,6 +848,7 @@ int appHandleEP5()
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;
     __xdata u8 * __xdata buf = &ep5.OUTbuf[0];
+    __xdata u8 blocks;
 
     switch (ep5.OUTapp)
     {
@@ -871,13 +878,13 @@ int appHandleEP5()
                         debug("crap, please use FHSSxmit() instead!");
                         break;
                     }
-                    len = *buf++;
-                    len += (*buf++) << 8;
-                    repeat = *buf++;
-                    repeat += (*buf++) << 8;
-                    offset = *buf++;
-                    offset += (*buf++) << 8;
-                    transmit(buf, len, repeat, offset);
+                    len = buf[0];
+                    len += (buf[1]) << 8;
+                    repeat = buf[2];
+                    repeat += (buf[3]) << 8;
+                    offset = buf[4];
+                    offset += (buf[5]) << 8;
+                    transmit(&buf[6], len, repeat, offset);
                     appReturn( 1, (__xdata u8*)&len);
                     break;
 
@@ -951,10 +958,12 @@ int appHandleEP5()
                     }
                     len = buf[0];
                     len += (buf[1]) << 8;
-                    debughex16(len);
+                    blocks = buf[2];
+                    //debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
-                    buf[0] = transmit_long(&buf[2], len);
+                    txTotal= 0;
+                    buf[0] = transmit_long(&buf[3], len, blocks);
                     appReturn( 1, buf);
                     break;
 
@@ -962,16 +971,34 @@ int appHandleEP5()
                     len = buf[0];
                     if (len == 0)
                     {
-                        // this is after the last chunk, wait and return results
-                        // while still length in TxTotalLen and no errors have occurred (like running into an uninitialized queue message before running out of TxTotalLen)
-                            //debughex16(rfTxTotalTXLen);
-                        //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
-                        {
-                            LED = 0;
-                        }
+                        // this is after the last chunk, wait for tx to finish and return OK
+                        while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
+                            ;
+                        LED = 0;
                         macdata.mac_state = MAC_STATE_NONHOPPING;
+                        buf[0] = LCE_NO_ERROR;
+                        debug("total bytes tx:");
+                        debughex16(txTotal);
+                        appReturn( 1, buf);
+                        break;
                     }
-                    buf[0] = MAC_tx(&buf[1], len);
+                    // catch if we've been called out of sequence, or we've had an underrun
+                    if (macdata.mac_state != MAC_STATE_LONG_XMIT)
+                    {
+                        debug("underrun");
+                        LED = 0;
+                        // TX underrun
+                        if(lastCode[1] == LCE_DROPPED_PACKET)
+                            appReturn( 1, &lastCode[1]);
+                        else
+                        {
+                            buf[0] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            appReturn( 1, buf);
+                        }
+                        break;
+                    }
+                    // add data to rolling buffer
+                    buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
                     appReturn( 1, buf);
                     break;
 
