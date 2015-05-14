@@ -1300,6 +1300,9 @@ class NICxx11(USBDongle):
         preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
+        error = struct.unpack("<b", retval[0])[0]
+        if error:
+            return error
 
         chlen = len(chunks)
         for chidx in range(preload, chlen):
@@ -1308,11 +1311,14 @@ class NICxx11(USBDongle):
             while error == ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<b", retval[0])[0]
+            if error:
+                return error
                 #if error == ERR_BUFFER_NOT_AVAILABLE:
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        return struct.unpack("<b", retval[0])[0]
 
     def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)

@@ -273,7 +273,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
         debug("never entered TX");
     }
     //debug("done with transmit_long");
-    return 1;
+    return LCE_NO_ERROR;
 }
 
 __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
@@ -977,6 +977,7 @@ int appHandleEP5()
                     if (macdata.mac_state != MAC_STATE_LONG_XMIT)
                     {
                         debug("underrun");
+                        LED = 0;
                         // TX underrun
                         if(lastCode[1] == LCE_DROPPED_PACKET)
                             appReturn( 1, &lastCode[1]);
