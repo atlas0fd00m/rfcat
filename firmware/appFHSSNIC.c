@@ -59,6 +59,7 @@ __xdata u16 g_NIC_ID;
 // queue of messages to transmit.  may be used for FHSS, or to send LONG messages
 // first byte of each message indicates its length
 __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
+__xdata u16 txTotal; // debugger to confirm long transmit number of bytes tx'd
 
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt T2_VECTOR;
@@ -952,6 +953,7 @@ int appHandleEP5()
                     //debughex16(len);
                     //appReturn( 2, (__xdata u8*)&len);
                     //if (transmit_long(buf, len, repeat, offset)) ;
+                    txTotal= 0;
                     buf[0] = transmit_long(&buf[3], len, blocks);
                     appReturn( 1, buf);
                     break;
@@ -960,18 +962,32 @@ int appHandleEP5()
                     len = buf[0];
                     if (len == 0)
                     {
-                        // this is after the last chunk, wait and return results
-                        // while still length in TxTotalLen and no errors have occurred (like running into an uninitialized queue message before running out of TxTotalLen)
-                            //debughex16(rfTxTotalTXLen);
-                        //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
-                        {
-                            LED = 0;
-                        }
+                        // this is after the last chunk, wait for tx to finish and return OK
+                        while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
+                            ;
+                        LED = 0;
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         buf[0] = LCE_NO_ERROR;
+                        debug("total bytes tx:");
+                        debughex16(txTotal);
                         appReturn( 1, buf);
                         break;
                     }
+                    // catch if we've been called out of sequence, or we've had an underrun
+                    if (macdata.mac_state != MAC_STATE_LONG_XMIT)
+                    {
+                        debug("underrun");
+                        // TX underrun
+                        if(lastCode[1] == LCE_DROPPED_PACKET)
+                            appReturn( 1, &lastCode[1]);
+                        else
+                        {
+                            buf[0] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            appReturn( 1, buf);
+                        }
+                        break;
+                    }
+                    // add data to rolling buffer
                     buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
                     appReturn( 1, buf);
                     break;

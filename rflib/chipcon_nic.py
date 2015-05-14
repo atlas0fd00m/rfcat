@@ -40,9 +40,8 @@ RF_SUCCESS                      = 0
 ERR_BUFFER_NOT_AVAILABLE        = -2
 
 RF_MAX_TX_BLOCK                 = 255
-RF_MAX_TX_CHUNK                 = 125
-# RF_MAX_BLOCK must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
-RF_MAX_RX_BLOCK                 = 512
+RF_MAX_TX_CHUNK                 = 250 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
+RF_MAX_RX_BLOCK                 = 512 # must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 
 APP_NIC =                       0x42
 APP_SPECAN =                    0x43
