@@ -216,9 +216,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
     while (MARCSTATE == MARC_STATE_TX)
     {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
     }
     // Leave LED in a known state (off)
     LED = 0;
@@ -389,9 +386,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents(); 
-#endif
         }
         // LED on - we're transmitting
         LED = 1;
@@ -403,9 +397,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         while (MARCSTATE == MARC_STATE_TX)
         {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
         }
 
         // LED off - we're done
