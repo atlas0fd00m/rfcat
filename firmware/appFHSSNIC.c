@@ -132,9 +132,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     while (MARCSTATE == MARC_STATE_TX)
     {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
     }
     // Leave LED in a known state (off)
     LED = 0;
@@ -167,58 +164,13 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
             }
     }
 
-    // If len is zero, assume first byte is the length
-    // if we're in FIXED mode, skip the first byte
-    // if we're in VARIABLE mode, make sure we copy the length byte + packet
-    if (len == 0)
-    {
-        len = buf[0];
+    // configure for infinitemode
+    PKTLEN = (u8) (rfTxTotalTXLen % 256);
+    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+    rfTxInfMode = 1;
 
-        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
-        {
-            case PKTCTRL0_LENGTH_CONFIG_VAR:
-                len++;  // we need to send the length byte too...
-                break;
-            case PKTCTRL0_LENGTH_CONFIG_FIX:
-                buf++;  // skip sending the length byte
-                PKTLEN = len;
-                break;
-            default:
-                break;
-        }
-    } else
-    {
-        // If len is nonzero, use that as the length, and make sure the tx buffer is setup appropriately
-        // if we're in FIXED mode, all is well
-        // if we're in VARIABLE mode, must insert that length byte first.
-        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
-        {
-            case PKTCTRL0_LENGTH_CONFIG_VAR:
-                // shuffle buffer up 1 byte to make room for length
-                byte_shuffle(buf, len, 1);
-                buf[0] = (u8) len;
-                break;
-            case PKTCTRL0_LENGTH_CONFIG_FIX:
-                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
-                // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
-                // note that repeat length of 0xFF means 'forever'
-                if(len > RF_MAX_TX_BLOCK)
-                {
-                    // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
-                    // ISR will trigger exit once rfTxTotalTXLen < 256
-                    PKTLEN = (u8) (rfTxTotalTXLen % 256);
-                    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
-                    rfTxInfMode = 1;
-                }
-                else
-                    PKTLEN= len;
-                break;
-            default:
-                break;
-        }
-    }
-
+    // todo: fix this code as it will not work for infinitemode!
     // CRYPTO if required //
     if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
     {
@@ -261,9 +213,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     while (MARCSTATE != MARC_STATE_TX && --countdown)
     {
         //LED = !LED;
-#ifdef USBDEVICE
-    //    usbProcessEvents(); 
-#endif
     }
     // LED on - we're transmitting
     LED = 1;
