@@ -59,6 +59,7 @@ SYS_CMD_RFMODE                  = 0x88
 SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
+SYS_CMD_CLEAR_CODES             = 0x90
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
 EP0_CMD_GET_ADDRESS             = 0x01
@@ -88,23 +89,35 @@ LC_USB_EP5OUT                 = 0xc
 LC_RF_VECTOR                  = 0x10
 LC_RFTXRX_VECTOR              = 0x11
 
-LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN    = 0x1
-LCE_USB_EP0_SENT_STALL                = 0x4
-LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN  = 0x5
-LCE_USB_EP5_LEN_TOO_BIG               = 0x6
-LCE_USB_EP5_GOT_CRAP                  = 0x7
-LCE_USB_EP5_STALL                     = 0x8
-LCE_USB_DATA_LEFTOVER_FLAGS           = 0x9
+LCE_NO_ERROR                            = 0x00
+LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN      = 0x1
+LCE_USB_EP0_SENT_STALL                  = 0x4
+LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN    = 0x5
+LCE_USB_EP5_LEN_TOO_BIG                 = 0x6
+LCE_USB_EP5_GOT_CRAP                    = 0x7
+LCE_USB_EP5_STALL                       = 0x8
+LCE_USB_DATA_LEFTOVER_FLAGS             = 0x9
 
-LCE_RF_RXOVF                          = 0x10
-LCE_RF_TXUNF                          = 0x11
-LCE_DROPPED_PACKET                    = 0x12
-LCE_RFTX_NEVER_TX                     = 0x13
-LCE_RFTX_NEVER_LEAVE_TX               = 0x14
-LCE_RF_MODE_INCOMPAT                  = 0x15
-LCE_RF_BLOCKSIZE_INCOMPAT             = 0x16
-LCE_RF_MULTI_BUFFER_NOT_INIT          = 0x17
+LCE_RF_RXOVF                            = 0x10
+LCE_RF_TXUNF                            = 0x11
+LCE_DROPPED_PACKET                      = 0x12
+LCE_RFTX_NEVER_TX                       = 0x13
+LCE_RFTX_NEVER_LEAVE_TX                 = 0x14
+LCE_RF_MODE_INCOMPAT                    = 0x15
+LCE_RF_BLOCKSIZE_INCOMPAT               = 0x16
+LCE_RF_MULTI_BUFFER_NOT_INIT            = 0x17
+LCE_RF_MULTI_BUFFER_NOT_FREE            = 0x18
 
+RC_NO_ERROR                             = 0x0
+RC_ERR_BUFFER_SIZE_EXCEEDED             = 0xff
+RC_ERR_BUFFER_NOT_AVAILABLE             = 0xfe
+RC_RF_MODE_INCOMPAT                     = 0xef
+RC_RF_BLOCKSIZE_INCOMPAT                = 0xee
+RC_TX_ERROR                             = 0xed
+RC_FAIL_TRANSMIT_LONG                   = 0xffff
+
+
+RCS = {}
 LCS = {}
 LCES = {}
 lcls = locals()
@@ -115,6 +128,9 @@ for lcl in lcls.keys():
     if lcl.startswith("LC_"):
         LCS[lcl] = lcls[lcl]
         LCS[lcls[lcl]] = lcl
+    if lcl.startswith("RC_"):
+        RCS[lcl] = lcls[lcl]
+        RCS[lcls[lcl]] = lcl
 
 CHIPS = {
     0x91: "CC2511",
@@ -739,12 +755,24 @@ class USBDongle:
         if self._debug: print "Sent Msg",msg.encode("hex")
         return self.recv(app, cmd, wait)
 
+    def reprDebugCodes(self, timeout=100):
+        codes = self.getDebugCodes(timeout)
+        if (codes != None and len(codes) == 2):
+            rc1 = LCS.get(codes[0])
+            rc2 = LCES.get(codes[0])
+            return 'last position: %s\nlast error: %s' % (rc1, rc2)
+        return codes
+
     def getDebugCodes(self, timeout=100):
         x = self._recvEP0(request=EP0_CMD_GET_DEBUG_CODES, timeout=timeout)
         if (x != None and len(x)==2):
             return struct.unpack("BB", x)
         else:
             return x
+
+    def clearDebugCodes(self):
+        retval = self.send(APP_SYSTEM, SYS_CMD_CLEAR_CODES, "  ", 1000)
+        return LCES.get(retval)
 
     def ep0GetAddr(self):
         addr = self._recvEP0(request=EP0_CMD_GET_ADDRESS)

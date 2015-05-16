@@ -123,9 +123,9 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
-        debug("Cannot call transmit_long while FHSS Hopping!");
+        debug("Cannot call transmit_long while FHSS Hopping or already processing transmit_long!");
         debughex(macdata.mac_state);
-        return LCE_RF_MODE_INCOMPAT;
+        return RC_RF_MODE_INCOMPAT;
     }
 
     macdata.mac_state = MAC_STATE_LONG_XMIT;
@@ -273,19 +273,23 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
         debug("never entered TX");
     }
     //debug("done with transmit_long");
-    return LCE_NO_ERROR;
+    return RC_NO_ERROR;
 }
 
 __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
 {
-    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
     // queue data for sending at subsequent time slots.
+    // - overloaded - also used for arbitrary length transmission
+    //
+    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying... - this would break stuff
     // FIXME: this is not good for fixed-length
+    // FIXME: possibly use DMA for transfers?
+    // FIXME: watch for errors and changes in state from ISR, and return value.
 
     if (len > MAX_TX_MSGLEN)
     {
         debug("FHSSxmit message too long");
-        return ERR_BUFFER_SIZE_EXCEEDED;
+        return RC_ERR_BUFFER_SIZE_EXCEEDED;
     }
 
     // len of 0 means clear buffer
@@ -297,15 +301,26 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
             g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_AVAILABLE;
         }
         macdata.txMsgIdx = 0;
-        return LCE_NO_ERROR;
+        return RC_NO_ERROR;
     }
 
+    switch (macdata.mac_state)
+    {
+        case MAC_STATE_LONG_XMIT:
+            if (macdata.txMsgIdx && MARCSTATE != MARC_STATE_TX)
+            {
+                macdata.mac_state = MAC_STATE_LONG_XMIT_FAIL;
+                return RC_TX_ERROR;
+            }
+            break;
+        case MAC_STATE_NONHOPPING:
+            return RC_TX_ERROR;
+    }
     if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
     {
         // can't add to the next queue
-        //debug("buffer not available");
-        //debughex(macdata.txMsgIdx);
-        return ERR_BUFFER_NOT_AVAILABLE;
+        lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_FREE;
+        return RC_ERR_BUFFER_NOT_AVAILABLE;
     }
 
     // mark the queue msg as filling:
@@ -325,7 +340,7 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
         macdata.txMsgIdx = 0;
     }
 
-    return LCE_NO_ERROR;
+    return RC_NO_ERROR;
 }
 
 void MAC_sync(__xdata u16 CellID)
@@ -816,12 +831,6 @@ void appMainLoop(void)
 }
 
 
-
-void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
-{
-    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
-    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
-}
 
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
  * main handler routine for the application as endpoint 0 is normally used for system stuff.

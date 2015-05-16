@@ -391,6 +391,7 @@ void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*  pReq));
 void registerCb_ep5(int (*callback)(void));
 
 
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 
 
 
@@ -406,6 +407,7 @@ void registerCb_ep5(int (*callback)(void));
 #define     CMD_COMPILER    0x89
 #define     CMD_PARTNUM     0x8e
 #define     CMD_RESET       0x8f
+#define     CMD_CLEAR_CODES 0x90
 
 #define     EP0_CMD_GET_DEBUG_CODES         0x00
 #define     EP0_CMD_GET_ADDRESS             0x01
