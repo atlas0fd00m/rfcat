@@ -27,6 +27,7 @@ extern __xdata u32 clock;
 //#define RECEIVE_TEST
 //////////////////////////////////////
 
+// lastCode[0]: locations
 #define LC_USB_INITUSB                  0x2
 #define LC_MAIN_RFIF                    0xd
 #define LC_USB_DATA_RESET_RESUME        0xa
@@ -36,6 +37,7 @@ extern __xdata u32 clock;
 #define LC_RF_VECTOR                    0x10
 #define LC_RFTXRX_VECTOR                0x11
 
+// lastCode[1]: Errors
 #define LCE_NO_ERROR                            0x0
 
 #define LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN      0x1
@@ -51,9 +53,17 @@ extern __xdata u32 clock;
 #define LCE_DROPPED_PACKET                      0x12
 #define LCE_RFTX_NEVER_TX                       0x13
 #define LCE_RFTX_NEVER_LEAVE_TX                 0x14
-#define LCE_RF_MODE_INCOMPAT                    0x15
-#define LCE_RF_BLOCKSIZE_INCOMPAT               0x16
 #define LCE_RF_MULTI_BUFFER_NOT_INIT            0x17
+#define LCE_RF_MULTI_BUFFER_NOT_FREE            0x18
+
+// Return Codes
+#define RC_NO_ERROR                             0x0
+#define RC_ERR_BUFFER_SIZE_EXCEEDED             0xff
+#define RC_ERR_BUFFER_NOT_AVAILABLE             0xfe
+#define RC_RF_MODE_INCOMPAT                     0xef
+#define RC_RF_BLOCKSIZE_INCOMPAT                0xee
+#define RC_TX_ERROR                             0xed
+
 
 // USB activities
 #ifdef CHRONOSDONGLE
@@ -66,8 +76,6 @@ extern __xdata u32 clock;
 // USB data buffer
 #define BUFFER_AVAILABLE		0x00
 #define BUFFER_FILLING			0xff
-#define ERR_BUFFER_SIZE_EXCEEDED        -1
-#define ERR_BUFFER_NOT_AVAILABLE        -2
 
 // Checks
 #define IS_XOSC_STABLE()    (SLEEP & SLEEP_XOSC_S)

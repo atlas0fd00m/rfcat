@@ -37,7 +37,6 @@ SYNCM_CARRIER_16_of_16          = 6
 SYNCM_CARRIER_30_of_32          = 7
 
 RF_SUCCESS                      = 0
-ERR_BUFFER_NOT_AVAILABLE        = -2
 
 RF_MAX_TX_BLOCK                 = 255
 RF_MAX_TX_CHUNK                 = 250 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
@@ -1300,17 +1299,17 @@ class NICxx11(USBDongle):
         preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
-        error = struct.unpack("<b", retval[0])[0]
+        error = struct.unpack("<B", retval[0])[0]
         if error:
             return error
 
         chlen = len(chunks)
         for chidx in range(preload, chlen):
             chunk = chunks[chidx]
-            error = ERR_BUFFER_NOT_AVAILABLE
-            while error == ERR_BUFFER_NOT_AVAILABLE:
+            error = RC_ERR_BUFFER_NOT_AVAILABLE
+            while error == RC_ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
-                error = struct.unpack("<b", retval[0])[0]
+                error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
                 #if error == ERR_BUFFER_NOT_AVAILABLE:
