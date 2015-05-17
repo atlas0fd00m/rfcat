@@ -118,7 +118,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
      * */
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0, err;
+    __xdata u8 err;
     __xdata u8 original_pktlen = PKTLEN;
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
@@ -164,43 +164,19 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
             }
     }
 
+    // set up crypto - MAC_tx will perform enc/dec if required
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        // set new length
+        rfTxTotalTXLen += rfTxTotalTXLen % 16;
+    }
+
     // configure for infinitemode
     PKTLEN = (u8) (rfTxTotalTXLen % 256);
     PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
     PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
     rfTxInfMode = 1;
 
-    // todo: fix this code as it will not work for infinitemode!
-    // CRYPTO if required //
-    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
-    {
-        if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
-            encoffset= 1;
-        // pad and set new length
-        len= padAES(buf + encoffset, len);
-        // do the encrypt or decrypt
-        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
-            encAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
-        else
-            decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
-        // packet length may have changed due to padding so reset
-        if(encoffset)
-        {
-            // if we are in CBC-MAC mode, only transmit the MAC or we will send
-            // part of our plaintext (as we are encrypting in-place)!
-            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
-                buf[0] = 16;
-            else
-                buf[0] = (u8) len;
-        }
-        else
-        {
-            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
-                PKTLEN = 16;
-            else
-                PKTLEN = (u8) len;
-        }
-    }
 
     /* Put radio into tx state */
 #ifdef YARDSTICKONE
@@ -276,6 +252,18 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_FILLING;
     // copy data
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+    // crypt if required
+    // todo: currently only works at very low baud rates (e.g. 10k)
+    // todo: may be a fundamental limitation as it slows throughput
+    // todo: implement some kind of failure detection
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        len = padAES(&g_txMsgQueue[macdata.txMsgIdx][1], len);
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+        else
+            decAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+    }
     // place data len in first byte
     g_txMsgQueue[macdata.txMsgIdx][0] = len;
     //debug("writing block");
@@ -948,6 +936,16 @@ int appHandleEP5()
                     }
                     // add data to rolling buffer
                     buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
+                    // check for any other error return
+                    if(buf[0] && buf[0] != RC_ERR_BUFFER_NOT_AVAILABLE)
+                    {
+                        debug("buffer error");
+                        debughex(buf[0]);
+                        LED = 0;
+                        IdleMode();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        break;
+                    }
                     appReturn( 1, buf);
                     break;
 
