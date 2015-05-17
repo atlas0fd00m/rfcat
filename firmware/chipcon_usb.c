@@ -225,9 +225,9 @@ void usb_init(void)
     USB_RESUME_INT_CLEAR();                 // P0IFG= 0; P0IF= 0
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
-    // set usb interrupt priority to 3
+    // set usb interrupt (group 1) priority to "10" - priority 2
     IP0 |= BIT1;
-    IP1 |= BIT1;
+    IP1 |= 0;
 
 
     // usb dma

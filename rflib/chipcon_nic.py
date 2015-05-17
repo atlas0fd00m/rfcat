@@ -39,7 +39,8 @@ SYNCM_CARRIER_30_of_32          = 7
 RF_SUCCESS                      = 0
 
 RF_MAX_TX_BLOCK                 = 255
-RF_MAX_TX_CHUNK                 = 250 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
+RF_MAX_TX_CHUNK                 = 240 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
+                                      # and be divisible by 16 for crypto operations
 RF_MAX_RX_BLOCK                 = 512 # must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 
 APP_NIC =                       0x42
