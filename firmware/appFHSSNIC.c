@@ -908,12 +908,10 @@ int appHandleEP5()
                     if (len == 0)
                     {
                         // this is after the last chunk, wait for tx to finish and return OK
-                        //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
                         while (rfTxTotalTXLen && MARCSTATE == MARC_STATE_TX) 
                         {
-                            sleepMillis(100); // todo: why does RF sometimes stop with 255 bytes to go
-                                              //       if we don't have a delay here?
-                        } 
+                            sleepMillis(40); // delay to avoid race condition that will cause mis-read of rfTxTotalTXLen == 0
+                        }
                         if(rfTxTotalTXLen)
                         {
                             debug("dropout final wait!");
