@@ -58,11 +58,12 @@ extern __xdata u32 clock;
 
 // Return Codes
 #define RC_NO_ERROR                             0x0
-#define RC_ERR_BUFFER_SIZE_EXCEEDED             0xff
-#define RC_ERR_BUFFER_NOT_AVAILABLE             0xfe
-#define RC_RF_MODE_INCOMPAT                     0xef
-#define RC_RF_BLOCKSIZE_INCOMPAT                0xee
+#define RC_TX_DROPPED_PACKET                    0xec
 #define RC_TX_ERROR                             0xed
+#define RC_RF_BLOCKSIZE_INCOMPAT                0xee
+#define RC_RF_MODE_INCOMPAT                     0xef
+#define RC_ERR_BUFFER_NOT_AVAILABLE             0xfe
+#define RC_ERR_BUFFER_SIZE_EXCEEDED             0xff
 
 
 // USB activities

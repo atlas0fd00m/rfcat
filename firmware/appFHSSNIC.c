@@ -920,7 +920,8 @@ int appHandleEP5()
                             debughex16(rfTxTotalTXLen);
                             debughex(g_txMsgQueue[0][0]);
                             debughex(g_txMsgQueue[1][0]);
-                            buf[0] = LCE_DROPPED_PACKET;
+                            lastCode[1] = LCE_DROPPED_PACKET;
+                            buf[0] = RC_TX_DROPPED_PACKET;
                             appReturn( 1, buf);
                             LED = 0;
                             IdleMode();
@@ -941,10 +942,14 @@ int appHandleEP5()
                         debug("underrun");
                         // TX underrun
                         if(lastCode[1] == LCE_DROPPED_PACKET)
-                            appReturn( 1, &lastCode[1]);
+                            {
+                            buf[0] = RC_TX_DROPPED_PACKET;
+                            appReturn( 1, buf);
+                            }
                         else
                         {
-                            buf[0] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            buf[0] = RC_RF_MODE_INCOMPAT;
                             appReturn( 1, buf);
                         }
                         LED = 0;
