@@ -891,8 +891,8 @@ int appHandleEP5()
                     if (macdata.mac_state != MAC_STATE_NONHOPPING)
                     {
                         debug("NIC_LONG_XMIT: can't work when FHSS hopping");
-                        len = -1;
-                        appReturn( 2, (__xdata u8*)&len);
+                        buf[0] = RC_RF_MODE_INCOMPAT;
+                        appReturn( 1, buf);
                         break;
                     }
                     len = buf[0];
@@ -924,7 +924,7 @@ int appHandleEP5()
                             buf[0] = RC_TX_DROPPED_PACKET;
                             appReturn( 1, buf);
                             LED = 0;
-                            IdleMode();
+                            resetRFSTATE();
                             macdata.mac_state = MAC_STATE_NONHOPPING;
                             break;
                         }
@@ -953,7 +953,7 @@ int appHandleEP5()
                             appReturn( 1, buf);
                         }
                         LED = 0;
-                        IdleMode();
+                        resetRFSTATE();
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         break;
                     }
@@ -965,7 +965,7 @@ int appHandleEP5()
                         debug("buffer error");
                         debughex(buf[0]);
                         LED = 0;
-                        IdleMode();
+                        resetRFSTATE();
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         break;
                     }
