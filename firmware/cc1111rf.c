@@ -574,7 +574,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                         // we should bail here, because the next buffer is empty, so we've had a usb buff fill underrun
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         lastCode[1] = LCE_DROPPED_PACKET;
-                        IdleMode();
+                        resetRFSTATE();
                         LED = 0;
                     }
 
