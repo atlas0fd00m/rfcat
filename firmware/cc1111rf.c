@@ -575,6 +575,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         lastCode[1] = LCE_DROPPED_PACKET;
                         IdleMode();
+                        LED = 0;
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
@@ -582,8 +583,11 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                 }
             }
             // radio to leave infinite mode?
-            if(rfTxTotalTXLen-- < 256)
+            if(rfTxTotalTXLen-- == 255)
+            {
+                //debughex16(txTotal);
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+            }
             // debug
             //LED = !LED;
         }

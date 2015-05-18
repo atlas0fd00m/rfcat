@@ -23,7 +23,7 @@
  *      set macdata.txMsgIdx = 0
  *      set macdata.txMsgIdxDone = 0
  *      clear all buffer lengths
- *      set macdata.macstate = MAC_STATE_XMIT_LONG  (rly? should just stay at NONHOPPING?)
+ *      set macdata.macstate = MAC_STATE_LONG_XMIT  (rly? should just stay at NONHOPPING?)
  *      write into g_txMsgQueue[macdata.txMsgIdx]
  *      need to indicate that the buffer if filled  (buffer[0] = len)
  *      need to indicate that there's data to RF TRANSMIT
@@ -119,7 +119,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
 {
     __xdata u16 countdown;
     __xdata u8 err;
-    __xdata u8 original_pktlen = PKTLEN;
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
@@ -165,10 +164,10 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     }
 
     // set up crypto - MAC_tx will perform enc/dec if required
-    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE && rfTxTotalTXLen % 16)
     {
-        // set new length
-        rfTxTotalTXLen += rfTxTotalTXLen % 16;
+        // set new length to multiple of 16 as last block will be padded
+        rfTxTotalTXLen += 16 - (rfTxTotalTXLen % 16);
     }
 
     // configure for infinitemode
@@ -176,7 +175,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
     PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
     rfTxInfMode = 1;
-
 
     /* Put radio into tx state */
 #ifdef YARDSTICKONE
@@ -619,6 +617,10 @@ void appMainLoop(void)
 
     switch  (macdata.mac_state)
     {
+        // do this first for speed/efficiency
+        case MAC_STATE_LONG_XMIT:
+            break;
+
         case MAC_STATE_PREP_SPECAN:
             RFOFF;
             PKTCTRL1 =  0xE5;       // highest PQT, address check, append_status
@@ -896,9 +898,6 @@ int appHandleEP5()
                     len = buf[0];
                     len += (buf[1]) << 8;
                     blocks = buf[2];
-                    //debughex16(len);
-                    //appReturn( 2, (__xdata u8*)&len);
-                    //if (transmit_long(buf, len, repeat, offset)) ;
                     txTotal= 0;
                     buf[0] = transmit_long(&buf[3], len, blocks);
                     appReturn( 1, buf);
@@ -909,8 +908,25 @@ int appHandleEP5()
                     if (len == 0)
                     {
                         // this is after the last chunk, wait for tx to finish and return OK
-                        while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
-                            ;
+                        //while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
+                        while (rfTxTotalTXLen && MARCSTATE == MARC_STATE_TX) 
+                        {
+                            sleepMillis(100); // todo: why does RF sometimes stop with 255 bytes to go
+                                              //       if we don't have a delay here?
+                        } 
+                        if(rfTxTotalTXLen)
+                        {
+                            debug("dropout final wait!");
+                            debughex16(rfTxTotalTXLen);
+                            debughex(g_txMsgQueue[0][0]);
+                            debughex(g_txMsgQueue[1][0]);
+                            buf[0] = LCE_DROPPED_PACKET;
+                            appReturn( 1, buf);
+                            LED = 0;
+                            IdleMode();
+                            macdata.mac_state = MAC_STATE_NONHOPPING;
+                            break;
+                        }
                         LED = 0;
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         buf[0] = LCE_NO_ERROR;
@@ -923,7 +939,6 @@ int appHandleEP5()
                     if (macdata.mac_state != MAC_STATE_LONG_XMIT)
                     {
                         debug("underrun");
-                        LED = 0;
                         // TX underrun
                         if(lastCode[1] == LCE_DROPPED_PACKET)
                             appReturn( 1, &lastCode[1]);
@@ -932,6 +947,9 @@ int appHandleEP5()
                             buf[0] = LCE_RF_MULTI_BUFFER_NOT_INIT;
                             appReturn( 1, buf);
                         }
+                        LED = 0;
+                        IdleMode();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
                         break;
                     }
                     // add data to rolling buffer
