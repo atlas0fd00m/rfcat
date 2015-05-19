@@ -362,55 +362,6 @@ class USBDongle:
                 self.xmit_event.set()
                 self.xsema.release()
                 if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-        '''
-        drain = buf[:self._usbmaxo]
-        buf = buf[self._usbmaxo:]
-        if len(buf):
-            if self._debug: print >>sys.stderr,"requeuing '%s'" % repr(buf)
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, buf)
-            self.xsema.release()
-            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-        try:
-            self._do.bulkWrite(5, drain, timeout)
-        except Exception, e:
-            if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, drain)
-            self.xsema.release()
-            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-
-        ---
-        while (len(buf)>0):
-            drain = buf[:self._usbmaxo]
-            buf = buf[self._usbmaxo:]
-
-            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            self._do.bulkWrite(5, drain, timeout)
-            time.sleep(1)
-        ---
-        if (len(buf) > self._usbmaxo):
-            drain = buf[:self._usbmaxo]
-            buf = buf[self._usbmaxo:]
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, buf)
-            self.xsema.release()
-        else:
-            drain = buf[:]
-        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-        self._do.bulkWrite(5, drain, timeout)
-        ---
-        while (len(buf)>0):
-            if (len(buf) > self._usbmaxo):
-                drain = buf[:self._usbmaxo]
-                buf = buf[self._usbmaxo:]
-            else:
-                drain = buf[:]
-            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            self._do.bulkWrite(5, drain, timeout)
-            time.sleep(1)
-        '''
         
     def _recvEP5(self, timeout=100):
         retary = ["%c"%x for x in self._do.bulkRead(0x85, 500, timeout)]
