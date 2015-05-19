@@ -122,4 +122,5 @@ void appInitRf(void);       // in application.c  (provided by the application an
 void init_RF(void);
 void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset);
 void startRX(void);
+void resetRFSTATE(void);
 #endif

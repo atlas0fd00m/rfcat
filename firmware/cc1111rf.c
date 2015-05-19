@@ -149,9 +149,9 @@ void init_RF()
     T2CTL |= T2CTL_TIP_64;  // 64, 128, 256, 1024
     T2CTL |= T2CTL_TIG;
 
-    // interrupt priority settings.  RF interrupts needs to be priority 2 since tx needs to happen from Timer interrupts
-    // however, usb will rank above RF
-    IP0 |= 0;//BIT0;       // grp0 is RF/RFTXRX/DMA
+    // interrupt priority settings.
+    // set to "01" == priority 1
+    IP0 |= 0;       // grp0 is RF/RFTXRX/DMA
     IP1 |= BIT0;
 
     // RF state
@@ -216,9 +216,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
     while (MARCSTATE == MARC_STATE_TX)
     {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
     }
     // Leave LED in a known state (off)
     LED = 0;
@@ -389,9 +386,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents(); 
-#endif
         }
         // LED on - we're transmitting
         LED = 1;
@@ -403,9 +397,6 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         while (MARCSTATE == MARC_STATE_TX)
         {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
         }
 
         // LED off - we're done
@@ -583,7 +574,8 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                         // we should bail here, because the next buffer is empty, so we've had a usb buff fill underrun
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         lastCode[1] = LCE_DROPPED_PACKET;
-                        IdleMode();
+                        resetRFSTATE();
+                        LED = 0;
                     }
 
                     // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
@@ -591,8 +583,11 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
                 }
             }
             // radio to leave infinite mode?
-            if(rfTxTotalTXLen-- < 256)
+            if(rfTxTotalTXLen-- == 255)
+            {
+                //debughex16(txTotal);
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+            }
             // debug
             //LED = !LED;
         }

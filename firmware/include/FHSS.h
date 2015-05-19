@@ -26,7 +26,7 @@
 #define MAC_STATE_LONG_XMIT         6
 #define MAC_STATE_LONG_XMIT_FAIL    7
 
-
+ 
 // spectrum analysis defines
 // application and command
 #define APP_SPECAN                  0x43
@@ -44,7 +44,8 @@
 // MAC layer defines
 #define MAX_CHANNELS                880
 #define MAX_TX_MSGS                 2
-#define MAX_TX_MSGLEN               250
+#define MAX_TX_MSGLEN               240   // must match RF_MAX_TX_CHUNK in rflib/chipcon_nic.py
+                                          // and be divisible by 16 for crypto operations
 #define MAX_SYNC_WAIT               10    //seconds... need to true up with T1/clock
 
 #define MAC_TIMER_STATIC_DIFF   6

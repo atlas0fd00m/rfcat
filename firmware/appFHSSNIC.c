@@ -23,7 +23,7 @@
  *      set macdata.txMsgIdx = 0
  *      set macdata.txMsgIdxDone = 0
  *      clear all buffer lengths
- *      set macdata.macstate = MAC_STATE_XMIT_LONG  (rly? should just stay at NONHOPPING?)
+ *      set macdata.macstate = MAC_STATE_LONG_XMIT  (rly? should just stay at NONHOPPING?)
  *      write into g_txMsgQueue[macdata.txMsgIdx]
  *      need to indicate that the buffer if filled  (buffer[0] = len)
  *      need to indicate that there's data to RF TRANSMIT
@@ -118,8 +118,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
      * */
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0, err;
-    __xdata u8 original_pktlen = PKTLEN;
+    __xdata u8 err;
 
     if (macdata.mac_state != MAC_STATE_NONHOPPING)
     {
@@ -132,9 +131,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     while (MARCSTATE == MARC_STATE_TX)
     {
             //LED = !LED;
-#ifdef USBDEVICE
-            //usbProcessEvents();
-#endif
     }
     // Leave LED in a known state (off)
     LED = 0;
@@ -167,88 +163,18 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
             }
     }
 
-    // If len is zero, assume first byte is the length
-    // if we're in FIXED mode, skip the first byte
-    // if we're in VARIABLE mode, make sure we copy the length byte + packet
-    if (len == 0)
+    // set up crypto - MAC_tx will perform enc/dec if required
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE && rfTxTotalTXLen % 16)
     {
-        len = buf[0];
-
-        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
-        {
-            case PKTCTRL0_LENGTH_CONFIG_VAR:
-                len++;  // we need to send the length byte too...
-                break;
-            case PKTCTRL0_LENGTH_CONFIG_FIX:
-                buf++;  // skip sending the length byte
-                PKTLEN = len;
-                break;
-            default:
-                break;
-        }
-    } else
-    {
-        // If len is nonzero, use that as the length, and make sure the tx buffer is setup appropriately
-        // if we're in FIXED mode, all is well
-        // if we're in VARIABLE mode, must insert that length byte first.
-        switch (PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG)
-        {
-            case PKTCTRL0_LENGTH_CONFIG_VAR:
-                // shuffle buffer up 1 byte to make room for length
-                byte_shuffle(buf, len, 1);
-                buf[0] = (u8) len;
-                break;
-            case PKTCTRL0_LENGTH_CONFIG_FIX:
-                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
-                // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
-                // note that repeat length of 0xFF means 'forever'
-                if(len > RF_MAX_TX_BLOCK)
-                {
-                    // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
-                    // ISR will trigger exit once rfTxTotalTXLen < 256
-                    PKTLEN = (u8) (rfTxTotalTXLen % 256);
-                    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
-                    rfTxInfMode = 1;
-                }
-                else
-                    PKTLEN= len;
-                break;
-            default:
-                break;
-        }
+        // set new length to multiple of 16 as last block will be padded
+        rfTxTotalTXLen += 16 - (rfTxTotalTXLen % 16);
     }
 
-    // CRYPTO if required //
-    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
-    {
-        if((PKTCTRL0 & PKTCTRL0_LENGTH_CONFIG) == PKTCTRL0_LENGTH_CONFIG_VAR)
-            encoffset= 1;
-        // pad and set new length
-        len= padAES(buf + encoffset, len);
-        // do the encrypt or decrypt
-        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
-            encAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
-        else
-            decAES(buf + encoffset, buf + encoffset, len, (rfAESMode & AES_CRYPTO_MODE));
-        // packet length may have changed due to padding so reset
-        if(encoffset)
-        {
-            // if we are in CBC-MAC mode, only transmit the MAC or we will send
-            // part of our plaintext (as we are encrypting in-place)!
-            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
-                buf[0] = 16;
-            else
-                buf[0] = (u8) len;
-        }
-        else
-        {
-            if((rfAESMode & AES_CRYPTO_MODE) == ENCCS_MODE_CBCMAC)
-                PKTLEN = 16;
-            else
-                PKTLEN = (u8) len;
-        }
-    }
+    // configure for infinitemode
+    PKTLEN = (u8) (rfTxTotalTXLen % 256);
+    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+    rfTxInfMode = 1;
 
     /* Put radio into tx state */
 #ifdef YARDSTICKONE
@@ -261,9 +187,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     while (MARCSTATE != MARC_STATE_TX && --countdown)
     {
         //LED = !LED;
-#ifdef USBDEVICE
-    //    usbProcessEvents(); 
-#endif
     }
     // LED on - we're transmitting
     LED = 1;
@@ -327,6 +250,18 @@ __xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
     g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_FILLING;
     // copy data
     memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+    // crypt if required
+    // todo: currently only works at very low baud rates (e.g. 10k)
+    // todo: may be a fundamental limitation as it slows throughput
+    // todo: implement some kind of failure detection
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        len = padAES(&g_txMsgQueue[macdata.txMsgIdx][1], len);
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+        else
+            decAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+    }
     // place data len in first byte
     g_txMsgQueue[macdata.txMsgIdx][0] = len;
     //debug("writing block");
@@ -682,6 +617,10 @@ void appMainLoop(void)
 
     switch  (macdata.mac_state)
     {
+        // do this first for speed/efficiency
+        case MAC_STATE_LONG_XMIT:
+            break;
+
         case MAC_STATE_PREP_SPECAN:
             RFOFF;
             PKTCTRL1 =  0xE5;       // highest PQT, address check, append_status
@@ -952,16 +891,13 @@ int appHandleEP5()
                     if (macdata.mac_state != MAC_STATE_NONHOPPING)
                     {
                         debug("NIC_LONG_XMIT: can't work when FHSS hopping");
-                        len = -1;
-                        appReturn( 2, (__xdata u8*)&len);
+                        buf[0] = RC_RF_MODE_INCOMPAT;
+                        appReturn( 1, buf);
                         break;
                     }
                     len = buf[0];
                     len += (buf[1]) << 8;
                     blocks = buf[2];
-                    //debughex16(len);
-                    //appReturn( 2, (__xdata u8*)&len);
-                    //if (transmit_long(buf, len, repeat, offset)) ;
                     txTotal= 0;
                     buf[0] = transmit_long(&buf[3], len, blocks);
                     appReturn( 1, buf);
@@ -972,8 +908,24 @@ int appHandleEP5()
                     if (len == 0)
                     {
                         // this is after the last chunk, wait for tx to finish and return OK
-                        while (rfTxTotalTXLen && macdata.mac_state == MAC_STATE_LONG_XMIT) 
-                            ;
+                        while (rfTxTotalTXLen && MARCSTATE == MARC_STATE_TX) 
+                        {
+                            sleepMillis(40); // delay to avoid race condition that will cause mis-read of rfTxTotalTXLen == 0
+                        }
+                        if(rfTxTotalTXLen)
+                        {
+                            debug("dropout final wait!");
+                            debughex16(rfTxTotalTXLen);
+                            debughex(g_txMsgQueue[0][0]);
+                            debughex(g_txMsgQueue[1][0]);
+                            lastCode[1] = LCE_DROPPED_PACKET;
+                            buf[0] = RC_TX_DROPPED_PACKET;
+                            appReturn( 1, buf);
+                            LED = 0;
+                            resetRFSTATE();
+                            macdata.mac_state = MAC_STATE_NONHOPPING;
+                            break;
+                        }
                         LED = 0;
                         macdata.mac_state = MAC_STATE_NONHOPPING;
                         buf[0] = LCE_NO_ERROR;
@@ -986,19 +938,35 @@ int appHandleEP5()
                     if (macdata.mac_state != MAC_STATE_LONG_XMIT)
                     {
                         debug("underrun");
-                        LED = 0;
                         // TX underrun
                         if(lastCode[1] == LCE_DROPPED_PACKET)
-                            appReturn( 1, &lastCode[1]);
+                            {
+                            buf[0] = RC_TX_DROPPED_PACKET;
+                            appReturn( 1, buf);
+                            }
                         else
                         {
-                            buf[0] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            buf[0] = RC_RF_MODE_INCOMPAT;
                             appReturn( 1, buf);
                         }
+                        LED = 0;
+                        resetRFSTATE();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
                         break;
                     }
                     // add data to rolling buffer
                     buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
+                    // check for any other error return
+                    if(buf[0] && buf[0] != RC_ERR_BUFFER_NOT_AVAILABLE)
+                    {
+                        debug("buffer error");
+                        debughex(buf[0]);
+                        LED = 0;
+                        resetRFSTATE();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        break;
+                    }
                     appReturn( 1, buf);
                     break;
 
