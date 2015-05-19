@@ -50,7 +50,6 @@
 
 #define RFCAT
 
-__xdata MAC_DATA_t macdata;
 __xdata u8 g_Channels[MAX_CHANNELS];
 
 __xdata u16 g_NIC_ID;
@@ -59,7 +58,6 @@ __xdata u16 g_NIC_ID;
 // queue of messages to transmit.  may be used for FHSS, or to send LONG messages
 // first byte of each message indicates its length
 __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
-__xdata u16 txTotal; // debugger to confirm long transmit number of bytes tx'd
 
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt T2_VECTOR;
