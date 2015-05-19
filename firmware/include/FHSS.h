@@ -1,3 +1,6 @@
+#ifndef FHSS_H
+#define FHSS_H
+
 #define FHSS_SET_CHANNELS       0x10
 #define FHSS_NEXT_CHANNEL       0x11
 #define FHSS_CHANGE_CHANNEL     0x12
@@ -65,4 +68,4 @@ u8 MAC_tx(__xdata u8* __xdata  message, __xdata u8 len);
 void MAC_rx_handle(__xdata u8 len, __xdata u8* __xdata  message);
 u8 MAC_getNextChannel();
 
-
+#endif
