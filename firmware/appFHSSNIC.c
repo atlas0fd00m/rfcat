@@ -134,7 +134,6 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     LED = 0;
 
     // setup infinite mode, length, and the variables that will last for and manage the whole transmission
-    rfTxInfMode = 1;
     rfTxTotalTXLen = len;
                 //debughex16(rfTxTotalTXLen);
     rfTxBufferEnd = MAX_TX_MSGLEN + 1; // add 1 for length byte
@@ -169,11 +168,16 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
         rfTxTotalTXLen += 16 - (rfTxTotalTXLen % 16);
     }
 
-    // configure for infinitemode
-    PKTLEN = (u8) (rfTxTotalTXLen % 256);
-    PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
-    rfTxInfMode = 1;
+    // configure for infinitemode if required
+    if(rfTxTotalTXLen > 255)
+    {
+        PKTLEN = (u8) (rfTxTotalTXLen % 256);
+        PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+        PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+        rfTxInfMode = 1;
+    }
+    else
+        PKTLEN = (u8) rfTxTotalTXLen;
 
     /* Put radio into tx state */
 #ifdef YARDSTICKONE
