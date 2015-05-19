@@ -422,8 +422,6 @@ void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 #define     DEBUG_CMD_HEX       0xf1
 #define     DEBUG_CMD_HEX16     0xf2
 #define     DEBUG_CMD_HEX32     0xf3
-#define     DEBUG_CMD_INT       0xf4
-
 
 /******************************** TROUBLESHOOTING *****************************************
 #define	EPERM		 1	* Operation not permitted /

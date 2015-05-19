@@ -53,6 +53,8 @@ extern __xdata u32 clock;
 #define LCE_DROPPED_PACKET                      0x12
 #define LCE_RFTX_NEVER_TX                       0x13
 #define LCE_RFTX_NEVER_LEAVE_TX                 0x14
+#define LCE_RF_MODE_INCOMPAT                    0x15
+#define LCE_RF_BLOCKSIZE_INCOMPAT               0x16
 #define LCE_RF_MULTI_BUFFER_NOT_INIT            0x17
 #define LCE_RF_MULTI_BUFFER_NOT_FREE            0x18
 
@@ -63,7 +65,7 @@ extern __xdata u32 clock;
 #define RC_RF_MODE_INCOMPAT                     0xef
 #define RC_RF_BLOCKSIZE_INCOMPAT                0xee
 #define RC_TX_ERROR                             0xed
-
+#define RC_TX_DROPPED_PACKET                    0xec
 
 // USB activities
 #ifdef CHRONOSDONGLE
@@ -76,6 +78,8 @@ extern __xdata u32 clock;
 // USB data buffer
 #define BUFFER_AVAILABLE		0x00
 #define BUFFER_FILLING			0xff
+#define ERR_BUFFER_SIZE_EXCEEDED        -1
+#define ERR_BUFFER_NOT_AVAILABLE        -2
 
 // Checks
 #define IS_XOSC_STABLE()    (SLEEP & SLEEP_XOSC_S)
