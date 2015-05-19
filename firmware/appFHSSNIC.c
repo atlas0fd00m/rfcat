@@ -156,6 +156,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
         if(err)
             {
             debug("MAC_tx() returned error");
+            macdata.mac_state = MAC_STATE_NONHOPPING;
             debughex(err);
             return err;
             }
