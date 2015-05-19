@@ -1148,12 +1148,6 @@ void processOUTEP5(void)
 
 #define handleINEP5()  ep5.flags &= ~EP_INBUF_WRITTEN 
 
-//void handleINEP5(void)
-//{
-//    // change state so the firmware knows that the packet has been picked up and can be overwritten.
-//    ep5.flags &= ~EP_INBUF_WRITTEN;
-//}
-
 void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
     // use this to easily 
 {
