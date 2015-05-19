@@ -592,6 +592,9 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
             // debug
             //LED = !LED;
         }
+        // maintain counter for non-infinite mode
+        else
+            rfTxTotalTXLen--;
         rf_status = RFST_STX;
         // rftxbuf is a pointer, not a static buffer, could be an array
         RFD = rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + rfTxCounter++];
