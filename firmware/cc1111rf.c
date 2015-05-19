@@ -28,7 +28,7 @@ volatile __xdata u16 rfTxRepeatOffset = 0;
 volatile __xdata u16 rfTxTotalTXLen = 0;
 volatile __xdata u8 rfTxInfMode = 0;
 
-extern __xdata u16 txTotal; // debugger
+__xdata u16 txTotal; // debugger to confirm long transmit number of bytes tx'd
 
 // AES
 volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
@@ -43,6 +43,7 @@ volatile __xdata u16 rf_tLastRecv;
 volatile __xdata DMA_DESC rfDMA;
 #endif
 
+__xdata MAC_DATA_t macdata;
 volatile __xdata u8 bRepeatMode = 0;
 
 /*************************************************************************************************
@@ -704,12 +705,6 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         //LED = !LED;
 
         resetRFSTATE();
-
-        //LED = !LED;
-
-        // DEBUGGING::::::  SHOULD BAIL HERE 
-        BLOCK();
-        ////////////////////////////////////
 
         RFIF &= ~RFIF_IRQ_TXUNF;
     }
