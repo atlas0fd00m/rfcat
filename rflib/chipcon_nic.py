@@ -1277,7 +1277,7 @@ class NICxx11(USBDongle):
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
-    def RFxmitLong(self, data, repeat=0, offset=0):
+    def RFxmitLong(self, data):
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
@@ -1286,7 +1286,6 @@ class NICxx11(USBDongle):
 
         # calculate wait time
         waitlen = len(data)
-        waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
 
 
@@ -1328,7 +1327,6 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        #retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HHH",len(chunks[0]),repeat,offset)+chunks[0], wait=1000)
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         sys.stderr.write('=' + repr(retval))
 
