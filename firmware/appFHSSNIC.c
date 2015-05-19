@@ -919,7 +919,6 @@ int appHandleEP5()
                             debughex(g_txMsgQueue[1][0]);
                             lastCode[1] = LCE_DROPPED_PACKET;
                             buf[0] = RC_TX_DROPPED_PACKET;
-                            appReturn( 1, buf);
                             LED = 0;
                             resetRFSTATE();
                             macdata.mac_state = MAC_STATE_NONHOPPING;
