@@ -963,7 +963,6 @@ int appHandleEP5()
                         LED = 0;
                         resetRFSTATE();
                         macdata.mac_state = MAC_STATE_NONHOPPING;
-                        break;
                     }
                     appReturn( 1, buf);
                     break;
