@@ -41,6 +41,7 @@ RF_SUCCESS                      = 0
 RF_MAX_TX_BLOCK                 = 255
 RF_MAX_TX_CHUNK                 = 240 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
                                       # and be divisible by 16 for crypto operations
+RF_MAX_TX_LONG                  = 65535
 RF_MAX_RX_BLOCK                 = 512 # must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 
 APP_NIC =                       0x42
@@ -1268,6 +1269,10 @@ class NICxx11(USBDongle):
     ##### RADIO XMIT/RECV and UTILITY FUNCTIONS #####
     # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
     def RFxmit(self, data, repeat=0, offset=0):
+        if len(data) > 255:
+            if repeat or offset:
+                return PY_TX_BLOCKSIZE_INCOMPAT
+            return self.RFxmitLong(data)
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
@@ -1278,6 +1283,8 @@ class NICxx11(USBDongle):
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
     def RFxmitLong(self, data):
+        if len(data) > RF_MAX_TX_LONG:
+            return PY_TX_BLOCKSIZE_TOO_LARGE
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
@@ -1306,13 +1313,13 @@ class NICxx11(USBDongle):
         chlen = len(chunks)
         for chidx in range(preload, chlen):
             chunk = chunks[chidx]
-            error = RC_ERR_BUFFER_NOT_AVAILABLE
-            while error == RC_ERR_BUFFER_NOT_AVAILABLE:
+            error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
+            while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
-                #if error == ERR_BUFFER_NOT_AVAILABLE:
+                #if error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
