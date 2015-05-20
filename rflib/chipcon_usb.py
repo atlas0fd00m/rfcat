@@ -4,6 +4,7 @@ import usb
 
 import bits
 from chipcondefs import *
+from rflib_defs import *
 from rflib_version import *
 
 DEFAULT_USB_TIMEOUT = 1000
@@ -88,34 +89,6 @@ LC_USB_RESET                  = 0xb
 LC_USB_EP5OUT                 = 0xc
 LC_RF_VECTOR                  = 0x10
 LC_RFTXRX_VECTOR              = 0x11
-
-LCE_NO_ERROR                            = 0x00
-LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN      = 0x1
-LCE_USB_EP0_SENT_STALL                  = 0x4
-LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN    = 0x5
-LCE_USB_EP5_LEN_TOO_BIG                 = 0x6
-LCE_USB_EP5_GOT_CRAP                    = 0x7
-LCE_USB_EP5_STALL                       = 0x8
-LCE_USB_DATA_LEFTOVER_FLAGS             = 0x9
-
-LCE_RF_RXOVF                            = 0x10
-LCE_RF_TXUNF                            = 0x11
-LCE_DROPPED_PACKET                      = 0x12
-LCE_RFTX_NEVER_TX                       = 0x13
-LCE_RFTX_NEVER_LEAVE_TX                 = 0x14
-LCE_RF_MODE_INCOMPAT                    = 0x15
-LCE_RF_BLOCKSIZE_INCOMPAT               = 0x16
-LCE_RF_MULTI_BUFFER_NOT_INIT            = 0x17
-LCE_RF_MULTI_BUFFER_NOT_FREE            = 0x18
-
-RC_NO_ERROR                             = 0x0
-RC_ERR_BUFFER_SIZE_EXCEEDED             = 0xff
-RC_ERR_BUFFER_NOT_AVAILABLE             = 0xfe
-RC_RF_MODE_INCOMPAT                     = 0xef
-RC_RF_BLOCKSIZE_INCOMPAT                = 0xee
-RC_TX_ERROR                             = 0xed
-RC_FAIL_TRANSMIT_LONG                   = 0xffff
-
 
 RCS = {}
 LCS = {}
