@@ -1269,7 +1269,7 @@ class NICxx11(USBDongle):
     ##### RADIO XMIT/RECV and UTILITY FUNCTIONS #####
     # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
     def RFxmit(self, data, repeat=0, offset=0):
-        if len(data) > 255:
+        if len(data) > RF_MAX_TX_BLOCK:
             if repeat or offset:
                 return PY_TX_BLOCKSIZE_INCOMPAT
             return self.RFxmitLong(data)
