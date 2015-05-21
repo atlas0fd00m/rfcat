@@ -46,10 +46,16 @@ __xdata int (*cb_ep0out)(void);
 __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
 
-__code u8 sdccver[] = {
-    'S','D','C','C','v',
-    LE_WORD(SDCC)
-};
+#ifdef SDCC
+  __code u8 sdccver[] = "SDCCv" QUOTE(SDCC);
+#else 
+  #ifdef __SDCC
+    __code u8 sdccver[] = "SDCCv" QUOTE(__SDCC);
+  #else
+    __code u8 sdccver[] = "NON-SDCC";
+  #endif
+#endif
+
 // BUILD_VERSION is passed in -D from Makefile
 __code u8 buildname[] = {
 #ifdef DONSDONGLES
@@ -219,9 +225,9 @@ void usb_init(void)
     USB_RESUME_INT_CLEAR();                 // P0IFG= 0; P0IF= 0
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
-    // set usb interrupt priority to 3
+    // set usb interrupt (group 1) priority to "10" - priority 2
     IP0 |= BIT1;
-    IP1 |= BIT1;
+    IP1 |= 0;
 
 
     // usb dma
@@ -453,7 +459,8 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* ))
 {
     cb_ep0vendor = callback;
 }
@@ -1065,6 +1072,10 @@ void processOUTEP5(void)
                 sleepMillis(200);
                 run_bootloader();
                 break;
+
+            case CMD_COMPILER:
+                txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(sdccver), (__xdata u8*)&sdccver[0]);
+                break;
                 
             case CMD_RFMODE:
                 switch (*ptr++)
@@ -1103,6 +1114,13 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
+            case CMD_CLEAR_CODES:
+                lastCode[0] = 0;
+                lastCode[1] = 0;
+                //txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);   // FIXME: need to reorient all these to return LCE_NO_ERROR unless error.
+                appReturn(2, ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
@@ -1130,11 +1148,12 @@ void processOUTEP5(void)
 
 #define handleINEP5()  ep5.flags &= ~EP_INBUF_WRITTEN 
 
-//void handleINEP5(void)
-//{
-//    // change state so the firmware knows that the packet has been picked up and can be overwritten.
-//    ep5.flags &= ~EP_INBUF_WRITTEN;
-//}
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
+    // use this to easily 
+{
+    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
+    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
+}
 
 void usbProcessEvents(void)
 {
