@@ -708,18 +708,12 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
 
         resetRFSTATE();
 
-        LED = !LED;
-
-        // DEBUGGING::::::  SHOULD BAIL HERE 
-        BLOCK();
-        ////////////////////////////////////
-
         RFIF &= ~RFIF_IRQ_TXUNF;
     }
 }
 
 // move data within a buffer
-void byte_shuffle(__xdata u8* __xdata  buf, u16 len, u16 offset)
+void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset)
 {
     while(len--)
         buf[len + offset] = buf[len];
