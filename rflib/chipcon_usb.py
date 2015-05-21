@@ -4,6 +4,7 @@ import usb
 
 import bits
 from chipcondefs import *
+from rflib_defs import *
 from rflib_version import *
 
 DEFAULT_USB_TIMEOUT = 1000
@@ -56,8 +57,10 @@ SYS_CMD_GET_CLOCK               = 0x85
 SYS_CMD_BUILDTYPE               = 0x86
 SYS_CMD_BOOTLOADER              = 0x87
 SYS_CMD_RFMODE                  = 0x88
+SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
+SYS_CMD_CLEAR_CODES             = 0x90
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
 EP0_CMD_GET_ADDRESS             = 0x01
@@ -87,16 +90,7 @@ LC_USB_EP5OUT                 = 0xc
 LC_RF_VECTOR                  = 0x10
 LC_RFTXRX_VECTOR              = 0x11
 
-LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN    = 0x1
-LCE_USB_EP0_SENT_STALL                = 0x4
-LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN  = 0x5
-LCE_USB_EP5_LEN_TOO_BIG               = 0x6
-LCE_USB_EP5_GOT_CRAP                  = 0x7
-LCE_USB_EP5_STALL                     = 0x8
-LCE_USB_DATA_LEFTOVER_FLAGS           = 0x9
-LCE_RF_RXOVF                          = 0x10
-LCE_RF_TXUNF                          = 0x11
-
+RCS = {}
 LCS = {}
 LCES = {}
 lcls = locals()
@@ -107,6 +101,9 @@ for lcl in lcls.keys():
     if lcl.startswith("LC_"):
         LCS[lcl] = lcls[lcl]
         LCS[lcls[lcl]] = lcl
+    if lcl.startswith("RC_"):
+        RCS[lcl] = lcls[lcl]
+        RCS[lcls[lcl]] = lcl
 
 CHIPS = {
     0x91: "CC2511",
@@ -338,55 +335,6 @@ class USBDongle:
                 self.xmit_event.set()
                 self.xsema.release()
                 if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-        '''
-        drain = buf[:self._usbmaxo]
-        buf = buf[self._usbmaxo:]
-        if len(buf):
-            if self._debug: print >>sys.stderr,"requeuing '%s'" % repr(buf)
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, buf)
-            self.xsema.release()
-            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-        try:
-            self._do.bulkWrite(5, drain, timeout)
-        except Exception, e:
-            if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, drain)
-            self.xsema.release()
-            if self._debug: print >>sys.stderr, repr(self.xmit_queue)
-
-        ---
-        while (len(buf)>0):
-            drain = buf[:self._usbmaxo]
-            buf = buf[self._usbmaxo:]
-
-            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            self._do.bulkWrite(5, drain, timeout)
-            time.sleep(1)
-        ---
-        if (len(buf) > self._usbmaxo):
-            drain = buf[:self._usbmaxo]
-            buf = buf[self._usbmaxo:]
-            self.xsema.acquire()
-            msg = self.xmit_queue.insert(0, buf)
-            self.xsema.release()
-        else:
-            drain = buf[:]
-        if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-        self._do.bulkWrite(5, drain, timeout)
-        ---
-        while (len(buf)>0):
-            if (len(buf) > self._usbmaxo):
-                drain = buf[:self._usbmaxo]
-                buf = buf[self._usbmaxo:]
-            else:
-                drain = buf[:]
-            if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
-            self._do.bulkWrite(5, drain, timeout)
-            time.sleep(1)
-        '''
         
     def _recvEP5(self, timeout=100):
         retary = ["%c"%x for x in self._do.bulkRead(0x85, 500, timeout)]
@@ -488,15 +436,13 @@ class USBDongle:
                                         print >>sys.stderr,("DEBUG: (%.3f) %s" % (timestamp, repr(printbuf)))
                             elif (cmd == DEBUG_CMD_HEX):
                                 #print >>sys.stderr, repr(buf)
-                                print >>sys.stderr, "DEBUG: (%.3f) %x"%(timestamp, struct.unpack("B", buf[4:5])[0])
+                                print >>sys.stderr, "DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("B", buf[4:5])[0], struct.unpack("B", buf[4:5])[0])
                             elif (cmd == DEBUG_CMD_HEX16):
                                 #print >>sys.stderr, repr(buf)
-                                print >>sys.stderr, "DEBUG: (%.3f) %x"%(timestamp, struct.unpack("<H", buf[4:6])[0])
+                                print >>sys.stderr, "DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("<H", buf[4:6])[0], struct.unpack("<H", buf[4:6])[0])
                             elif (cmd == DEBUG_CMD_HEX32):
                                 #print >>sys.stderr, repr(buf)
-                                print >>sys.stderr, "DEBUG: (%.3f) %x"%(timestamp, struct.unpack("<L", buf[4:8])[0])
-                            elif (cmd == DEBUG_CMD_INT):
-                                print >>sys.stderr, "DEBUG: (%.3f) %d"%(timestamp, struct.unpack("<L", buf[4:8])[0])
+                                print >>sys.stderr, "DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("<L", buf[4:8])[0], struct.unpack("<L", buf[4:8])[0])
                             else:
                                 print >>sys.stderr,('DEBUG COMMAND UNKNOWN: %x (buf=%s)'%(cmd,repr(buf)))
 
@@ -731,12 +677,24 @@ class USBDongle:
         if self._debug: print "Sent Msg",msg.encode("hex")
         return self.recv(app, cmd, wait)
 
+    def reprDebugCodes(self, timeout=100):
+        codes = self.getDebugCodes(timeout)
+        if (codes != None and len(codes) == 2):
+            rc1 = LCS.get(codes[0])
+            rc2 = LCES.get(codes[0])
+            return 'last position: %s\nlast error: %s' % (rc1, rc2)
+        return codes
+
     def getDebugCodes(self, timeout=100):
         x = self._recvEP0(request=EP0_CMD_GET_DEBUG_CODES, timeout=timeout)
         if (x != None and len(x)==2):
             return struct.unpack("BB", x)
         else:
             return x
+
+    def clearDebugCodes(self):
+        retval = self.send(APP_SYSTEM, SYS_CMD_CLEAR_CODES, "  ", 1000)
+        return LCES.get(retval)
 
     def ep0GetAddr(self):
         addr = self._recvEP0(request=EP0_CMD_GET_ADDRESS)
@@ -859,6 +817,10 @@ class USBDongle:
         r, t = self.send(APP_SYSTEM, SYS_CMD_BUILDTYPE, '')
         return r
             
+    def getCompilerInfo(self):
+        r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, '')
+        return r
+            
     def getInterruptRegisters(self):
         regs = {}
         # IEN0,1,2
@@ -888,12 +850,17 @@ class USBDongle:
     def reprHardwareConfig(self):
         output= []
 
-        hardware= self.getBuildInfo()
+        hardware = self.getBuildInfo()
         output.append("Dongle:              %s" % hardware.split(' ')[0])
         try:
             output.append("Firmware rev:        %s" % hardware.split('r')[1])
         except:
             output.append("Firmware rev:        Not found! Update needed!")
+        try:
+            compiler = self.getCompilerInfo()
+            output.append("Compiler:            %s" % compiler)
+        except:
+            output.append("Compiler:            Not found! Update needed!")
         # see if we have a bootloader by loooking for it's recognition semaphores
         # in SFR I2SCLKF0 & I2SCLKF1
         if(self.peek(0xDF46,1) == '\xF0' and self.peek(0xDF47,1) == '\x0D'):
