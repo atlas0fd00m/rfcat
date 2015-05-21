@@ -371,7 +371,7 @@ extern __xdata u16  ep0value;
 
 // provided by cc1111usb.c
 void clock_init(void);
-int txdata(u8 app, u8 cmd, u16 len, __xdata u8* __xdata  dataptr);
+int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
 int setup_send_ep0(u8* __xdata  payload, u16 length);
 int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length);
 u16 usb_recv_ep0OUT();
@@ -386,7 +386,8 @@ void usbProcessEvents(void);
 
 void registerCb_ep0OutDone(int (*callback)(void));
 void registerCb_ep0Out(int (*callback)(void));
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*  pReq));
 void registerCb_ep5(int (*callback)(void));
 
 

@@ -206,7 +206,7 @@ int waitRSSI()
  * FAIL on args - return EFAIL_ARGS_FUKT
  */
 
-u8 transmit(__xdata u8* __xdata  buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
+u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
 {
     __xdata u16 countdown;
     __xdata u8 encoffset= 0;
@@ -698,7 +698,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
 }
 
 // move data within a buffer
-void byte_shuffle(__xdata u8* __xdata  buf, u16 len, u16 offset)
+void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset)
 {
     while(len--)
         buf[len + offset] = buf[len];

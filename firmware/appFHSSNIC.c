@@ -67,7 +67,7 @@ int appHandleEP5();
 
 /**************************** PHY LAYER *****************************/
 
-void PHY_set_channel(u16 chan)
+void PHY_set_channel(__xdata u16 chan)
 {
     // set mode IDLE
     RFOFF;
@@ -304,7 +304,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 r
     //return 0;
 }
 
-__xdata u8 MAC_tx(__xdata u8* msg, __xdata u8 len)
+__xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
 {
     // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
     // queue data for sending at subsequent time slots.
@@ -406,7 +406,7 @@ void MAC_do_Master_scanny_thingy()
 }
 
 
-void MAC_set_chanidx(u16 chanidx)
+void MAC_set_chanidx(__xdata u16 chanidx)
 {
     PHY_set_channel( g_Channels[ chanidx ] );
 }
@@ -418,7 +418,7 @@ void MAC_set_NIC_ID(__xdata u16 NIC_ID)
     g_NIC_ID = NIC_ID;
 }
 
-void MAC_rx_handle(__xdata u8 len, __xdata u8* message)
+void MAC_rx_handle(__xdata u8 len, __xdata u8* __xdata message)
 {
     len;
     message;
