@@ -43,7 +43,7 @@ __data u8 usbdmachan, usbdmaarm;
 
 __xdata int (*cb_ep0outdone)(void);
 __xdata int (*cb_ep0out)(void);
-__xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
+__xdata int (*cb_ep0vendor)(USB_Setup_Header*);
 __xdata int (*cb_ep5)(void);
 
 __code u8 sdccver[] = {
@@ -453,7 +453,7 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* ))
 {
     cb_ep0vendor = callback;
 }
