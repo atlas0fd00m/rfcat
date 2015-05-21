@@ -79,6 +79,7 @@ extern volatile __xdata u16 rf_tLastRecv;
 // AES
 extern volatile __xdata u8 rfAESMode;
 
+extern __xdata u16 txTotal; // debugger
 extern volatile u8 rfif;
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
@@ -122,4 +123,25 @@ void appInitRf(void);       // in application.c  (provided by the application an
 void init_RF(void);
 void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset);
 void startRX(void);
+void resetRFSTATE(void);
+
+typedef struct MAC_DATA_s 
+{
+    u8 mac_state;
+    // MAC parameters (FIXME: make this all cc1111fhssmac.c/h?)
+    u16 MAC_threshold;              // when the T2 clock as overflowed this many times, change channel
+    u16 MAC_timer;                  // this tracks how many times it's overflowed (really?  32-bits for these two?!?)
+    u16 NumChannels;                // in case of multiple paths through the available channels 
+    u16 NumChannelHops;             // total number of channels in pattern (>= g_MaxChannels)
+    u16 curChanIdx;                 // indicates current channel index of the hopping pattern
+    u16 tLastStateChange;
+    u16 tLastHop;
+    u16 desperatelySeeking;         // this should be unnecessary, and should instead use mac_state?
+    u8  txMsgIdx;
+    u8  txMsgIdxDone;
+    u16 synched_chans;
+} MAC_DATA_t;
+
+extern __xdata MAC_DATA_t macdata;
+
 #endif
