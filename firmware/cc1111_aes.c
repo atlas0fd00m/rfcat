@@ -35,6 +35,10 @@ void initAES(void)
     aesdmao->trig = DMA_CFG0_TRIGGER_DNC_UP;  // trigger when co-processor signals upload ready
     aesdmao->destInc = 1;
     aesdmao->priority = 1;
+
+    // set interrupt priority for group 4 to "11" (3 - highest)
+    IP0 |= BIT4;
+    IP1 |= BIT4;
 }
 
 // set the AES 128 bit key or IV
@@ -58,8 +62,8 @@ void setAES(__xdata u8* __xdata buf, __xdata u8 command, __xdata u8 mode)
         ;
 }
 
-// pad a buffer to multiple of 128 bits. caller must ensure
-// enough space exists in buffer.
+// pad a buffer to multiple of 16 bytes. caller must ensure
+// enough space exists in buffer. returns new length.
 __xdata u16 padAES(__xdata u8* __xdata buf, __xdata u16 len)
 {
     while(len % 16)
