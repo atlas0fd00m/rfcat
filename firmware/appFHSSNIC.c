@@ -169,7 +169,7 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
     }
 
     // configure for infinitemode if required
-    if(rfTxTotalTXLen > 255)
+    if(rfTxTotalTXLen > RF_MAX_TX_BLOCK)
     {
         PKTLEN = (u8) (rfTxTotalTXLen % 256);
         PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
@@ -177,7 +177,10 @@ __xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 bl
         rfTxInfMode = 1;
     }
     else
+    {
         PKTLEN = (u8) rfTxTotalTXLen;
+        rfTxInfMode = 0;
+    }
 
     /* Put radio into tx state */
 #ifdef YARDSTICKONE
@@ -821,13 +824,17 @@ int appHandleEP5()
                         break;
                     }
                     len = buf[0];
-                    len += (buf[1]) << 8;
+                    len += buf[1] << 8;
                     repeat = buf[2];
-                    repeat += (buf[3]) << 8;
+                    repeat += buf[3] << 8;
                     offset = buf[4];
-                    offset += (buf[5]) << 8;
-                    transmit(&buf[6], len, repeat, offset);
-                    appReturn( 1, (__xdata u8*)&len);
+                    offset += buf[5] << 8;
+                    txTotal= 0;
+                    buf[0] = transmit(&buf[6], len, 0, offset);
+                    appReturn( 1, buf);
+                    debug("NIC_XMIT: done");
+                    debughex16(txTotal);
+                    debughex16(rfTxTotalTXLen);
                     break;
 
                 case NIC_SET_RECV_LARGE:
@@ -835,8 +842,8 @@ int appHandleEP5()
                     
                     // configure large block receive (infinite mode)
                     // call with block size of 0 to switch off
-                    rfRxLargeLen = *buf++;
-                    rfRxLargeLen += (*buf++) << 8;
+                    rfRxLargeLen = buf[0];
+                    rfRxLargeLen += buf[1] << 8;
                     if(rfRxLargeLen)
                     {
                         rfRxInfMode = 1;
@@ -862,7 +869,7 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_AES_MODE:
-                    rfAESMode= *buf;
+                    rfAESMode= buf[0];
                     appReturn( 1, buf);
                     break;
 
@@ -882,7 +889,7 @@ int appHandleEP5()
 
                 case NIC_SET_ID:
                     // fixme: sending 8 bit to 16 bit function???
-                    MAC_set_NIC_ID(*buf);
+                    MAC_set_NIC_ID(buf[0]);
                     appReturn( 1, buf);
                     break;
 
@@ -899,7 +906,7 @@ int appHandleEP5()
                         break;
                     }
                     len = buf[0];
-                    len += (buf[1]) << 8;
+                    len += buf[1] << 8;
                     blocks = buf[2];
                     txTotal= 0;
                     buf[0] = transmit_long(&buf[3], len, blocks);
@@ -973,7 +980,7 @@ int appHandleEP5()
                     break;
 
                 case FHSS_XMIT:
-                    len = *buf++;
+                    len = buf[0];
                     //len += (*buf++) << 8;
                     //repeat = *buf++;
                     //repeat += (*buf++) << 8;
@@ -997,7 +1004,7 @@ int appHandleEP5()
                     }
 
                     g_txMsgQueue[macdata.txMsgIdx][0] = len;
-                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], &buf[1], len);
 
                     if (++macdata.txMsgIdx >= MAX_TX_MSGS)
                     {
@@ -1008,11 +1015,11 @@ int appHandleEP5()
                     break;
                     
                 case FHSS_SET_CHANNELS:
-                    macdata.NumChannels = (__xdata u16)*buf;
+                    macdata.NumChannels = (__xdata u16)buf[0];
                     if (macdata.NumChannels <= MAX_CHANNELS)
                     {
-                        buf += 2;
-                        memcpy(&g_Channels[0], buf, macdata.NumChannels);
+                        //buf += 2;
+                        memcpy(&g_Channels[0], &buf[2], macdata.NumChannels);
                         appReturn( 2, (u8*)&macdata.NumChannels);
                     } else {
                         appReturn( 8, (__xdata u8*)"NO DEAL");
@@ -1029,7 +1036,7 @@ int appHandleEP5()
                     break;
 
                 case FHSS_CHANGE_CHANNEL:
-                    PHY_set_channel(*buf);
+                    PHY_set_channel(buf[0]);
                     appReturn( 1, buf);
                     break;
 
@@ -1045,7 +1052,7 @@ int appHandleEP5()
 
                 // FIXME: do we even need g_MAC_threshold anymore?
                 case FHSS_SET_MAC_THRESHOLD:
-                    macdata.MAC_threshold = *buf;
+                    macdata.MAC_threshold = buf[0];
                     appReturn( 1, buf);
                     break;
 
@@ -1055,7 +1062,7 @@ int appHandleEP5()
 
                 case FHSS_SET_MAC_DATA:
                     debugx(buf);
-                    debughex(*buf);
+                    debughex(buf[0]);
                     memcpy((__xdata u8*)&macdata, (__xdata u8*)*buf, sizeof(macdata));
                     appReturn( sizeof(macdata), buf);
                     break;
@@ -1066,14 +1073,14 @@ int appHandleEP5()
                     break;
 
                 case FHSS_START_SYNC:
-                    MAC_sync(*buf);
+                    MAC_sync(buf[0]);
                     appReturn( 1, buf);
                     break;
                     
                 case FHSS_SET_STATE:
                     // store the main timer value for beginning of this phase.
                     macdata.tLastStateChange = clock;
-                    macdata.mac_state = (u8)*buf;
+                    macdata.mac_state = (u8)buf[0];
                     
                     // if macdata.mac_state is > 2, make sure the T2 interrupt is set
                     // if macdata.mac_state <= 2, make sure T2 interrupt is ignored
@@ -1351,6 +1358,7 @@ void main (void)
     {  
         usbProcessEvents();
         appMainLoop();
+        
     }
 
 }
