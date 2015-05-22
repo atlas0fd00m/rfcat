@@ -1358,7 +1358,6 @@ void main (void)
     {  
         usbProcessEvents();
         appMainLoop();
-        
     }
 
 }
