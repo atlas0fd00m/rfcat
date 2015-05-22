@@ -211,11 +211,12 @@ int waitRSSI()
 u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0;
-    __xdata u8 original_pktlen= PKTLEN;
+    __xdata u8 encoffset = 0;
+    __xdata u8 original_pktlen = PKTLEN;
 
     while (MARCSTATE == MARC_STATE_TX)
     {
+        sleepMillis(40);
             //LED = !LED;
     }
     // Leave LED in a known state (off)
@@ -262,20 +263,23 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
                 buf[0] = (u8) len;
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
-                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
+                // if we're repeating we need to implement 'infinite' mode
                 // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
                 // note that repeat length of 0xFF means 'forever'
-                if(repeat || len > RF_MAX_TX_BLOCK)
+                if(repeat)
                 {
                     // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
                     // ISR will trigger exit once rfTxTotalTXLen < 256
                     PKTLEN = (u8) (rfTxTotalTXLen % 256);
                     PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    // only set radio into infinite mode if we need more than max
+                    if(rfTxTotalTXLen > RF_MAX_TX_BLOCK)
+                        PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    // but we still need logical infinite mode either way
                     rfTxInfMode = 1;
                 }
                 else
-                    PKTLEN= len;
+                    PKTLEN = len;
                 break;
             default:
                 break;
@@ -362,7 +366,7 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
     //} while(!waitRSSI() && uiRSSITries);
 
     //if(uiRSSITries)
-    {
+    //{
 #ifdef RFDMA
         {
             /* Arm DMA channel */
@@ -397,6 +401,7 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
         while (MARCSTATE == MARC_STATE_TX)
         {
+            sleepMillis(40);
             //LED = !LED;
         }
 
@@ -406,8 +411,8 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         // reset PKTLEN as we may have messed with it
         PKTLEN = original_pktlen;
 
-        return 1;
-    }
+        return RC_NO_ERROR;
+    //}
     //return 0;
 }
 
@@ -566,7 +571,6 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
 
                     if (++rfTxCurBufIdx == rfTxBufCount)
                     {
-                        //debug("resetting idx");
                         rfTxCurBufIdx = 0;
                     }
 
@@ -586,7 +590,6 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
             // radio to leave infinite mode?
             if(rfTxTotalTXLen-- == 255)
             {
-                //debughex16(txTotal);
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
             }
             // debug
