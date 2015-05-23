@@ -1269,25 +1269,28 @@ class NICxx11(USBDongle):
     ##### RADIO XMIT/RECV and UTILITY FUNCTIONS #####
     # set repeat & offset to optionally repeat tx of a section of the data block. repeat of 65535 means 'forever'
     def RFxmit(self, data, repeat=0, offset=0):
-        if len(data) > RF_MAX_TX_BLOCK:
-            if repeat or offset:
-                return PY_TX_BLOCKSIZE_INCOMPAT
-            return self.RFxmitLong(data)
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
+
+        if len(data) > RF_MAX_TX_BLOCK:
+            if repeat or offset:
+                return PY_TX_BLOCKSIZE_INCOMPAT
+            return self.RFxmitLong(data, doencoding=False)
+
         # calculate wait time
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
-    def RFxmitLong(self, data):
+    def RFxmitLong(self, data, doencoding=True):
+        # encode, if necessary
+        if self.endec is not None and doencoding:
+            data = self.endec.encode(data)
+
         if len(data) > RF_MAX_TX_LONG:
             return PY_TX_BLOCKSIZE_TOO_LARGE
-        # encode, if necessary
-        if self.endec is not None:
-            data = self.endec.encode(data)
 
         datalen = len(data)
 
@@ -1347,7 +1350,10 @@ class NICxx11(USBDongle):
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
         if self.endec is not None:
-            data = self.endec.decode(data)
+            # strip off timestamp, process data, then reapply timestamp to continue
+            msg, ts = data
+            msg = self.endec.decode(msg)
+            data = msg, ts
 
         return data
 
