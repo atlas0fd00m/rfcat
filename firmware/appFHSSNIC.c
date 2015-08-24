@@ -451,6 +451,7 @@ void appMainLoop(void)
             for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
+                RFOFF;
                 RFRX;
                 sleepMillis(2);
 
@@ -693,6 +694,16 @@ int appHandleEP5()
                 case NIC_SET_AES_KEY:
                     setAES(buf, ENCCS_CMD_LDKEY, (rfAESMode & AES_CRYPTO_MODE));
                     appReturn( 16, buf);
+                    break;
+
+                case NIC_SET_AMP_MODE:
+                    rfAmpMode= *buf;
+                    rfAmpMode &= 1;
+                    appReturn( 1, buf);
+                    break;
+
+                case NIC_GET_AMP_MODE:
+                    appReturn( 1, (__xdata u8*) &rfAmpMode);
                     break;
 
                 case NIC_SET_ID:

@@ -53,6 +53,8 @@ NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
 NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
+NIC_SET_AMP_MODE =              0xA
+NIC_GET_AMP_MODE =              0xB
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -1252,6 +1254,17 @@ class NICxx11(USBDongle):
         set the AES key. this will persist until the next reboot. key must be 128 bits.
         '''
         return self.send(APP_NIC, NIC_SET_AES_KEY, key)
+
+    def setAmpMode(self, ampmode=0):
+        '''
+        set the amplifier mode (RF amp external to CC1111)
+        '''
+        return self.send(APP_NIC, NIC_SET_AMP_MODE, "%c"%ampmode)
+    def getAmpMode(self):
+        '''
+        get the amplifier mode (RF amp external to CC1111)
+        '''
+        return self.send(APP_NIC, NIC_GET_AMP_MODE, "")
 
     def setPktAddr(self, addr):
         return self.poke(ADDR, chr(addr))
