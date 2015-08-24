@@ -13,9 +13,14 @@ the goals of the project are to reduce the time for security researchers to crea
 
 == REQUIREMENTS ==
 RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff".
+
 Other requirements:
 * python usb
 * libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
+
+Build Requirements:
+* Make
+* SDCC (code is kept up-to-date with the current Ubuntu release, as of this writing: 3.4.0+dfsg-2ubuntu1)
 
 == DEVELOPMENT ==
 new development efforts should copy the "application.c" file to "appWhateverMyToolIs.c" and attempt to avoid making changes to other files in the repo if at all possible.  that is only a recommendation, because future bug-fixes in other libraries/headers will go much more smoothely for you.
