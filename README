@@ -161,9 +161,12 @@ bootloader when required. If you haven't done this step already (see above), the
   sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
   sudo udevadm control --reload-rules
 
+Next, your user must have read/write access to the dongle when it shows up to the operating system.  
+For most Linux distros, this means you have to be a member of the "dialout" group.
+
 To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
 
-(install 'bootload.py' from the CC-Bootloader subdirectory to somewhere on your execution path)
+(install 'rfcat_bootloader' from the CC-Bootloader subdirectory to somewhere on your execution path)
 
 cd firmware
 
