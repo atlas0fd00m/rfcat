@@ -29,6 +29,9 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
 //volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
 
+// amplifier external to CC1111
+volatile __xdata u8 rfAmpMode = 0;
+
 u8 rfif;
 volatile __xdata u8 rf_status;
 volatile __xdata u16 rf_MAC_timer;
