@@ -1390,6 +1390,10 @@ class NICxx11(USBDongle):
                 yhex = y.encode('hex')
 
                 print "(%5.3f) Received:  %s" % (t, yhex)
+                mchdata = rfbits.findManchester(y, 10):
+                if mchdata != None:
+                    print "Manchester Encoded: %s" % mchdata.encode('hex')
+
                 if RegExpSearch is not None:
                     ynext = y
                     for loop in range(8):

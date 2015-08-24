@@ -624,3 +624,52 @@ def manchester_encode(data, hilo=1):
 
         out.append(struct.pack(">H", obyte))
     return ''.join(out)
+
+def findManchesterData(data, hilo=1):
+    poss = []
+
+    for x in range(8):
+        try:
+            newdata = shiftString(data, x)
+            thing = manchester_decode(x, newdata)
+            poss.append(thing)
+        except:
+            pass
+
+def findManchester(data, minbytes=10):
+    success = []
+
+    last = 0
+    last2 = 0
+    lastCount = 0
+    minbits = minbytes * 8
+
+    for bidx in len(data):
+        byt = data[bidx]
+        for btidx in range(0, 8, 2):
+            # compare every other bits
+            bit = (byt>>(8-btidx)) & 1
+
+            if (bit + last + last2) in (1,2):
+                lastCount += 1
+            else:
+                # we're done, or not started
+                if lastCount >= minbits:
+                    lenbytes = (lastCount / 8)
+                    lenbits = lastCount % 8
+                    startbyte = bidx - lenbytes
+                    if lenbits > btidx:
+                        startbyte += 1
+                        lenbits -= 8
+                    startbit = btidx - lenbits
+
+                    stopbyte = startbyte + lenbytes + (0,1)[lenbits>0]
+                    bytez = data[startbyte:stopbyte]
+
+                    success.append((bidx, startbyte, startbit, bytez))
+                lastCount = 0
+            # cycle through
+            last2 = last
+            last = bit
+    return success
+
