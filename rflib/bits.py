@@ -644,8 +644,8 @@ def findManchester(data, minbytes=10):
     lastCount = 0
     minbits = minbytes * 8
 
-    for bidx in len(data):
-        byt = data[bidx]
+    for bidx in range(len(data)):
+        byt = ord(data[bidx])
         for btidx in range(0, 8, 2):
             # compare every other bits
             bit = (byt>>(8-btidx)) & 1
