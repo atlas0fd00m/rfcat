@@ -18,7 +18,7 @@ libsimme =
 libsidongle  = $(libsimme) immeusb.rel immeusbdebug.rel chipcon_dma.rel
 
 
-all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader
+all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader RfCatSRF RfCatSRFCCBootloader
 	make clean immeSniff
 
 donfw: 	RfCatDons
@@ -47,6 +47,8 @@ RfCatDons24: 				clean RfCatDons24.hex
 RfCatDons24CCBootloader: 	clean RfCatDons24CCBootloader.hex
 RfCatYS1: 					clean RfCatYS1.hex
 RfCatYS1CCBootloader: 		clean RfCatYS1CCBootloader.hex
+RfCatSRF: 			clean RfCatSRF.hex
+RfCatSRFCCBootloader:		clean RfCatSRFCCBootloader.hex
 immeSniff: 					clean immeSniff.hex
 
 RfCatChronos.hex: DEFINES = -DCHRONOSDONGLE -DCC1111 -DUSBDEVICE
@@ -97,6 +99,17 @@ RfCatYS1CCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
 	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
 	packihx <appFHSSNIC.ihx >bins/RfCatYS1CCBootloader.hex
 
+RfCatSRF.hex: DEFINES = -DSRFSTICK -DCC1111 -DUSBDEVICE -DBOOTLOADER_SIZE=$(BOOTLOADER_SIZE)
+RfCatSRF.hex: $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatSRF.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatSRF.hex
+
+RfCatSRFCCBootloader.hex: DEFINES = -DSRFSTICK -DCC1111 -DUSBDEVICE
+RfCatSRFCCBootloader.hex: appFHSSNIC.c $(libsusb) $(apps1111)
+	@printf "\n\n==RfCatSRFCCBootloader.hex building==\n"
+	sdcc $(CFLAGS) $(LFLAGS) $(LDFLAGS_FLASH) appFHSSNIC.c $(libsusb) $(apps1111) $(DEFINES)
+	packihx <appFHSSNIC.ihx >bins/RfCatSRFCCBootloader.hex
 
 immeSniff.hex: DEFINES = -DIMME
 immeSniff.hex: $(libsimme) $(appsimme)

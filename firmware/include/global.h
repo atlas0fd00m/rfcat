@@ -74,6 +74,8 @@ extern __xdata u32 clock;
 // USB activities
 #ifdef CHRONOSDONGLE
     #define USB_ENABLE_PIN              P1_1
+##elif defined SRFSTICK
+    #define USB_ENABLE_PIN              P2_0
 #else
     #define USB_ENABLE_PIN              P1_0
 #endif
@@ -156,6 +158,12 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR;
         #define TX_AMP_EN     P2_0
         #define RX_AMP_EN     P2_4
         #define AMP_BYPASS_EN P2_3
+
+    #elif defined SRFSTICK
+        #define LED1          P1_5
+        #define LED2          P1_6
+        #define LED3          P1_7
+        #define LED_GREEN     P1_7
 
     #elif defined CHRONOSDONGLE
         // CC1111 USB Chronos watch dongle - 24mhz

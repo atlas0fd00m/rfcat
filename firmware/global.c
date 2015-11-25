@@ -185,6 +185,16 @@ void io_init(void)
     RX_AMP_EN = 0;
     AMP_BYPASS_EN = 1;
 
+ #elif defined SRFSTICK
+    // LEDs
+    P1DIR |= (1<<7)|(1<<6)|(1<<5);
+    LED1 = 0;
+    LED2 = 0;
+    LED3 = 0;
+    // USB enable
+    P2DIR |= (1<<0);
+    P2SEL &= ~(1<<0);
+
  #else
     // CC1111 USB (ala Chronos watch dongle), we just need LED
     P1DIR |= 3;
