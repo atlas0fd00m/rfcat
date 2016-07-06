@@ -1,0 +1,12 @@
+# legacy RfCats and cc1111usb
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="0451" ATTRS{idProduct}=="4715" MODE:="0660" SYMLINK+="RFCAT%n", GROUP="dialout"
+
+# modern RfCats
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6047" MODE:="0660" SYMLINK+="RFCAT%n", GROUP="dialout"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6048" MODE:="0660" SYMLINK+="RFCAT%n", GROUP="dialout"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="605b" MODE:="0660" SYMLINK+="RFCAT%n", GROUP="dialout"
+
+# RfCat bootloader subsystem (uses it's own product id)
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="6049" SYMLINK+="RFCAT_BL_C" ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="604a" SYMLINK+="RFCAT_BL_D" ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEMS=="usb" ATTRS{idVendor}=="1d50" ATTRS{idProduct}=="605c" SYMLINK+="RFCAT_BL_YS1" ENV{ID_MM_DEVICE_IGNORE}="1"
