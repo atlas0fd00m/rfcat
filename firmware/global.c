@@ -127,7 +127,7 @@ void clock_init(void)
 
 
 /* initialize the IO subsystems for the appropriate dongles */
-static void io_init(void)
+void io_init(void)
 {
 #ifdef IMME
     
