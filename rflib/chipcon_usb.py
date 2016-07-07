@@ -423,7 +423,9 @@ class USBDongle:
             #### transmit stuff.  if any exists in the xmit_queue
             self.xmit_event.wait() # event driven xmit
             msgsent = False
+
             try:
+                #self._do.clearHalt(5)
                 if len(self.xmit_queue):
                     self.xsema.acquire()
 

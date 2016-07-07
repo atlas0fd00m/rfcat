@@ -273,7 +273,9 @@ void usb_init(void)
     USBMAXI  = (EP5IN_MAX_PACKET_SIZE+7)>>3;    // these registers live in incrememnts of 8 bytes.  
     USBMAXO  = (EP5OUT_MAX_PACKET_SIZE+7)>>3;   // these registers live in incrememnts of 8 bytes.  
     //USBCSOH |= USBCSOH_AUTOCLEAR;               // when we drain the FIFO, automagically tell host
-    USBCSIH |= USBCSIH_AUTOSET;                 // when the buffer is full, automagically tell host
+    //USBCSIH |= USBCSIH_AUTOSET;                 // when the buffer is full, automagically tell host
+    USBCSIH |= USBCSIH_IN_DBL_BUF;
+    USBCSOH |= USBCSOH_OUT_DBL_BUF;
     ep5.epstatus   =  EP_STATE_IDLE;       // this tracks the status of our endpoint 5
     ep5.flags      =  0;
     ep5.INbytesleft=  0;
