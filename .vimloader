@@ -1,0 +1,23 @@
+:tabnew ./firmware/appFHSSNIC.c
+:tabnew ./firmware/cc1111rf.c
+:tabnew ./firmware/global.c
+:tabnew ./firmware/chipcon_usb.c
+:tabnew ./firmware/cc1111_vcom.c
+:tabnew ./firmware/cc1111_vcomdesc.c
+:tabnew ./firmware/include/global.h
+:tabnew ./firmware/include/chipcon_usb.h
+:tabnew ./firmware/include/nic.h
+:tabnew ./firmware/include/FHSS.h
+:tabnew ./firmware/include/cc1111.h
+:tabnew ./firmware/include/cc1111rf.h
+:tabnew ./firmware/include/cc1110-ext.h
+:tabnew ./firmware/include/cc1111_vcom.h
+:tabnew ./rfcat
+:tabnew ./rfcat_server
+:tabnew ./rflib/__init__.py
+:tabnew ./rflib/chipcon_nic.py
+:tabnew ./rflib/cc1111client.py
+:tabnew ./rflib/cc111Xhparser.py
+:tabnew ./rflib/chipcondefs.py
+:tabnext
+:q
