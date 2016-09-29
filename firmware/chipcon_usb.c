@@ -498,13 +498,14 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
         if (descType == wantedType)
         {
 #ifdef BOOTLOADER_SIZE
-            tmpdesc = BOOTLOADER_SIZE;
+            tmpdesc = (__xdata u8*)BOOTLOADER_SIZE;
             if (wantedType == USB_DESC_STRING 
                     && index == USB_SERIAL_STRIDX_BYTE
                     && *((__xdata u32*)(tmpdesc-32)) == 0x73616c40) //@las
             {
                 descPtr = (__xdata u8*)(tmpdesc-28);
                 descType = 0xff;
+                index = 0;
                 break;
             }
             else
