@@ -34,6 +34,10 @@ extern __xdata u32 clock;
 
 #define LC_RF_VECTOR                    0x10
 #define LC_RFTXRX_VECTOR                0x11
+#define LC_TXDATA_START                 0x12
+#define LC_TXDATA_COMPLETED_FRAME       0x13
+#define LC_TXDATA_COMPLETED_MESSAGE     0x14
+
 
 #define LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN      0x1
 #define LCE_USB_EP0_SENT_STALL                  0x4
