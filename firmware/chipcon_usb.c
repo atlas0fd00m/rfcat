@@ -112,6 +112,8 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
     u8 firsttime=1;
     USBINDEX=5;
 
+    lastCode[0] = LC_TXDATA_START;
+
     while (len>0)
     {
         // if we do this in the loop, for some reason ep5.flags never clears between frames.  
@@ -127,12 +129,12 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
         }
         //LED = 0;    //FIXME: DEBUG
         
-        // if USB is still not ready... fail.  this should only happen when the USB is disconnected anyway <crosses fingers>
-        if (!loop)
-        {
-            blink(1000, 1000);
-            return -1;
-        }
+        //// if USB is still not ready... fail.  this should only happen when the USB is disconnected anyway <crosses fingers>
+        //if (!loop)
+        //{
+        //    blink(1000, 1000);
+        //    return -1;
+        //}
         
         // first time through, we send the header.    
         if (firsttime==1)
@@ -174,12 +176,13 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
         
         USBINDEX=5;
         USBCSIL |= USBCSIL_INPKT_RDY;
-        //ep5.flags |= EP_INBUF_WRITTEN;                         // set the 'written' flag
 
         len -= loop;
         dataptr += loop;
+        lastCode[0] = LC_TXDATA_COMPLETED_FRAME;
 
     }
+    lastCode[0] = LC_TXDATA_COMPLETED_MESSAGE;
     return(0);
 }
 
