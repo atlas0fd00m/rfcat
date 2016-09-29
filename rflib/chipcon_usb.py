@@ -330,7 +330,9 @@ class USBDongle:
 
             if self._debug: print >>sys.stderr,"XMIT:"+repr(drain)
             try:
-                self._do.bulkWrite(5, drain, timeout)
+                numwrt = self._do.bulkWrite(5, drain, timeout)
+                if numwrt != len(drain):
+                    raise Exception("Didn't write all the data!? Sent: %d != Queued: %d.  REqueuing!(this may be the wrong thing to do, swat me if so)" % (numwrt, len(drain)))
             except Exception, e:
                 if self._debug: print >>sys.stderr,"requeuing on error '%s' (%s)" % (repr(drain), e)
                 self.xsema.acquire()
