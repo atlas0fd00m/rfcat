@@ -427,7 +427,7 @@ class USBDongle:
             msgsent = False
 
             try:
-                self._do.clearHalt(5)
+                #self._do.clearHalt(5)
                 if len(self.xmit_queue):
                     self.xsema.acquire()
 
