@@ -146,6 +146,9 @@ direct=False
 class USBDongle:
     ######## INITIALIZATION ########
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
+        self.chipstr = None
+        self.chipnum = None
+
         self.rsema = None
         self.xsema = None
         self._bootloader = False
@@ -260,15 +263,22 @@ class USBDongle:
 
         self._threadGo.set()
 
-        self.getRadioConfig()
-        chip = self.getPartNum()
-        chipstr = CHIPS.get(chip)
+        chip = None
+        chipstr = None
 
-        self.chipnum = chip
-        self.chipstr = chipstr
+        try:
+            self.getRadioConfig()
+            chip = self.getPartNum()
+            chipstr = CHIPS.get(chip)
+
+            self.chipnum = chip
+            self.chipstr = chipstr
+        except:
+            print "ERROR TALKING TO DONGLE...  *trying* to continue..."
 
         if chip == None:
             print "Older firmware, consider upgrading."
+            self.chip = None
         else:
             self.chipstr = "unrecognized dongle: %s" % chip
 
@@ -298,7 +308,7 @@ class USBDongle:
                 #if console: sys.stderr.write('.')
                 if not self._quiet:
                     print >>sys.stderr,("Error in resetup():" + repr(e))
-                #if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
+                    if self._debug: sys.excepthook(*sys.exc_info())
                 time.sleep(1)
 
 
