@@ -731,7 +731,29 @@ class USBDongle:
         if self._debug: print "Sent Msg",msg.encode("hex")
         return self.recv(app, cmd, wait)
 
+    def reprDebugCodes(self):
+        out = []
+        codes = self.getDebugCodes()
+        code0, code1 = codes
+
+        code0str = LCS.get(code0)
+        code1str = LCES.get(code1)
+
+        return '%d: %s\n%d: %s' % (code0, code0str, code1, code1str)
+
+
     def getDebugCodes(self, timeout=100):
+        '''
+        this function uses EP0 (not the normal USB EP5) to check the last state of the dongle.
+        this only works if the dongle isn't in a hard-loop or some other corrupted state
+        that neglects usbprocessing.
+
+        two values are returned.  
+        the first value is lastCode[0] and represents standard tracking messages (we were <here>)
+        the second value is lastCode[1] and represents exception information (writing OUT while buffer in use!)
+
+        messages LC_* and LCE_* (respectively) are defined in both global.h and rflib.chipcon_usb
+        '''
         x = self._recvEP0(timeout=timeout)
         if (x != None and len(x)==2):
             return struct.unpack("BB", x)
