@@ -1200,16 +1200,32 @@ void usbProcessEvents(void)
     
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
+        __xdata u16 retval;
         lastCode[0] = LC_USB_EP5OUT;
-        switch (handleOUTEP5() == 1)                    // handles the immediate read into ep5
+        switch (handleOUTEP5())                    // handles the immediate read into ep5
         {
             case -1:                                    // we failed to send.  still waiting on our OUT_BUF.  still a message waiting in queue.
-                break;
+                //txdata(ep5.OUTapp,ep5.OUTcmd, 0, ptr);      // WTF do we do here?  what if it never gets processed??  did we miss a race condition for status???  *processOUTEP5* should be processing something, but we're here... so it's not processed it.  what gives?
+                    // * Race condition on ep5.flags
+                    // * Not resetting ep5.flags correctly
+                    // * Interrupt Collisions
+                    // * ???
+                //break;
+                //  no need to break since we still want to run processOUTEP5 on the current buffer.
             case 1:
-                processOUTEP5();                            // process the data read into ep5
+//                processOUTEP5();                            // process the data read into ep5
+                break;
+
+            case -2:
+                retval = LCE_USB_EP5_LEN_TOO_BIG;
+                txdata(ep5.OUTapp,ep5.OUTcmd, 2, (u8*)&retval);
+                txdata(ep5.OUTapp,1, 2, (u8*)&retval);
+
+                break;
+
             default:
         }
-        
+        processOUTEP5();                            // process the data read into ep5
     }
 
     // we don't currently queue IN data, we just send it.  probably should move to a queuing system but it takes valuable RAM.
