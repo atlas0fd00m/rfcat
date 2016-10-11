@@ -225,9 +225,9 @@ void usb_init(void)
     USB_RESUME_INT_CLEAR();                 // P0IFG= 0; P0IF= 0
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
-    // set usb interrupt (group 1) priority to "10" - priority 2
+    // set usb interrupt priority to 3
     IP0 |= BIT1;
-    IP1 |= 0;
+    IP1 |= BIT1;
 
 
     // usb dma
@@ -459,8 +459,7 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* ))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*))
 {
     cb_ep0vendor = callback;
 }
@@ -492,7 +491,7 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
 #ifdef BOOTLOADER_SIZE
     __xdata u8* __xdata  tmpdesc;
 #endif
-    __xdata u8* __xdata  descPtr = (__xdata u8* __xdata )&USBDESCBEGIN;                 // start of data... sorta
+    __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
 
     descType = *(descPtr+1);
 
@@ -503,13 +502,14 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
         if (descType == wantedType)
         {
 #ifdef BOOTLOADER_SIZE
-            tmpdesc = (__xdata u8)BOOTLOADER_SIZE;
+            tmpdesc = (__xdata u8*)BOOTLOADER_SIZE;
             if (wantedType == USB_DESC_STRING 
                     && index == USB_SERIAL_STRIDX_BYTE
-                    && *((__xdata u32* __xdata )(tmpdesc-32)) == 0x73616c40) //@las
+                    && *((__xdata u32*)(tmpdesc-32)) == 0x73616c40) //@las
             {
-                descPtr = (__xdata u8* __xdata )(tmpdesc-28);
+                descPtr = (__xdata u8*)(tmpdesc-28);
                 descType = 0xff;
+                index = 0;
                 break;
             }
             else
@@ -662,7 +662,7 @@ void handleCS0(void)
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
                                 case USB_GET_INTERFACE:         setup_send_ep0("\x00", 1);          break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
                             }
                         }
                         // EndPoint Requests
@@ -671,7 +671,7 @@ void handleCS0(void)
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
                                 case USB_SYNCH_FRAME:           break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
                             }
                         }
                         // Other Requests
@@ -679,11 +679,11 @@ void handleCS0(void)
                         {
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2); break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
                             }
                         } else {
                             // We reached Never Never Land.  Stall
-                            debugEP0Req((u8* __xdata )&req);
+                            debugEP0Req((u8*)&req);
                             USBCS0 |= USBCS0_SEND_STALL;
                         }
                         break;
@@ -691,10 +691,10 @@ void handleCS0(void)
 #ifdef VCOMTEST
                         switch (req.bRequest){
                             case SET_LINE_CODING:
-                                setup_send_ep0((__xdata u8 * __xdata ) &usb_line_codings, 7);
+                                setup_send_ep0((__xdata u8 *) &usb_line_codings, 7);
                                 break;
                             case GET_LINE_CODING:
-                                setup_send_ep0((u8 * __xdata ) &usb_line_codings, 7);
+                                setup_send_ep0((u8 *) &usb_line_codings, 7);
                                 break;
                             case SET_CONTROL_LINE_STATE:
                                 break;
@@ -702,7 +702,7 @@ void handleCS0(void)
 #else
                         USBCS0 |= USBCS0_SEND_STALL;
 #endif
-                        //debugEP0Req((u8* __xdata )&req);
+                        //debugEP0Req((u8*)&req);
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
@@ -717,7 +717,7 @@ void handleCS0(void)
                         break;
                     case USB_BM_REQTYPE_TYPE_RESERVED:          // RESERVED
                         USBCS0 |= USBCS0_SEND_STALL;
-                        debugEP0Req((u8* __xdata )&req);
+                        debugEP0Req((u8*)&req);
                 }
             } else {                                            // should be *receiving* data, if any
                 //  if there's any length requirement, enter RX mode
@@ -740,7 +740,7 @@ void handleCS0(void)
                                 case USB_SET_FEATURE:           break;
                                 case USB_SET_DESCRIPTOR:        break;
                                 default:
-                                    debugEP0Req((u8* __xdata )&req);
+                                    debugEP0Req((u8*)&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
@@ -752,7 +752,7 @@ void handleCS0(void)
                                 case USB_SET_FEATURE:       break;
                                 case USB_SET_INTERFACE:     break;
                                 default:
-                                    debugEP0Req((u8* __xdata )&req);
+                                    debugEP0Req((u8*)&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
@@ -763,16 +763,16 @@ void handleCS0(void)
                                 case USB_CLEAR_FEATURE:     break;
                                 case USB_SET_FEATURE:       break;
                                 default:
-                                    debugEP0Req((u8* __xdata )&req);
+                                    debugEP0Req((u8*)&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         } else {
                             USBCS0 |= USBCS0_SEND_STALL;
-                            debugEP0Req((u8* __xdata )&req);
+                            debugEP0Req((u8*)&req);
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_CLASS:             // CLASS type
-                        debugEP0Req((u8* __xdata )&req);
+                        debugEP0Req((u8*)&req);
                         USBCS0 |= USBCS0_SEND_STALL;
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
@@ -788,7 +788,7 @@ void handleCS0(void)
                         break;
                     case USB_BM_REQTYPE_TYPE_RESERVED:          // RESERVED type
                         USBCS0 |= USBCS0_SEND_STALL;
-                        debugEP0Req((u8* __xdata )&req);
+                        debugEP0Req((u8*)&req);
                 }
 
             }       // else *receive*
@@ -827,16 +827,16 @@ int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq)
                 setup_send_ep0(&lastCode[0], 2);
                 break;
             case EP0_CMD_GET_ADDRESS:
-                setup_sendx_ep0((__xdata u8* __xdata )USBADDR, 40);
+                setup_sendx_ep0((__xdata u8*)USBADDR, 40);
                 break;
             case EP0_CMD_PEEKX:
-                setup_sendx_ep0((__xdata u8* __xdata )pReq->wValue, pReq->wLength);
+                setup_sendx_ep0((__xdata u8*)pReq->wValue, pReq->wLength);
                 break;
             case EP0_CMD_PING0:
-                setup_send_ep0((u8* __xdata )pReq, pReq->wLength);
+                setup_send_ep0((u8*)pReq, pReq->wLength);
                 break;
             case EP0_CMD_PING1:
-                setup_sendx_ep0((__xdata u8* __xdata )&ep0.OUTbuf[0], 16);//ep0.OUTlen);
+                setup_sendx_ep0((__xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
                 break;
             case EP0_CMD_RESET:
                 if (strncmp((char*)&(pReq->wValue), "RSTN", 4))           // therefore, ->wValue == "RS" and ->wIndex == "TN" or no reset
@@ -855,7 +855,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq)
         {
             case EP0_CMD_POKEX:     // poke
                 
-                dst = (__xdata u8* __xdata ) pReq->wValue;
+                dst = (__xdata u8*) pReq->wValue;
 
                 USBINDEX = 0;
                 loop = USBCNT0;
@@ -880,7 +880,7 @@ int handleOUTEP5(void)
 {
     // client is sending commands... or looking for information...  status... whatever...
     u16 len;
-    __xdata u8* __xdata  ptr; 
+    __xdata u8* ptr; 
     if (ep5.flags & EP_OUTBUF_WRITTEN)                     // have we processed the last OUTbuf?  don't want to clobber it.
     {
         // // // // FIXME: forget the second memory buffering... rework this to use just the buffering in the usb controller // // // // 
@@ -1226,9 +1226,8 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        switch (handleOUTEP5())                         // handles the immediate read into ep5
+        switch (handleOUTEP5() == 1)                    // handles the immediate read into ep5
         {
-            case -2:
             case -1:                                    // we failed to send.  still waiting on our OUT_BUF.  still a message waiting in queue.
                 break;
             case 1:
