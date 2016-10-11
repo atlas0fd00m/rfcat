@@ -9,7 +9,6 @@ import pickle
 import threading
 #from chipcondefs import *
 from chipcon_usb import *
-import rflib.bits as rfbits
 
 # band limits in Hz
 FREQ_MIN_300  = 281000000
@@ -40,8 +39,10 @@ SYNCM_CARRIER_30_of_32          = 7
 RF_SUCCESS                      = 0
 
 RF_MAX_TX_BLOCK                 = 255
-# RF_MAX_BLOCK must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
-RF_MAX_RX_BLOCK                 = 512
+RF_MAX_TX_CHUNK                 = 240 # must match MAX_TX_MSGLEN in firmware/include/FHSS.h
+                                      # and be divisible by 16 for crypto operations
+RF_MAX_TX_LONG                  = 65535
+RF_MAX_RX_BLOCK                 = 512 # must match BUFFER_SIZE definition in firmware/include/cc1111rf.h
 
 APP_NIC =                       0x42
 APP_SPECAN =                    0x43
@@ -54,8 +55,10 @@ NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
 NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
-NIC_SET_AMP_MODE =              0xA
-NIC_GET_AMP_MODE =              0xB
+NIC_SET_AMP_MODE =              0xa
+NIC_GET_AMP_MODE =              0xb
+NIC_XMIT_LONG =                 0xc
+NIC_XMIT_LONG_MORE =            0xd
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -1282,11 +1285,74 @@ class NICxx11(USBDongle):
         # encode, if necessary
         if self.endec is not None:
             data = self.endec.encode(data)
+
+        if len(data) > RF_MAX_TX_BLOCK:
+            if repeat or offset:
+                return PY_TX_BLOCKSIZE_INCOMPAT
+            return self.RFxmitLong(data, doencoding=False)
+
         # calculate wait time
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+
+    def RFxmitLong(self, data, doencoding=True):
+        # encode, if necessary
+        if self.endec is not None and doencoding:
+            data = self.endec.encode(data)
+
+        if len(data) > RF_MAX_TX_LONG:
+            return PY_TX_BLOCKSIZE_TOO_LARGE
+
+        datalen = len(data)
+
+        # calculate wait time
+        waitlen = len(data)
+        wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
+
+
+        # load chunk buffers
+        chunks = []
+        for x in range(datalen / RF_MAX_TX_CHUNK):
+            chunks.append(data[x * RF_MAX_TX_CHUNK:(x + 1) * RF_MAX_TX_CHUNK])
+        if datalen % RF_MAX_TX_CHUNK:
+            chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
+
+        preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
+        #sys.stderr.write('=' + repr(retval))
+        error = struct.unpack("<B", retval[0])[0]
+        if error:
+            return error
+
+        chlen = len(chunks)
+        for chidx in range(preload, chlen):
+            chunk = chunks[chidx]
+            error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
+            while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
+                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                error = struct.unpack("<B", retval[0])[0]
+            if error:
+                return error
+                #if error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
+                #    sys.stderr.write('.')
+            #sys.stderr.write('+')
+        # tell dongle we've finished
+        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        return struct.unpack("<b", retval[0])[0]
+
+    def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
+        datalen = len(data)
+
+        chunks = []
+        while len(data):
+            chunks.append(data[:RF_MAX_TX_CHUNK])
+            data = data[RF_MAX_TX_CHUNK:]
+
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
+        sys.stderr.write('=' + repr(retval))
+
 
     # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
@@ -1297,7 +1363,10 @@ class NICxx11(USBDongle):
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
         if self.endec is not None:
-            data = self.endec.decode(data)
+            # strip off timestamp, process data, then reapply timestamp to continue
+            msg, ts = data
+            msg = self.endec.decode(msg)
+            data = msg, ts
 
         return data
 
@@ -1391,10 +1460,6 @@ class NICxx11(USBDongle):
                 yhex = y.encode('hex')
 
                 print "(%5.3f) Received:  %s" % (t, yhex)
-                #mchdata = rfbits.findManchester(y, 10)
-                #if mchdata != None:
-                #    print "Manchester Encoded: %s" % mchdata.encode('hex')
-
                 if RegExpSearch is not None:
                     ynext = y
                     for loop in range(8):
@@ -1941,14 +2006,24 @@ class FHSSNIC(NICxx11):
         self.poke(X_T2PR, chr(PR))
         self.poke(X_T2CTL, chr(t2ctl))
         self.poke(X_CLKCON, chr(clkcon))
-        
+
+    def _setMACmode(self, _mode):
+        '''
+        internal debugging use only
+        '''
+        macdata = self.getMACdata()
+        print repr(macdata)
+        macdata = (_mode,) +  macdata[1:]
+        print repr(macdata)
+        self.setMACdata(macdata)
+
     def setMACdata(self, data):
-        datastr = ''.join([chr(d) for x in data])
+        datastr = struct.pack("<BHHHHHHHHBBH", *data)
         return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
 
     def getMACdata(self):
         datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
-        print (repr(datastr))
+        #print (repr(datastr))
         data = struct.unpack("<BHHHHHHHHBBH", datastr)
         return data
 
@@ -1956,8 +2031,8 @@ class FHSSNIC(NICxx11):
         data = self.getMACdata()
         return """\
 u8 mac_state                %x
-u32 MAC_threshold           %x
-u32 MAC_ovcount             %x
+u16 MAC_threshold           %x
+u16 MAC_ovcount             %x
 u16 NumChannels             %x
 u16 NumChannelHops          %x
 u16 curChanIdx              %x

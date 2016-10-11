@@ -4,7 +4,7 @@
 #include "global.h"
 #include "chipcon_usbdebug.h"
 
-#define     EP0_MAX_PACKET_SIZE     32
+#define     EP0_MAX_PACKET_SIZE     64
 #define     EP5_MAX_PACKET_SIZE     64
 #define     EP5OUT_MAX_PACKET_SIZE  64
 #define     EP5IN_MAX_PACKET_SIZE   64
@@ -372,11 +372,11 @@ extern __xdata u16  ep0value;
 // provided by cc1111usb.c
 void clock_init(void);
 int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
-int setup_send_ep0(u8* payload, u16 length);
-int setup_sendx_ep0(__xdata u8* payload, u16 length);
+int setup_send_ep0(u8* __xdata  payload, u16 length);
+int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length);
 u16 usb_recv_ep0OUT();
 
-u16 usb_recv_epOUT(u8 epnum, USB_EP_IO_BUF* epiobuf);
+u16 usb_recv_epOUT(u8 epnum, USB_EP_IO_BUF* __xdata  epiobuf);
 void initUSB(void);
 void usb_up(void);
 void usb_down(void);
@@ -386,10 +386,12 @@ void usbProcessEvents(void);
 
 void registerCb_ep0OutDone(int (*callback)(void));
 void registerCb_ep0Out(int (*callback)(void));
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* pReq));
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata  pReq));
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*  pReq));
 void registerCb_ep5(int (*callback)(void));
 
 
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 
 
 
@@ -402,8 +404,10 @@ void registerCb_ep5(int (*callback)(void));
 #define     CMD_BUILDTYPE   0x86
 #define     CMD_BOOTLOADER  0x87
 #define     CMD_RFMODE      0x88
+#define     CMD_COMPILER    0x89
 #define     CMD_PARTNUM     0x8e
 #define     CMD_RESET       0x8f
+#define     CMD_CLEAR_CODES 0x90
 
 #define     EP0_CMD_GET_DEBUG_CODES         0x00
 #define     EP0_CMD_GET_ADDRESS             0x01
@@ -418,8 +422,6 @@ void registerCb_ep5(int (*callback)(void));
 #define     DEBUG_CMD_HEX       0xf1
 #define     DEBUG_CMD_HEX16     0xf2
 #define     DEBUG_CMD_HEX32     0xf3
-#define     DEBUG_CMD_INT       0xf4
-
 
 /******************************** TROUBLESHOOTING *****************************************
 #define	EPERM		 1	* Operation not permitted /
