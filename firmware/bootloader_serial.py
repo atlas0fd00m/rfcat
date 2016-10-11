@@ -25,8 +25,11 @@ for c in sertmp:
 
 ihc=IntelHex('CCBootloader/CCBootloader-rfcat-chronosdongle.hex')
 ihd=IntelHex('CCBootloader/CCBootloader-rfcat-donsdongle.hex')
+ihy=IntelHex('CCBootloader/CCBootloader-rfcat-ys1.hex')
 ihc.puts(0x13e0, "@las\x1c\x03" + sertxt)
 ihd.puts(0x13e0, "@las\x1c\x03" + sertxt)
+ihy.puts(0x13e0, "@las\x1c\x03" + sertxt)
 ihc.write_hex_file('CCBootloader/CCBootloader-rfcat-chronosdongle-serial.hex')
 ihd.write_hex_file('CCBootloader/CCBootloader-rfcat-donsdongle-serial.hex')
+ihy.write_hex_file('CCBootloader/CCBootloader-rfcat-ys1-serial.hex')
 
