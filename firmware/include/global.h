@@ -26,6 +26,8 @@ extern __xdata u32 clock;
 //#define TRANSMIT_TEST
 //#define RECEIVE_TEST
 //////////////////////////////////////
+
+// lastCode[0]: locations
 #define LC_USB_INITUSB                  0x2
 #define LC_MAIN_RFIF                    0xd
 #define LC_USB_DATA_RESET_RESUME        0xa
@@ -38,6 +40,9 @@ extern __xdata u32 clock;
 #define LC_TXDATA_COMPLETED_FRAME       0x13
 #define LC_TXDATA_COMPLETED_MESSAGE     0x14
 
+
+// lastCode[1]: Errors
+#define LCE_NO_ERROR                            0x0
 
 #define LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN      0x1
 #define LCE_USB_EP0_SENT_STALL                  0x4
@@ -52,6 +57,19 @@ extern __xdata u32 clock;
 #define LCE_DROPPED_PACKET                      0x12
 #define LCE_RFTX_NEVER_TX                       0x13
 #define LCE_RFTX_NEVER_LEAVE_TX                 0x14
+#define LCE_RF_MODE_INCOMPAT                    0x15
+#define LCE_RF_BLOCKSIZE_INCOMPAT               0x16
+#define LCE_RF_MULTI_BUFFER_NOT_INIT            0x17
+#define LCE_RF_MULTI_BUFFER_NOT_FREE            0x18
+
+// Return Codes
+#define RC_NO_ERROR                             0x0
+#define RC_TX_DROPPED_PACKET                    0xec
+#define RC_TX_ERROR                             0xed
+#define RC_RF_BLOCKSIZE_INCOMPAT                0xee
+#define RC_RF_MODE_INCOMPAT                     0xef
+#define RC_ERR_BUFFER_NOT_AVAILABLE             0xfe
+#define RC_ERR_BUFFER_SIZE_EXCEEDED             0xff
 
 // USB activities
 #ifdef CHRONOSDONGLE
@@ -60,6 +78,12 @@ extern __xdata u32 clock;
     #define USB_ENABLE_PIN              P1_0
 #endif
 #define NOP()                       __asm; nop; __endasm;
+
+// USB data buffer
+#define BUFFER_AVAILABLE		0x00
+#define BUFFER_FILLING			0xff
+#define ERR_BUFFER_SIZE_EXCEEDED        -1
+#define ERR_BUFFER_NOT_AVAILABLE        -2
 
 // Checks
 #define IS_XOSC_STABLE()    (SLEEP & SLEEP_XOSC_S)
@@ -153,6 +177,8 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR;
 #define BLOCK()     { while (1) { REALLYFASTBLINK() ; usbProcessEvents(); }  }
 #define LE_WORD(x) ((x)&0xFF),((u8) (((u16) (x))>>8))
 #define ASCII_LONG(x) '0' + x / 1000 % 10,'0' + x / 100 % 10, '0' + x / 10 % 10, '0' + x % 10
+#define QUOTE(x) XQUOTE(x)
+#define XQUOTE(x) #x
 
 /* function declarations */
 void sleepMillis(int ms);
@@ -162,5 +188,5 @@ void clock_init(void);
 void io_init(void);
 //void blink(u16 on_cycles, u16 off_cycles);
 void blink_binary_baby_lsb(u16 num, char bits);
-int strncmp(const char *s1, const char *s2, u16 n);
+int strncmp(const char * __xdata s1, const char * __xdata s2, u16 n);
 #endif

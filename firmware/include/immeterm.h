@@ -58,4 +58,4 @@ void LCDPowerSave();
 void setCursor(unsigned char row, unsigned char col) ;
 
 
-void fail(char *msg);
+void fail(char * __xdata msg);

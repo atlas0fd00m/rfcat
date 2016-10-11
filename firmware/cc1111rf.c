@@ -13,9 +13,13 @@ volatile __xdata u8 rfRxInfMode = 0;
 volatile __xdata u16 rfRxTotalRXLen = 0;
 volatile __xdata u16 rfRxLargeLen = 0;
 
-
 /* Tx buffers */
-volatile __xdata u8 *rftxbuf;
+// point and details about potentially multiple buffers for infinite mode transfers
+//
+volatile __xdata u8 * __xdata rftxbuf;
+volatile __xdata u8 rfTxCurBufIdx = 0;
+volatile __xdata u8 rfTxBufCount = 1; // this must be set by the tx routine to match the number of buffer blocks available
+
 volatile __xdata u16 rfTxCounter = 0;
 volatile __xdata u16 rfTxRepeatCounter = 0;
 volatile __xdata u16 rfTxBufferEnd = 0;
@@ -23,6 +27,8 @@ volatile __xdata u16 rfTxRepeatLen = 0;
 volatile __xdata u16 rfTxRepeatOffset = 0;
 volatile __xdata u16 rfTxTotalTXLen = 0;
 volatile __xdata u8 rfTxInfMode = 0;
+
+__xdata u16 txTotal; // debugger to confirm long transmit number of bytes tx'd
 
 // AES
 volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
@@ -32,7 +38,7 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // amplifier external to CC1111
 volatile __xdata u8 rfAmpMode = 0;
 
-u8 rfif;
+volatile u8 rfif;
 volatile __xdata u8 rf_status;
 volatile __xdata u16 rf_MAC_timer;
 volatile __xdata u16 rf_tLastRecv;
@@ -40,6 +46,7 @@ volatile __xdata u16 rf_tLastRecv;
 volatile __xdata DMA_DESC rfDMA;
 #endif
 
+__xdata MAC_DATA_t macdata;
 volatile __xdata u8 bRepeatMode = 0;
 
 /*************************************************************************************************
@@ -146,9 +153,9 @@ void init_RF()
     T2CTL |= T2CTL_TIP_64;  // 64, 128, 256, 1024
     T2CTL |= T2CTL_TIG;
 
-    // interrupt priority settings.  RF interrupts needs to be priority 2 since tx needs to happen from Timer interrupts
-    // however, usb will rank above RF
-    IP0 |= 0;//BIT0;       // grp0 is RF/RFTXRX/DMA
+    // interrupt priority settings.
+    // set to "01" == priority 1
+    IP0 |= 0;       // grp0 is RF/RFTXRX/DMA
     IP1 |= BIT0;
 
     // RF state
@@ -204,11 +211,11 @@ int waitRSSI()
  * FAIL on args - return EFAIL_ARGS_FUKT
  */
 
-u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
+u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset)
 {
     __xdata u16 countdown;
-    __xdata u8 encoffset= 0;
-    __xdata u8 original_pktlen= PKTLEN;
+    __xdata u8 encoffset = 0;
+    __xdata u8 original_pktlen = PKTLEN;
 
     while (MARCSTATE == MARC_STATE_TX)
     {
@@ -261,20 +268,23 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
                 buf[0] = (u8) len;
                 break;
             case PKTCTRL0_LENGTH_CONFIG_FIX:
-                // if we're repeating or sending a block bigger than max, we need to implement 'infinite' mode
+                // if we're repeating we need to implement 'infinite' mode
                 // see ti document 'SLAU259C' http://www.ti.com/litv/pdf/slau259c
                 // note that repeat length of 0xFF means 'forever'
-                if(repeat || len > RF_MAX_TX_BLOCK)
+                if(repeat)
                 {
                     // PKTLEN must be correctly configured for the final blocksize after we exit infinite mode
                     // ISR will trigger exit once rfTxTotalTXLen < 256
                     PKTLEN = (u8) (rfTxTotalTXLen % 256);
                     PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
-                    PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    // only set radio into infinite mode if we need more than max
+                    if(rfTxTotalTXLen > RF_MAX_TX_BLOCK)
+                        PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+                    // but we still need logical infinite mode either way
                     rfTxInfMode = 1;
                 }
                 else
-                    PKTLEN= len;
+                    PKTLEN = len;
                 break;
             default:
                 break;
@@ -320,7 +330,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     }
 
     // point tx buffer at userdata //
-    rftxbuf= buf;
+    rftxbuf = buf;
 
     // Reset byte pointer //
     rfTxCounter = 0;
@@ -363,7 +373,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
     //} while(!waitRSSI() && uiRSSITries);
 
     //if(uiRSSITries)
-    {
+    //{
 #ifdef RFDMA
         {
             /* Arm DMA channel */
@@ -414,7 +424,7 @@ u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset)
         PKTLEN = original_pktlen;
 
         return 1;
-    }
+    //}
     //return 0;
 }
 
@@ -507,8 +517,13 @@ void RepeaterStop()
 
 //void dmaIntHandler(void) __interrupt DMA_VECTOR // Interrupt handler for DMA */
 
+
+
+// DEBUGGING...
+#include "FHSS.h"
+
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
-{   // dormant, in favor of DMA transfers (ifdef RFDMA)
+{
     lastCode[0] = LC_RFTXRX_VECTOR;
         
 
@@ -538,24 +553,66 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
           PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
           }
     }
+
     else if(MARCSTATE == MARC_STATE_TX)
     {   // Transmit Byte
         // maintain infinite mode
-        if(rfTxInfMode)
+        if (rfTxInfMode)
         {
-            if(rfTxCounter == rfTxBufferEnd)
-                if(rfTxRepeatCounter)
+            // rfTxCounter will always be the index in the current buffer
+            // rfTxBufferEnd will always be the length of the current buffer
+            //
+            //
+            //DEBUGGING
+            macdata.tLastHop ++;
+            //
+            if (rfTxCounter == rfTxBufferEnd)
+            {
+                if (rfTxRepeatCounter)
                 {
                     if(rfTxRepeatCounter != 0xff)
                         rfTxRepeatCounter--;
                     rfTxCounter = rfTxRepeatOffset;
                 }
+                else
+                {
+                    // arbitrary length packets flowing from one buffer to another
+                    // first we mark the first byte of the current block
+                    rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] = BUFFER_AVAILABLE;
+
+                    if (++rfTxCurBufIdx == rfTxBufCount)
+                    {
+                        rfTxCurBufIdx = 0;
+                    }
+
+                    if (rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd)] == BUFFER_AVAILABLE)
+                    {
+                        // we should bail here, because the next buffer is empty, so we've had a usb buff fill underrun
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        lastCode[1] = LCE_DROPPED_PACKET;
+                        resetRFSTATE();
+                        LED = 0;
+                    }
+
+                    // reset buffer index to the 2nd byte of next buffer (first byte = buflen)
+                    rfTxCounter = 1;
+                }
+            }
             // radio to leave infinite mode?
-            if(rfTxTotalTXLen-- < 256)
+            if(rfTxTotalTXLen-- == 255)
+            {
                 PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+            }
+            // debug
+            //LED = !LED;
         }
+        // maintain counter for non-infinite mode
+        else
+            rfTxTotalTXLen--;
         rf_status = RFST_STX;
-        RFD = rftxbuf[rfTxCounter++];
+        // rftxbuf is a pointer, not a static buffer, could be an array
+        RFD = rftxbuf[(rfTxCurBufIdx * rfTxBufferEnd) + rfTxCounter++];
+        txTotal++;
     }
 }
 
@@ -566,6 +623,8 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     // note: S1CON should be cleared before handling the RFIF flags.
     lastCode[0] = LC_RF_VECTOR;
     S1CON &= ~(S1CON_RFIF_0 | S1CON_RFIF_1);
+
+    // store the data from RFIF for main loop code to access and deal with.
     rfif |= RFIF;
 
     if (RFIF & RFIF_IRQ_SFD)
@@ -582,7 +641,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     {
         // we want *all zee bytezen!*
         if(rf_status == RFST_STX)
-        {
+        {   // FIXME: if this, we have a state engine problem.  RXOVF should not be set when RFST_STX!
 #ifdef RFDMA
             // rearm the DMA?  not sure this is a good thing.
             DMAARM |= (0x80 | DMAARM0);
@@ -671,7 +730,7 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
 }
 
 // move data within a buffer
-void byte_shuffle(__xdata u8* buf, u16 len, u16 offset)
+void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset)
 {
     while(len--)
         buf[len + offset] = buf[len];
