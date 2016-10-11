@@ -29,11 +29,11 @@ ys1fw: RfCatYS1
 
 
 # helper targets 
-chipcon_usb.rel : 
+chipcon_usb.rel: chipcon_usb.c include/*.h
 	#./new_serial.py
 	$(CC) $(CFLAGS) $(DEFINES)  -DUSB_DEVICE_SERIAL_NUMBER=$(USB_DEVICE_SERIAL_NUMBER) -c chipcon_usb.c
 
-%.rel : %.c
+%.rel: %.c include/*.h
 	$(CC) $(CFLAGS) $(DEFINES) -c $<
 
 # firmware build targets

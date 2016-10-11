@@ -5,7 +5,7 @@
 
 
 /*************************************************************************************************
- * welcome to the cc1111usb library.
+ * welcome to the chipcon_usb library.
  * this lib was designed to be the basis for your usb-app on the cc1111 radio.  hack fun!
  *
  * 
@@ -23,7 +23,7 @@
  * 
  * */
 
-extern u8 transmit(__xdata u8* buf, u16 len, u16 repeat, u16 offset);
+extern u8 transmit(__xdata u8* __xdata  buf, u16 len, u16 repeat, u16 offset);
 
 USB_STATE usb_data;
 __xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
@@ -43,13 +43,19 @@ __data u8 usbdmachan, usbdmaarm;
 
 __xdata int (*cb_ep0outdone)(void);
 __xdata int (*cb_ep0out)(void);
-__xdata int (*cb_ep0vendor)(USB_Setup_Header*);
+__xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
 
-__code u8 sdccver[] = {
-    'S','D','C','C','v',
-    LE_WORD(SDCC)
-};
+#ifdef SDCC
+  __code u8 sdccver[] = "SDCCv" QUOTE(SDCC);
+#else 
+  #ifdef __SDCC
+    __code u8 sdccver[] = "SDCCv" QUOTE(__SDCC);
+  #else
+    __code u8 sdccver[] = "NON-SDCC";
+  #endif
+#endif
+
 // BUILD_VERSION is passed in -D from Makefile
 __code u8 buildname[] = {
 #ifdef DONSDONGLES
@@ -94,7 +100,7 @@ __code u8 buildname[] = {
     #define PRODUCT_NAME   'C', 0, 'C', 0, '1', 0, '1', 0, '1', 0, '1', 0, ' ', 0, 'U', 0, 'S', 0, 'B', 0, ' ', 0, 'n', 0, 'i', 0, 'c', 0
 #endif
 
-int _usb_internal_handle_vendor(USB_Setup_Header* pReq);
+int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq);
 // state tracking:
 // * appstatus
 // * usb_data.usbstatus  - usb state overall...  (IDLE, SUSPEND, RESUME, RESET)
@@ -219,9 +225,9 @@ void usb_init(void)
     USB_RESUME_INT_CLEAR();                 // P0IFG= 0; P0IF= 0
     USB_INT_CLEAR();                        // P2IFG= 0; P2IF= 0;
 
-    // set usb interrupt priority to 3
+    // set usb interrupt (group 1) priority to "10" - priority 2
     IP0 |= BIT1;
-    IP1 |= BIT1;
+    IP1 |= 0;
 
 
     // usb dma
@@ -321,7 +327,7 @@ void usb_down(void)
 /*************************************************************************************************
  * main USB handler/enabler code.                                                                *
  *************************************************************************************************/
-int setup_send_ep0(u8* payload, u16 length)
+int setup_send_ep0(u8* __xdata  payload, u16 length)
 {
     if (ep0.epstatus != EP_STATE_IDLE)
     {
@@ -340,7 +346,7 @@ int setup_send_ep0(u8* payload, u16 length)
 }
 
 /* send from XDATA */
-int setup_sendx_ep0(__xdata u8* payload, u16 length)
+int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length)
 {
     if (ep0.epstatus != EP_STATE_IDLE)
     {
@@ -400,7 +406,7 @@ u16 usb_recv_ep0OUT(){
      *******************************************************************************************/
     u16 loop;
 
-    __xdata u8* payload = &ep0.OUTbuf[0];
+    __xdata u8* __xdata  payload = &ep0.OUTbuf[0];
     while (! USBCS0 & USBCS0_OUTPKT_RDY);           // wait for it...
 
     USBINDEX = 0;
@@ -453,7 +459,8 @@ u16 usb_recv_ep0OUT(){
 //    cb_ep0out = callback;
 //}
 
-void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*))
+//void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* __xdata ))
+void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header* ))
 {
     cb_ep0vendor = callback;
 }
@@ -472,7 +479,7 @@ void usbGetConfiguration()
     setup_send_ep0(&usb_data.config, 1);
 }
 
-void usbSetConfiguration(USB_Setup_Header* pReq)
+void usbSetConfiguration(USB_Setup_Header* __xdata  pReq)
 {
     usb_data.config = pReq->wValue & 0xff;
     usb_data.usbstatus = USB_STATE_IDLE;
@@ -483,9 +490,9 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
     __xdata u8 counter = 0;
     __xdata u8 descType;
 #ifdef BOOTLOADER_SIZE
-    __xdata u8* tmpdesc;
+    __xdata u8* __xdata  tmpdesc;
 #endif
-    __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
+    __xdata u8* __xdata  descPtr = (__xdata u8* __xdata )&USBDESCBEGIN;                 // start of data... sorta
 
     descType = *(descPtr+1);
 
@@ -496,12 +503,12 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
         if (descType == wantedType)
         {
 #ifdef BOOTLOADER_SIZE
-            tmpdesc = BOOTLOADER_SIZE;
+            tmpdesc = (__xdata u8)BOOTLOADER_SIZE;
             if (wantedType == USB_DESC_STRING 
                     && index == USB_SERIAL_STRIDX_BYTE
-                    && *((__xdata u32*)(tmpdesc-32)) == 0x73616c40) //@las
+                    && *((__xdata u32* __xdata )(tmpdesc-32)) == 0x73616c40) //@las
             {
-                descPtr = (__xdata u8*)(tmpdesc-28);
+                descPtr = (__xdata u8* __xdata )(tmpdesc-28);
                 descType = 0xff;
                 break;
             }
@@ -524,9 +531,9 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
     return descPtr;
 }
 
-void usbGetDescriptor(USB_Setup_Header* pReq)
+void usbGetDescriptor(USB_Setup_Header* __xdata  pReq)
 {
-    __xdata u8* buffer;                                  // this will point to the start of the descriptor (in code) when we're done
+    __xdata u8* __xdata  buffer;                                  // this will point to the start of the descriptor (in code) when we're done
     u16 length;
 
     switch ((pReq->wValue)>>8){
@@ -655,7 +662,7 @@ void handleCS0(void)
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
                                 case USB_GET_INTERFACE:         setup_send_ep0("\x00", 1);          break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
                             }
                         }
                         // EndPoint Requests
@@ -664,7 +671,7 @@ void handleCS0(void)
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2);      break;
                                 case USB_SYNCH_FRAME:           break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
                             }
                         }
                         // Other Requests
@@ -672,11 +679,11 @@ void handleCS0(void)
                         {
                             switch (req.bRequest){
                                 case USB_GET_STATUS:            setup_send_ep0("\x00\x00", 2); break;
-                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8*)&req); 
+                                default:                        USBCS0 |= USBCS0_SEND_STALL;debugEP0Req((u8* __xdata )&req); 
                             }
                         } else {
                             // We reached Never Never Land.  Stall
-                            debugEP0Req((u8*)&req);
+                            debugEP0Req((u8* __xdata )&req);
                             USBCS0 |= USBCS0_SEND_STALL;
                         }
                         break;
@@ -684,10 +691,10 @@ void handleCS0(void)
 #ifdef VCOMTEST
                         switch (req.bRequest){
                             case SET_LINE_CODING:
-                                setup_send_ep0((__xdata u8 *) &usb_line_codings, 7);
+                                setup_send_ep0((__xdata u8 * __xdata ) &usb_line_codings, 7);
                                 break;
                             case GET_LINE_CODING:
-                                setup_send_ep0((u8 *) &usb_line_codings, 7);
+                                setup_send_ep0((u8 * __xdata ) &usb_line_codings, 7);
                                 break;
                             case SET_CONTROL_LINE_STATE:
                                 break;
@@ -695,7 +702,7 @@ void handleCS0(void)
 #else
                         USBCS0 |= USBCS0_SEND_STALL;
 #endif
-                        //debugEP0Req((u8*)&req);
+                        //debugEP0Req((u8* __xdata )&req);
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
                         if (cb_ep0vendor)
@@ -710,7 +717,7 @@ void handleCS0(void)
                         break;
                     case USB_BM_REQTYPE_TYPE_RESERVED:          // RESERVED
                         USBCS0 |= USBCS0_SEND_STALL;
-                        debugEP0Req((u8*)&req);
+                        debugEP0Req((u8* __xdata )&req);
                 }
             } else {                                            // should be *receiving* data, if any
                 //  if there's any length requirement, enter RX mode
@@ -733,7 +740,7 @@ void handleCS0(void)
                                 case USB_SET_FEATURE:           break;
                                 case USB_SET_DESCRIPTOR:        break;
                                 default:
-                                    debugEP0Req((u8*)&req);
+                                    debugEP0Req((u8* __xdata )&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
@@ -745,7 +752,7 @@ void handleCS0(void)
                                 case USB_SET_FEATURE:       break;
                                 case USB_SET_INTERFACE:     break;
                                 default:
-                                    debugEP0Req((u8*)&req);
+                                    debugEP0Req((u8* __xdata )&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         }
@@ -756,16 +763,16 @@ void handleCS0(void)
                                 case USB_CLEAR_FEATURE:     break;
                                 case USB_SET_FEATURE:       break;
                                 default:
-                                    debugEP0Req((u8*)&req);
+                                    debugEP0Req((u8* __xdata )&req);
                                     USBCS0 |= USBCS0_SEND_STALL;
                             }
                         } else {
                             USBCS0 |= USBCS0_SEND_STALL;
-                            debugEP0Req((u8*)&req);
+                            debugEP0Req((u8* __xdata )&req);
                         }
                         break;
                     case USB_BM_REQTYPE_TYPE_CLASS:             // CLASS type
-                        debugEP0Req((u8*)&req);
+                        debugEP0Req((u8* __xdata )&req);
                         USBCS0 |= USBCS0_SEND_STALL;
                         break;
                     case USB_BM_REQTYPE_TYPE_VENDOR:            // VENDOR type
@@ -781,7 +788,7 @@ void handleCS0(void)
                         break;
                     case USB_BM_REQTYPE_TYPE_RESERVED:          // RESERVED type
                         USBCS0 |= USBCS0_SEND_STALL;
-                        debugEP0Req((u8*)&req);
+                        debugEP0Req((u8* __xdata )&req);
                 }
 
             }       // else *receive*
@@ -804,13 +811,13 @@ void handleCS0(void)
     
 }
 
-int _usb_internal_handle_vendor(USB_Setup_Header* pReq)
+int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq)
 {
 #ifdef VIRTUAL_COM
     pReq = 0;
 #else
     u16 loop;
-    __xdata u8* dst;
+    __xdata u8* __xdata  dst;
 
     if (pReq->bmRequestType & USB_BM_REQTYPE_DIRMASK)       // IN to host
     {
@@ -820,16 +827,16 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq)
                 setup_send_ep0(&lastCode[0], 2);
                 break;
             case EP0_CMD_GET_ADDRESS:
-                setup_sendx_ep0((__xdata u8*)USBADDR, 40);
+                setup_sendx_ep0((__xdata u8* __xdata )USBADDR, 40);
                 break;
             case EP0_CMD_PEEKX:
-                setup_sendx_ep0((__xdata u8*)pReq->wValue, pReq->wLength);
+                setup_sendx_ep0((__xdata u8* __xdata )pReq->wValue, pReq->wLength);
                 break;
             case EP0_CMD_PING0:
-                setup_send_ep0((u8*)pReq, pReq->wLength);
+                setup_send_ep0((u8* __xdata )pReq, pReq->wLength);
                 break;
             case EP0_CMD_PING1:
-                setup_sendx_ep0((__xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
+                setup_sendx_ep0((__xdata u8* __xdata )&ep0.OUTbuf[0], 16);//ep0.OUTlen);
                 break;
             case EP0_CMD_RESET:
                 if (strncmp((char*)&(pReq->wValue), "RSTN", 4))           // therefore, ->wValue == "RS" and ->wIndex == "TN" or no reset
@@ -848,7 +855,7 @@ int _usb_internal_handle_vendor(USB_Setup_Header* pReq)
         {
             case EP0_CMD_POKEX:     // poke
                 
-                dst = (__xdata u8*) pReq->wValue;
+                dst = (__xdata u8* __xdata ) pReq->wValue;
 
                 USBINDEX = 0;
                 loop = USBCNT0;
@@ -873,7 +880,7 @@ int handleOUTEP5(void)
 {
     // client is sending commands... or looking for information...  status... whatever...
     u16 len;
-    __xdata u8* ptr; 
+    __xdata u8* __xdata  ptr; 
     if (ep5.flags & EP_OUTBUF_WRITTEN)                     // have we processed the last OUTbuf?  don't want to clobber it.
     {
         // // // // FIXME: forget the second memory buffering... rework this to use just the buffering in the usb controller // // // // 
@@ -974,7 +981,7 @@ int handleOUTEP5(void)
 void processOUTEP5(void)
 {
     u16 loop;
-    __xdata u8* ptr; 
+    __xdata u8* __xdata  ptr; 
 
     // if the buffer is still being loaded or just plain empty, ignore this  (superfluous... may remove this check later)
     if ((ep5.flags & EP_OUTBUF_WRITTEN) == 0)
@@ -1000,20 +1007,20 @@ void processOUTEP5(void)
                 break;
 
             case CMD_POKE:
-                    loop =  *ptr++;
-                    loop += *ptr++ << 8;
-                    ep5.dptr = (__xdata u8*) loop;
+                loop =  *ptr++;
+                loop += *ptr++ << 8;
+                ep5.dptr = (__xdata u8*) loop;
 
-                    loop = ep5.OUTlen - 2;
+                loop = ep5.OUTlen - 2;
 
-                    for (;loop>0;loop--)
-                    {
-                        *ep5.dptr++ = *ptr++;
-                    }
+                for (;loop>0;loop--)
+                {
+                    *ep5.dptr++ = *ptr++;
+                }
 
-                    //if (ep5.OUTbytesleft == 0)
-                    txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
-                    break;
+                //if (ep5.OUTbytesleft == 0)
+                txdata(ep5.OUTapp, ep5.OUTcmd, 2, (__xdata u8*)&(ep5.OUTbytesleft));
+                break;
 
             case CMD_POKE_REG:
                 if (!(ep5.flags & EP_OUTBUF_CONTINUED))
@@ -1065,6 +1072,10 @@ void processOUTEP5(void)
                 sleepMillis(200);
                 run_bootloader();
                 break;
+
+            case CMD_COMPILER:
+                txdata(ep5.OUTapp, ep5.OUTcmd, sizeof(sdccver), (__xdata u8*)&sdccver[0]);
+                break;
                 
             case CMD_RFMODE:
                 switch (*ptr++)
@@ -1103,6 +1114,13 @@ void processOUTEP5(void)
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
+            case CMD_CLEAR_CODES:
+                lastCode[0] = 0;
+                lastCode[1] = 0;
+                //txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);   // FIXME: need to reorient all these to return LCE_NO_ERROR unless error.
+                appReturn(2, ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
@@ -1113,20 +1131,29 @@ void processOUTEP5(void)
     {
         if (cb_ep5)
         {
-            cb_ep5();
+            if (! cb_ep5())
+            {
+                // if the callback returns 0, we're done.  
+                // if non-zero, we can't handle it right now, keep it around
+                ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+            }
         }
-        ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+        else
+        {
+            ep5.flags &= ~EP_OUTBUF_WRITTEN; 
+        }
     }
 
 }
 
 #define handleINEP5()  ep5.flags &= ~EP_INBUF_WRITTEN 
 
-//void handleINEP5(void)
-//{
-//    // change state so the firmware knows that the packet has been picked up and can be overwritten.
-//    ep5.flags &= ~EP_INBUF_WRITTEN;
-//}
+void appReturn(__xdata u8 len, __xdata u8* __xdata  response)
+    // use this to easily 
+{
+    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
+    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
+}
 
 void usbProcessEvents(void)
 {
@@ -1199,8 +1226,9 @@ void usbProcessEvents(void)
     if (usb_data.event & (USBD_OIF_OUTEP5IF))
     {
         lastCode[0] = LC_USB_EP5OUT;
-        switch (handleOUTEP5() == 1)                    // handles the immediate read into ep5
+        switch (handleOUTEP5())                         // handles the immediate read into ep5
         {
+            case -2:
             case -1:                                    // we failed to send.  still waiting on our OUT_BUF.  still a message waiting in queue.
                 break;
             case 1:
@@ -1281,7 +1309,7 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR  // P0_7's interrupt is used as
 }
 
 /* blinks the EP0 SETUP packet in binary on the LED */
-void debugEP0Req(u8 *pReq)
+void debugEP0Req(u8 * __xdata pReq)
 {
 #ifndef DEBUG
     (void) pReq;
