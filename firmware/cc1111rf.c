@@ -35,6 +35,9 @@ volatile __xdata u8 rfAESMode = AES_CRYPTO_NONE;
 // to test crypto between two dongles (KEY & IV will be all zeros directly after boot):
 //volatile __xdata u8 rfAESMode = (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT);
 
+// amplifier external to CC1111
+volatile __xdata u8 rfAmpMode = 0;
+
 volatile u8 rfif;
 volatile __xdata u8 rf_status;
 volatile __xdata u16 rf_MAC_timer;
@@ -216,8 +219,10 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
     while (MARCSTATE == MARC_STATE_TX)
     {
-        sleepMillis(40);
-            //LED = !LED;
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents();
+#endif
     }
     // Leave LED in a known state (off)
     LED = 0;
@@ -354,7 +359,9 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
     }
 #endif
 
+    // FIXME: why are we using waitRSSI()? and why all the NOP();s?
     // FIXME: nops should be "while (!(DMAIRQ & DMAARM1));"
+    // FIXME: waitRSSI()?  not sure about that one.
     // FIXME: doublecheck CCA enabled and that we're in RX mode
     /* Strobe to rx */
     //RFRX;
@@ -390,7 +397,10 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         while (MARCSTATE != MARC_STATE_TX && --countdown)
         {
             // FIXME: if we never end up in TX, why not?  seeing it in RX atm...  what's setting it there?  we can't have missed the whole tx!  we're not *that* slow!  although if other interrupts occurred?
-            //LED = !LED;
+            LED = !LED;
+#ifdef USBDEVICE
+            usbProcessEvents(); 
+#endif
         }
         // LED on - we're transmitting
         LED = 1;
@@ -401,8 +411,10 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
         while (MARCSTATE == MARC_STATE_TX)
         {
-            sleepMillis(40);
-            //LED = !LED;
+            LED = !LED;
+#ifndef IMME
+            usbProcessEvents();
+#endif
         }
 
         // LED off - we're done
@@ -411,11 +423,10 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
         // reset PKTLEN as we may have messed with it
         PKTLEN = original_pktlen;
 
-        return RC_NO_ERROR;
+        return 1;
     //}
     //return 0;
 }
-
 
 
 // prepare for RF RX
@@ -679,9 +690,9 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
                 // contingency - Packet Not Handled!
                 /* Main app didn't process previous packet yet, drop this one */
                 lastCode[1] = LCE_DROPPED_PACKET;
-                //LED = !LED;
+                LED = !LED;
                 rfRxCounter[rfRxCurrentBuffer] = 0;
-                //LED = !LED;
+                LED = !LED;
             }
             // LED off - we're done receiving
             LED = 0;
@@ -696,11 +707,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
         // RX overflow, only way to get out of this is to restart receiver //
         //resetRf();
         lastCode[1] = LCE_RF_RXOVF;
-        //LED = !LED;
+        LED = !LED;
 
         resetRFSTATE();
 
-        //LED = !LED;
+        LED = !LED;
         RFIF &= ~RFIF_IRQ_RXOVF;
     }
     // contingency - TX Underflow
@@ -708,9 +719,11 @@ void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigg
     {
         // Put radio into idle state //
         lastCode[1] = LCE_RF_TXUNF;
-        //LED = !LED;
+        LED = !LED;
 
         resetRFSTATE();
+
+        LED = !LED;
 
         RFIF &= ~RFIF_IRQ_TXUNF;
     }

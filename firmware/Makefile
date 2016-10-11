@@ -319,9 +319,9 @@ installRfCatChronosDongle: RfCatChronos.hex
 
 installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_C erase_all
-	bootload.py /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
-	bootload.py /dev/RFCAT_BL_C verify bins/RfCatChronosCCBootloader.hex && bootload.py /dev/RFCAT_BL_C run
+	rfcat_bootloader /dev/RFCAT_BL_C erase_all
+	rfcat_bootloader /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_C verify bins/RfCatChronosCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_C run
 
 installRfCat24DonsDongle: RfCatDons24.hex
 	goodfet.cc erase
@@ -331,9 +331,9 @@ installRfCat24DonsDongle: RfCatDons24.hex
 
 installRfCat24DonsDongleCCBootloader: RfCatDons24CCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_D erase_all
-	bootload.py /dev/RFCAT_BL_D download bins/RfCatDons24CCBootloader.hex
-	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDons24CCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
+	rfcat_bootloader /dev/RFCAT_BL_D erase_all
+	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDons24CCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDons24CCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
 
 installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc erase
@@ -343,9 +343,9 @@ installRfCatDonsDongle: RfCatDons.hex
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_D erase_all
-	bootload.py /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
-	bootload.py /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && bootload.py /dev/RFCAT_BL_D run
+	rfcat_bootloader /dev/RFCAT_BL_D erase_all
+	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
 
 installRfCatYS1: RfCatYS1.hex
 	goodfet.cc erase
@@ -355,9 +355,9 @@ installRfCatYS1: RfCatYS1.hex
 
 installRfCatYS1CCBootloader: RfCatYS1CCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_YS1 ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_YS1 erase_all
-	bootload.py /dev/RFCAT_BL_YS1 download bins/RfCatYS1CCBootloader.hex
-	bootload.py /dev/RFCAT_BL_YS1 verify bins/RfCatYS1CCBootloader.hex && bootload.py /dev/RFCAT_BL_YS1 run
+	rfcat_bootloader /dev/RFCAT_BL_YS1 erase_all
+	rfcat_bootloader /dev/RFCAT_BL_YS1 download bins/RfCatYS1CCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_YS1 verify bins/RfCatYS1CCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_YS1 run
 
 installimmesnifffw: immeSniff
 	goodfet.cc erase
@@ -452,9 +452,9 @@ installchronostestrecvusbfw: chronostestrecvusb.hex
 
 installchronostestrecvusbfwCC: chronostestrecvusbCC.hex
 	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_C erase_all
-	bootload.py /dev/RFCAT_BL_C download bins/testrecv.hex
-	bootload.py /dev/RFCAT_BL_C verify bins/testrecv.hex && bootload.py /dev/RFCAT_BL_C run
+	rfcat_bootloader /dev/RFCAT_BL_C erase_all
+	rfcat_bootloader /dev/RFCAT_BL_C download bins/testrecv.hex
+	rfcat_bootloader /dev/RFCAT_BL_C verify bins/testrecv.hex && rfcat_bootloader /dev/RFCAT_BL_C run
 
 installdonstestrecvusbfw: donstestrecvusb.hex
 	goodfet.cc erase
@@ -464,9 +464,9 @@ installdonstestrecvusbfw: donstestrecvusb.hex
 
 installdonstestrecvusbfwCC: donstestrecvusbCC.hex
 	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	bootload.py /dev/RFCAT_BL_D erase_all
-	bootload.py /dev/RFCAT_BL_D download bins/testrecv.hex
-	bootload.py /dev/RFCAT_BL_D verify bins/testrecv.hex && bootload.py /dev/RFCAT_BL_D run
+	rfcat_bootloader /dev/RFCAT_BL_D erase_all
+	rfcat_bootloader /dev/RFCAT_BL_D download bins/testrecv.hex
+	rfcat_bootloader /dev/RFCAT_BL_D verify bins/testrecv.hex && rfcat_bootloader /dev/RFCAT_BL_D run
 
 installys1testrecvusbfw: ys1testrecvusb.hex
 	goodfet.cc erase

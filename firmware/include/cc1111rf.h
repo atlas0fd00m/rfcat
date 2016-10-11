@@ -79,7 +79,9 @@ extern volatile __xdata u16 rf_tLastRecv;
 // AES
 extern volatile __xdata u8 rfAESMode;
 
+extern volatile __xdata u8 rfAmpMode;
 extern __xdata u16 txTotal; // debugger
+
 extern volatile u8 rfif;
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
@@ -93,9 +95,11 @@ void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 // set transient RF mode (like.  NOW!)
 #ifdef YARDSTICKONE
 // enable or disable front-end amplifiers on YARD Stick One
-#define SET_TX_AMP do { TX_AMP_EN = 1; RX_AMP_EN = 0; AMP_BYPASS_EN = 0; } while (0)
-#define SET_RX_AMP do { TX_AMP_EN = 0; RX_AMP_EN = 1; AMP_BYPASS_EN = 0; } while (0)
+#define SET_TX_AMP_ON do { TX_AMP_EN = 1; RX_AMP_EN = 0; AMP_BYPASS_EN = 0; } while (0)
+#define SET_RX_AMP_ON do { TX_AMP_EN = 0; RX_AMP_EN = 1; AMP_BYPASS_EN = 0; } while (0)
 #define SET_AMP_OFF do { TX_AMP_EN = 0; RX_AMP_EN = 0; AMP_BYPASS_EN = 1; } while (0)
+#define SET_TX_AMP do { TX_AMP_EN = rfAmpMode; RX_AMP_EN = 0; AMP_BYPASS_EN = rfAmpMode^1; } while (0)
+#define SET_RX_AMP do { TX_AMP_EN = 0; RX_AMP_EN = rfAmpMode; AMP_BYPASS_EN = rfAmpMode^1; } while (0)
 // set RF mode to RX and wait until MARCSTATE shows it's there
 #define RFTX do { SET_TX_AMP; RFST = RFST_STX; while ((MARCSTATE) != MARC_STATE_TX); } while (0)
 // set RF mode to TX and wait until MARCSTATE shows it's there

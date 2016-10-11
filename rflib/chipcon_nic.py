@@ -55,8 +55,10 @@ NIC_SET_AES_MODE =              0x6
 NIC_GET_AES_MODE =              0x7
 NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
-NIC_XMIT_LONG =                 0xa
-NIC_XMIT_LONG_MORE =            0xb
+NIC_SET_AMP_MODE =              0xa
+NIC_GET_AMP_MODE =              0xb
+NIC_XMIT_LONG =                 0xc
+NIC_XMIT_LONG_MORE =            0xd
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11
@@ -1257,6 +1259,17 @@ class NICxx11(USBDongle):
         '''
         return self.send(APP_NIC, NIC_SET_AES_KEY, key)
 
+    def setAmpMode(self, ampmode=0):
+        '''
+        set the amplifier mode (RF amp external to CC1111)
+        '''
+        return self.send(APP_NIC, NIC_SET_AMP_MODE, "%c"%ampmode)
+    def getAmpMode(self):
+        '''
+        get the amplifier mode (RF amp external to CC1111)
+        '''
+        return self.send(APP_NIC, NIC_GET_AMP_MODE, "")
+
     def setPktAddr(self, addr):
         return self.poke(ADDR, chr(addr))
 
@@ -1993,6 +2006,7 @@ class FHSSNIC(NICxx11):
         self.poke(X_T2PR, chr(PR))
         self.poke(X_T2CTL, chr(t2ctl))
         self.poke(X_CLKCON, chr(clkcon))
+
     def _setMACmode(self, _mode):
         '''
         internal debugging use only
@@ -2004,7 +2018,6 @@ class FHSSNIC(NICxx11):
         self.setMACdata(macdata)
 
     def setMACdata(self, data):
-        #datastr = ''.join([chr(x) for x in data])
         datastr = struct.pack("<BHHHHHHHHBBH", *data)
         return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
 
