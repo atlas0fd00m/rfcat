@@ -2,6 +2,7 @@ welcome to the rfcat project
 
 = TOC =
 * Goals
+* Requirements
 * Installing Hardware
 * Installing Client
 * Using RfCat
@@ -9,6 +10,17 @@ welcome to the rfcat project
 
 == GOALS ==
 the goals of the project are to reduce the time for security researchers to create needed tools for analyzing unknown targets, to aid in reverse-engineering of hardware, and to satiate my rf lust.
+
+== REQUIREMENTS ==
+RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff".
+
+Other requirements:
+* python usb
+* libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
+
+Build Requirements:
+* Make
+* SDCC (code is kept up-to-date with the current Ubuntu release, as of this writing: 3.4.0+dfsg-2ubuntu1)
 
 == DEVELOPMENT ==
 new development efforts should copy the "application.c" file to "appWhateverMyToolIs.c" and attempt to avoid making changes to other files in the repo if at all possible.  that is only a recommendation, because future bug-fixes in other libraries/headers will go much more smoothely for you.
@@ -154,9 +166,12 @@ bootloader when required. If you haven't done this step already (see above), the
   sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
   sudo udevadm control --reload-rules
 
+Next, your user must have read/write access to the dongle when it shows up to the operating system.  
+For most Linux distros, this means you have to be a member of the "dialout" group.
+
 To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
 
-(install 'bootload.py' from the CC-Bootloader subdirectory to somewhere on your execution path)
+(install 'rfcat_bootloader' from the CC-Bootloader subdirectory to somewhere on your execution path)
 
 cd firmware
 

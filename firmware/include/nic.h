@@ -12,8 +12,10 @@
 #define NIC_GET_AES_MODE        0x7
 #define NIC_SET_AES_IV          0x8
 #define NIC_SET_AES_KEY         0x9
+#define NIC_SET_AMP_MODE        0xa
+#define NIC_GET_AMP_MODE        0xb
 
-#define NIC_LONG_XMIT           0xa
-#define NIC_LONG_XMIT_MORE      0xb
+#define NIC_LONG_XMIT           0xc
+#define NIC_LONG_XMIT_MORE      0xd
 #endif
 

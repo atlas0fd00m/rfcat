@@ -637,8 +637,6 @@ class USBDongle:
             except:
                 sys.excepthook(*sys.exc_info())
 
-            time.sleep(0.001)
-            
         raise(ChipconUsbTimeoutException())
 
     def recvAll(self, app, cmd=None):
