@@ -637,6 +637,7 @@ def findManchesterData(data, hilo=1):
             pass
 
 def findManchester(data, minbytes=10):
+    print "DEBUG: DATA=" + repr(data)
     success = []
 
     last = 0

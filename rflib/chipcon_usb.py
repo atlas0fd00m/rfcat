@@ -90,6 +90,16 @@ LC_USB_EP5OUT                 = 0xc
 LC_RF_VECTOR                  = 0x10
 LC_RFTXRX_VECTOR              = 0x11
 
+LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN    = 0x1
+LCE_USB_EP0_SENT_STALL                = 0x4
+LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN  = 0x5
+LCE_USB_EP5_LEN_TOO_BIG               = 0x6
+LCE_USB_EP5_GOT_CRAP                  = 0x7
+LCE_USB_EP5_STALL                     = 0x8
+LCE_USB_DATA_LEFTOVER_FLAGS           = 0x9
+LCE_RF_RXOVF                          = 0x10
+LCE_RF_TXUNF                          = 0x11
+
 RCS = {}
 LCS = {}
 LCES = {}
@@ -371,6 +381,7 @@ class USBDongle:
             #### transmit stuff.  if any exists in the xmit_queue
             self.xmit_event.wait() # event driven xmit
             msgsent = False
+
             try:
                 if len(self.xmit_queue):
                     self.xsema.acquire()
@@ -443,6 +454,8 @@ class USBDongle:
                             elif (cmd == DEBUG_CMD_HEX32):
                                 #print >>sys.stderr, repr(buf)
                                 print >>sys.stderr, "DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("<L", buf[4:8])[0], struct.unpack("<L", buf[4:8])[0])
+                            elif (cmd == DEBUG_CMD_INT):
+                                print >>sys.stderr, "DEBUG: (%.3f) %d"%(timestamp, struct.unpack("<L", buf[4:8])[0])
                             else:
                                 print >>sys.stderr,('DEBUG COMMAND UNKNOWN: %x (buf=%s)'%(cmd,repr(buf)))
 
