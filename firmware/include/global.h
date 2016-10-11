@@ -36,6 +36,10 @@ extern __xdata u32 clock;
 
 #define LC_RF_VECTOR                    0x10
 #define LC_RFTXRX_VECTOR                0x11
+#define LC_TXDATA_START                 0x12
+#define LC_TXDATA_COMPLETED_FRAME       0x13
+#define LC_TXDATA_COMPLETED_MESSAGE     0x14
+
 
 // lastCode[1]: Errors
 #define LCE_NO_ERROR                            0x0
