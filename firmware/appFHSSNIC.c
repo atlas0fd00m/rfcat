@@ -833,9 +833,6 @@ int appHandleEP5()
                     txTotal= 0;
                     buf[0] = transmit(&buf[6], len, 0, offset);
                     appReturn( 1, buf);
-                    debug("NIC_XMIT: done");
-                    debughex16(txTotal);
-                    debughex16(rfTxTotalTXLen);
                     break;
 
                 case NIC_SET_RECV_LARGE:
@@ -911,7 +908,6 @@ int appHandleEP5()
                     // this is duplicating our work in transmit_long().  pick one.
                     if (macdata.mac_state != MAC_STATE_NONHOPPING)
                     {
-                        debug("NIC_LONG_XMIT: can't work when FHSS hopping");
                         buf[0] = RC_RF_MODE_INCOMPAT;
                         appReturn( 1, buf);
                         break;
