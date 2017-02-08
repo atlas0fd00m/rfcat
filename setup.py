@@ -5,7 +5,7 @@ from distutils.core import setup, Extension
 packages = ['rflib', 'vstruct', 'vstruct.defs']
 mods = []
 pkgdata = {}
-scripts = ['rfcat', 'rfcat_server', 'CC-Bootloader/rfcat_bootloader',
+scripts = ['rfcat', 'rfcat_server', 'rfcat_msfrelay', 'CC-Bootloader/rfcat_bootloader',
         ]
 
 # store the HG revision in an rflib python file
