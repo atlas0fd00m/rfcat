@@ -5,7 +5,8 @@
 #include "global.h"
 
 // use DMA for RF?
-//#define RFDMA
+//#define RFDMA  - nope.  this has now died for InfiniteMode TX/RX.  we need to 
+//                  switch buffers mid-stream
 
 #define DMA_CFG_SIZE 8
 // BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
@@ -61,8 +62,16 @@ extern volatile __xdata u8 rfRxInfMode;
 extern volatile __xdata u16 rfRxTotalRXLen;
 extern volatile __xdata u16 rfRxLargeLen;
 /* Tx buffers */
-extern volatile __xdata u8 *rftxbuf;
+extern volatile __xdata u8 *__xdata rftxbuf;
+extern volatile __xdata u8 rfTxBufCount;
+extern volatile __xdata u8 rfTxCurBufIdx;
 extern volatile __xdata u16 rfTxCounter;
+extern volatile __xdata u16 rfTxRepeatCounter;
+extern volatile __xdata u16 rfTxBufferEnd;
+extern volatile __xdata u16 rfTxRepeatLen;
+extern volatile __xdata u16 rfTxRepeatOffset;
+extern volatile __xdata u16 rfTxTotalTXLen;
+extern volatile __xdata u8 rfTxInfMode;
 
 extern volatile __xdata u16 rf_MAC_timer;
 extern volatile __xdata u16 rf_tLastRecv;
@@ -71,8 +80,9 @@ extern volatile __xdata u16 rf_tLastRecv;
 extern volatile __xdata u8 rfAESMode;
 
 extern volatile __xdata u8 rfAmpMode;
+extern __xdata u16 txTotal; // debugger
 
-extern u8 rfif;
+extern volatile u8 rfif;
 
 void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
 void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
@@ -112,9 +122,30 @@ void IdleMode(void);        // set defaults to return to IDLE and calls RFOFF
 
 int waitRSSI(void);
 
-u8 transmit(__xdata u8*, u16 len, u16 repeat, u16 offset);   // sends data out the radio using the current RF settings
+u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdata u16 offset);   // sends data out the radio using the current RF settings
 void appInitRf(void);       // in application.c  (provided by the application and called from init_RF()
 void init_RF(void);
-void byte_shuffle(__xdata u8* buf, u16 len, u16 offset);
+void byte_shuffle(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 offset);
 void startRX(void);
+void resetRFSTATE(void);
+
+typedef struct MAC_DATA_s 
+{
+    u8 mac_state;
+    // MAC parameters (FIXME: make this all cc1111fhssmac.c/h?)
+    u16 MAC_threshold;              // when the T2 clock as overflowed this many times, change channel
+    u16 MAC_timer;                  // this tracks how many times it's overflowed (really?  32-bits for these two?!?)
+    u16 NumChannels;                // in case of multiple paths through the available channels 
+    u16 NumChannelHops;             // total number of channels in pattern (>= g_MaxChannels)
+    u16 curChanIdx;                 // indicates current channel index of the hopping pattern
+    u16 tLastStateChange;
+    u16 tLastHop;
+    u16 desperatelySeeking;         // this should be unnecessary, and should instead use mac_state?
+    u8  txMsgIdx;
+    u8  txMsgIdxDone;
+    u16 synched_chans;
+} MAC_DATA_t;
+
+extern __xdata MAC_DATA_t macdata;
+
 #endif

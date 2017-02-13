@@ -29,11 +29,11 @@ ys1fw: RfCatYS1
 
 
 # helper targets 
-chipcon_usb.rel : 
+chipcon_usb.rel: chipcon_usb.c include/*.h
 	#./new_serial.py
 	$(CC) $(CFLAGS) $(DEFINES)  -DUSB_DEVICE_SERIAL_NUMBER=$(USB_DEVICE_SERIAL_NUMBER) -c chipcon_usb.c
 
-%.rel : %.c
+%.rel: %.c include/*.h
 	$(CC) $(CFLAGS) $(DEFINES) -c $<
 
 # firmware build targets
@@ -521,8 +521,8 @@ installdonsbootloader:
 installys1bootloader: 
 	./bootloader_serial.py $(USBSERNUM)
 	goodfet.cc erase
-	goodfet.cc flash CCBootloader/CCBootloader-rfcat-ys1.hex
-	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1.hex
+	goodfet.cc flash CCBootloader/CCBootloader-rfcat-ys1-serial.hex
+	goodfet.cc verify CCBootloader/CCBootloader-rfcat-ys1-serial.hex
 	goodfet.cc info
 
 installchronosbootloadercctool: 
@@ -537,8 +537,8 @@ installdonsbootloadercctool:
 
 installys1bootloadercctool: 
 	./bootloader_serial.py $(USBSERNUM)
-	cc-tool -n CC1111 -e -w CCBootloader/CCBootloader-rfcat-ys1.hex
-	cc-tool -n CC1111 -v CCBootloader/CCBootloader-rfcat-ys1.hex
+	cc-tool -n CC1111 -e -w CCBootloader/CCBootloader-rfcat-ys1-serial.hex
+	cc-tool -n CC1111 -v CCBootloader/CCBootloader-rfcat-ys1-serial.hex
 
 testgoodfet:
 	goodfet.cc info

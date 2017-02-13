@@ -17,17 +17,47 @@
  * */
 
 
+/* todo:  NIC_LONG_XMIT:
+ * usb cycles (appHandleEP5()):
+ *    case NIC_LONG_XMIT:
+ *      set macdata.txMsgIdx = 0
+ *      set macdata.txMsgIdxDone = 0
+ *      clear all buffer lengths
+ *      set macdata.macstate = MAC_STATE_LONG_XMIT  (rly? should just stay at NONHOPPING?)
+ *      write into g_txMsgQueue[macdata.txMsgIdx]
+ *      need to indicate that the buffer if filled  (buffer[0] = len)
+ *      need to indicate that there's data to RF TRANSMIT
+ *
+ *    case NIC_LONG_XMIT_MORE:
+ *      if g_txMsgQueue[macdata.txMsgIdx+1][0] != 0 (we've looped and caught up with RFtx)
+ *          return 1 (meaning, don't release the USB IN buffer for writing)
+ *      macdata.txMsgIdx ++
+ *      write into g_txMsgQueuepmacdata.txMsgIdx], [0]=len, [1:]=data
+ *
+ * rf cycles:
+ *      some indicator of Infinite Transmit mode  (rfTxInfMode)
+ *      start writing g_txMsgQueue[macdata.txMsgIdxDone]
+ *      when done with g_txMsgQueue[macdata.txMsgIdxDone]:
+ *          macdata.txMsgIdxDone++ (wrap if == MAX...)
+ *          if g_txMsgQueue[macdata.txMsgIdxDone][0] == 0:
+ *              signal "done with transmitting"
+ *      
+ *
+*/
 ////  turn this on to enable TX of CARRIER at each hop instead of normal RX/TX
 //#define DEBUG_HOPPING 1
 
 
-__xdata MAC_DATA_t macdata;
+#define RFCAT
+
 __xdata u8 g_Channels[MAX_CHANNELS];
 
 __xdata u16 g_NIC_ID;
 
 
-__xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN];
+// queue of messages to transmit.  may be used for FHSS, or to send LONG messages
+// first byte of each message indicates its length
+__xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt T2_VECTOR;
@@ -36,7 +66,7 @@ int appHandleEP5();
 
 /**************************** PHY LAYER *****************************/
 
-void PHY_set_channel(u16 chan)
+void PHY_set_channel(__xdata u16 chan)
 {
     // set mode IDLE
     RFOFF;
@@ -61,7 +91,7 @@ void MAC_initChannels()
     //macdata.MAC_threshold = 0;
 }
 
-void begin_hopping(u8 T2_offset)
+void begin_hopping(__xdata u8 T2_offset)
 {
     // reset the T2 clock settings based on T1 clock an offset
     T2CT -= T2_offset;
@@ -79,29 +109,182 @@ void stop_hopping(void)
     
 }
 
-void MAC_tx(__xdata u8* msg, u8 len)
+
+__xdata u8 transmit_long(__xdata u8* __xdata buf, __xdata u16 len, __xdata u8 blocks)
+    /* Infinite transmit.  keep transmitting until the next buffer in the g_txMsgQueue is clear
+     * ([0] == 0)
+     * */
 {
-    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying...
+    __xdata u16 countdown;
+    __xdata u8 err;
+
+    if (macdata.mac_state != MAC_STATE_NONHOPPING)
+    {
+        debug("Cannot call transmit_long while FHSS Hopping or already processing transmit_long!");
+        debughex(macdata.mac_state);
+        return RC_RF_MODE_INCOMPAT;
+    }
+
+    macdata.mac_state = MAC_STATE_LONG_XMIT;
+    while (MARCSTATE == MARC_STATE_TX)
+    {
+            //LED = !LED;
+    }
+    // Leave LED in a known state (off)
+    LED = 0;
+
+    // setup infinite mode, length, and the variables that will last for and manage the whole transmission
+    rfTxTotalTXLen = len;
+                //debughex16(rfTxTotalTXLen);
+    rfTxBufferEnd = MAX_TX_MSGLEN + 1; // add 1 for length byte
+                //debughex16(rfTxBufferEnd);
+    rftxbuf = (volatile __xdata u8*)&g_txMsgQueue[0][0];
+    rfTxRepeatCounter = 0;
+    rfTxCurBufIdx = macdata.txMsgIdxDone = 0;
+    macdata.txMsgIdx = 0;
+    rfTxCounter = 1; // don't transmit length byte
+    rfTxBufCount = MAX_TX_MSGS;
+
+    // clear buffer
+    MAC_tx(NULL, 0);
+
+    // pre-load 1st blocks into message queue
+    for(countdown = 0 ; countdown < blocks ; ++countdown)
+    {
+        err = MAC_tx(buf + (u8) (countdown * MAX_TX_MSGLEN), (u8) MAX_TX_MSGLEN);
+        if(err)
+            {
+            debug("MAC_tx() returned error");
+            macdata.mac_state = MAC_STATE_NONHOPPING;
+            debughex(err);
+            return err;
+            }
+    }
+
+    // set up crypto - MAC_tx will perform enc/dec if required
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE && rfTxTotalTXLen % 16)
+    {
+        // set new length to multiple of 16 as last block will be padded
+        rfTxTotalTXLen += 16 - (rfTxTotalTXLen % 16);
+    }
+
+    // configure for infinitemode if required
+    if(rfTxTotalTXLen > RF_MAX_TX_BLOCK)
+    {
+        PKTLEN = (u8) (rfTxTotalTXLen % 256);
+        PKTCTRL0 &= ~PKTCTRL0_LENGTH_CONFIG;
+        PKTCTRL0 |= PKTCTRL0_LENGTH_CONFIG_INF;
+        rfTxInfMode = 1;
+    }
+    else
+    {
+        PKTLEN = (u8) rfTxTotalTXLen;
+        rfTxInfMode = 0;
+    }
+
+    /* Put radio into tx state */
+#ifdef YARDSTICKONE
+    SET_TX_AMP;
+#endif
+    RFST = RFST_STX;
+
+    // wait until we're safely in TX mode
+    countdown = 60000;
+    while (MARCSTATE != MARC_STATE_TX && --countdown)
+    {
+        //LED = !LED;
+    }
+    // LED on - we're transmitting
+    LED = 1;
+    if (!countdown)
+    {
+        lastCode[1] = LCE_RFTX_NEVER_TX;
+        debug("never entered TX");
+    }
+    //debug("done with transmit_long");
+    return RC_NO_ERROR;
+}
+
+__xdata u8 MAC_tx(__xdata u8* __xdata msg, __xdata u8 len)
+{
     // queue data for sending at subsequent time slots.
+    // - overloaded - also used for arbitrary length transmission
+    //
+    // FIXME: possibly integrate USB/RF buffers so we don't have to keep copying... - this would break stuff
     // FIXME: this is not good for fixed-length
+    // FIXME: possibly use DMA for transfers?
+    // FIXME: watch for errors and changes in state from ISR, and return value.
 
     if (len > MAX_TX_MSGLEN)
     {
         debug("FHSSxmit message too long");
-        return;
+        return RC_ERR_BUFFER_SIZE_EXCEEDED;
     }
 
-    g_txMsgQueue[macdata.txMsgIdx][0] = len;
-    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+    // len of 0 means clear buffer
+    if(len == 0)
+    {
+        //debug("clearing queue");
+        for(macdata.txMsgIdx = 0 ; macdata.txMsgIdx < rfTxBufCount ; ++macdata.txMsgIdx)
+        {
+            g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_AVAILABLE;
+        }
+        macdata.txMsgIdx = 0;
+        return RC_NO_ERROR;
+    }
 
-    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+    switch (macdata.mac_state)
+    {
+        case MAC_STATE_LONG_XMIT:
+            if (macdata.txMsgIdx && MARCSTATE != MARC_STATE_TX)
+            {
+                macdata.mac_state = MAC_STATE_LONG_XMIT_FAIL;
+                return RC_TX_ERROR;
+            }
+            break;
+        case MAC_STATE_NONHOPPING:
+            return RC_TX_ERROR;
+    }
+    if (g_txMsgQueue[macdata.txMsgIdx][0] != BUFFER_AVAILABLE)
+    {
+        // can't add to the next queue
+        lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_FREE;
+        return RC_ERR_BUFFER_NOT_AVAILABLE;
+    }
+
+    // mark the queue msg as filling:
+    g_txMsgQueue[macdata.txMsgIdx][0] = BUFFER_FILLING;
+    // copy data
+    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], msg, len);
+    // crypt if required
+    // todo: currently only works at very low baud rates (e.g. 10k)
+    // todo: may be a fundamental limitation as it slows throughput
+    // todo: implement some kind of failure detection
+    if(rfAESMode & AES_CRYPTO_OUT_ENABLE)
+    {
+        len = padAES(&g_txMsgQueue[macdata.txMsgIdx][1], len);
+        if((rfAESMode & AES_CRYPTO_OUT_TYPE) == AES_CRYPTO_OUT_ENCRYPT)
+            encAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+        else
+            decAES(&g_txMsgQueue[macdata.txMsgIdx][1], &g_txMsgQueue[macdata.txMsgIdx][1], len, (rfAESMode & AES_CRYPTO_MODE));
+    }
+    // place data len in first byte
+    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+    //debug("writing block");
+    //debughex(macdata.txMsgIdx);
+    //debug("writing length");
+    //debughex(g_txMsgQueue[macdata.txMsgIdx][0]);
+    // [0] means:  0xff=writing, 0=avail, !0=ready_to_send/datalen
+
+    if (++macdata.txMsgIdx == rfTxBufCount)
     {
         macdata.txMsgIdx = 0;
     }
 
+    return RC_NO_ERROR;
 }
 
-void MAC_sync(u16 CellID)
+void MAC_sync(__xdata u16 CellID)
 {
     // this should be implemented for a specific MAC/PHY.  too many details are left out here.
     // what are we synching to?  need to determine if we have a network id to sync with?
@@ -169,19 +352,19 @@ void MAC_do_Master_scanny_thingy()
 }
 
 
-void MAC_set_chanidx(u16 chanidx)
+void MAC_set_chanidx(__xdata u16 chanidx)
 {
     PHY_set_channel( g_Channels[ chanidx ] );
 }
 
 
-void MAC_set_NIC_ID(u16 NIC_ID)
+void MAC_set_NIC_ID(__xdata u16 NIC_ID)
 {
     // this function is a placeholder for more functionality, if it makes sense... perhaps cut it.
     g_NIC_ID = NIC_ID;
 }
 
-void MAC_rx_handle(u8 len, __xdata u8* message)
+void MAC_rx_handle(__xdata u8 len, __xdata u8* __xdata message)
 {
     len;
     message;
@@ -190,7 +373,7 @@ void MAC_rx_handle(u8 len, __xdata u8* message)
 }
 
 
-u8 MAC_getNextChannel()
+__xdata u8 MAC_getNextChannel()
 {
     macdata.curChanIdx++;
     if (macdata.curChanIdx >= MAX_CHANNELS)
@@ -207,6 +390,7 @@ u8 MAC_getNextChannel()
 void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigger on T2 overflow
 {
     __xdata u8 packet[28];
+
     // timer2 controls hopping.
     // if the system is not supposed to be hopping, T2 Interrupt should be disabled
     // otherwise....
@@ -240,7 +424,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
             debug("hop");
             RFOFF;
             RFTX;        // for debugging purposes, we'll just transmit carrier at each hop
-            LED = !LED;
+            //LED = !LED;
             while(MARCSTATE != MARC_STATE_TX);
             return();
     
@@ -313,7 +497,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
 
                     if ( g_txMsgQueue[macdata.txMsgIdxDone][0])      // if length byte >0
                     {
-                        LED = !LED;
+                        //LED = !LED;
                         sleepMillis(FHSS_TX_SLEEP_DELAY);
                         transmit(&g_txMsgQueue[macdata.txMsgIdxDone][!(PKTCTRL0&1)], g_txMsgQueue[macdata.txMsgIdxDone][0], 0, 0);
                         // FIXME: rudimentary FHSS_tx in interrupt handler, make more elegant (with confirmation or somesuch?)
@@ -416,6 +600,8 @@ void init_MAC(void)
 /*************************************************************************************************
  * Application Code - these first few functions are what should get overwritten for your app     *
  ************************************************************************************************/
+__xdata u8 processbuffer;
+__xdata u8 *__xdata chan_table;
 
 /* appMainInit() is called *before Interrupts are enabled* for various initialization things. */
 void appMainInit(void)
@@ -424,17 +610,23 @@ void appMainInit(void)
     clock = 0;
 
     init_MAC();
+
+    processbuffer = 0;
+    chan_table = rfrxbuf[0];
+
 }
 
 /* appMain is the application.  it is called every loop through main, as does the USB handler code.
  * do not block if you want USB to work.                                                           */
 void appMainLoop(void)
 {
-    __xdata u8 processbuffer;
-    __xdata u8 *chan_table;
 
     switch  (macdata.mac_state)
     {
+        // do this first for speed/efficiency
+        case MAC_STATE_LONG_XMIT:
+            break;
+
         case MAC_STATE_PREP_SPECAN:
             RFOFF;
             PKTCTRL1 =  0xE5;       // highest PQT, address check, append_status
@@ -448,7 +640,8 @@ void appMainLoop(void)
             chan_table = rfrxbuf[0];
 
         case MAC_STATE_SPECAN:
-            for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++) {
+            for (processbuffer = 0; processbuffer < macdata.synched_chans; processbuffer++)
+            {
                 /* tune radio and start RX */
                 CHANNR = processbuffer;        // may not be the fastest, but otherwise we have to store FSCAL data for each channel
                 RFOFF;
@@ -500,7 +693,7 @@ void appMainLoop(void)
                 }
             }
 
-            rfif = 0;
+            __critical { rfif = 0; }
             IEN2 |= IEN2_RFIE;
             break;
 
@@ -533,11 +726,11 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~RFIF_IRQ_DONE;
+                    __critical { rfif &= ~RFIF_IRQ_DONE; }
                 }
             }
 
-            rfif = 0;
+            __critical{ rfif = 0; }
             IEN2 |= IEN2_RFIE;
             break;
 
@@ -574,7 +767,7 @@ void appMainLoop(void)
                         /* Set receive buffer to processed so it can be used again */
                         rfRxProcessed[processbuffer] = RX_PROCESSED;
                     }
-                    rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );           // FIXME: rfif is way too easily tossed aside here...
+                    __critical { rfif &= ~( RFIF_IRQ_DONE | RFIF_IRQ_TIMEOUT );  }          // FIXME: rfif is way too easily tossed aside here...
                 }
 
                 //LED = !LED;
@@ -584,12 +777,6 @@ void appMainLoop(void)
 }
 
 
-
-void appReturn(__xdata u8 len, __xdata u8* response)
-{
-    ep5.flags &= ~EP_OUTBUF_WRITTEN;                       // this should be superfluous... but could be causing problems?
-    txdata(ep5.OUTapp,ep5.OUTcmd, len, response);
-}
 
 /* appHandleEP5 gets called when a message is received on endpoint 5 from the host.  this is the 
  * main handler routine for the application as endpoint 0 is normally used for system stuff.
@@ -606,7 +793,8 @@ int appHandleEP5()
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;
-    __xdata u8 *buf = &ep5.OUTbuf[0];
+    __xdata u8 * __xdata buf = &ep5.OUTbuf[0];
+    __xdata u8 blocks;
 
     switch (ep5.OUTapp)
     {
@@ -636,14 +824,15 @@ int appHandleEP5()
                         debug("crap, please use FHSSxmit() instead!");
                         break;
                     }
-                    len = *buf++;
-                    len += (*buf++) << 8;
-                    repeat = *buf++;
-                    repeat += (*buf++) << 8;
-                    offset = *buf++;
-                    offset += (*buf++) << 8;
-                    transmit(buf, len, repeat, offset);
-                    appReturn( 1, (__xdata u8*)&len);
+                    len = buf[0];
+                    len += buf[1] << 8;
+                    repeat = buf[2];
+                    repeat += buf[3] << 8;
+                    offset = buf[4];
+                    offset += buf[5] << 8;
+                    txTotal= 0;
+                    buf[0] = transmit(&buf[6], len, 0, offset);
+                    appReturn( 1, buf);
                     break;
 
                 case NIC_SET_RECV_LARGE:
@@ -651,8 +840,8 @@ int appHandleEP5()
                     
                     // configure large block receive (infinite mode)
                     // call with block size of 0 to switch off
-                    rfRxLargeLen = *buf++;
-                    rfRxLargeLen += (*buf++) << 8;
+                    rfRxLargeLen = buf[0];
+                    rfRxLargeLen += buf[1] << 8;
                     if(rfRxLargeLen)
                     {
                         rfRxInfMode = 1;
@@ -678,7 +867,7 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_AES_MODE:
-                    rfAESMode= *buf;
+                    rfAESMode= buf[0];
                     appReturn( 1, buf);
                     break;
 
@@ -707,12 +896,98 @@ int appHandleEP5()
                     break;
 
                 case NIC_SET_ID:
-                    MAC_set_NIC_ID(*buf);
+                    // fixme: sending 8 bit to 16 bit function???
+                    MAC_set_NIC_ID(buf[0]);
+                    appReturn( 1, buf);
+                    break;
+
+                case NIC_LONG_XMIT:
+                    // load up macdata queues, follow-on with 
+                    //
+                    //
+                    // this is duplicating our work in transmit_long().  pick one.
+                    if (macdata.mac_state != MAC_STATE_NONHOPPING)
+                    {
+                        buf[0] = RC_RF_MODE_INCOMPAT;
+                        appReturn( 1, buf);
+                        break;
+                    }
+                    len = buf[0];
+                    len += buf[1] << 8;
+                    blocks = buf[2];
+                    txTotal= 0;
+                    buf[0] = transmit_long(&buf[3], len, blocks);
+                    appReturn( 1, buf);
+                    break;
+
+                case NIC_LONG_XMIT_MORE:
+                    len = buf[0];
+                    if (len == 0)
+                    {
+                        // this is after the last chunk, wait for tx to finish and return OK
+                        while (rfTxTotalTXLen && MARCSTATE == MARC_STATE_TX) 
+                        {
+                            sleepMillis(40); // delay to avoid race condition that will cause mis-read of rfTxTotalTXLen == 0
+                        }
+                        if(rfTxTotalTXLen)
+                        {
+                            debug("dropout final wait!");
+                            debughex16(rfTxTotalTXLen);
+                            debughex(g_txMsgQueue[0][0]);
+                            debughex(g_txMsgQueue[1][0]);
+                            lastCode[1] = LCE_DROPPED_PACKET;
+                            buf[0] = RC_TX_DROPPED_PACKET;
+                            LED = 0;
+                            resetRFSTATE();
+                            macdata.mac_state = MAC_STATE_NONHOPPING;
+                            appReturn( 1, buf);
+                            break;
+                        }
+                        LED = 0;
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        buf[0] = LCE_NO_ERROR;
+                        debug("total bytes tx:");
+                        debughex16(txTotal);
+                        appReturn( 1, buf);
+                        break;
+                    }
+                    // catch if we've been called out of sequence, or we've had an underrun
+                    if (macdata.mac_state != MAC_STATE_LONG_XMIT)
+                    {
+                        debug("underrun");
+                        // TX underrun
+                        if(lastCode[1] == LCE_DROPPED_PACKET)
+                            {
+                            buf[0] = RC_TX_DROPPED_PACKET;
+                            appReturn( 1, buf);
+                            }
+                        else
+                        {
+                            lastCode[1] = LCE_RF_MULTI_BUFFER_NOT_INIT;
+                            buf[0] = RC_RF_MODE_INCOMPAT;
+                            appReturn( 1, buf);
+                        }
+                        LED = 0;
+                        resetRFSTATE();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                        break;
+                    }
+                    // add data to rolling buffer
+                    buf[0] = MAC_tx(&buf[1], (__xdata u8) len);
+                    // check for any other error return
+                    if(buf[0] && buf[0] != RC_ERR_BUFFER_NOT_AVAILABLE)
+                    {
+                        debug("buffer error");
+                        debughex(buf[0]);
+                        LED = 0;
+                        resetRFSTATE();
+                        macdata.mac_state = MAC_STATE_NONHOPPING;
+                    }
                     appReturn( 1, buf);
                     break;
 
                 case FHSS_XMIT:
-                    len = *buf++;
+                    len = buf[0];
                     //len += (*buf++) << 8;
                     //repeat = *buf++;
                     //repeat += (*buf++) << 8;
@@ -720,37 +995,38 @@ int appHandleEP5()
                     //offset += (*buf++) << 8;
                     //transmit(buf, len, repeat, offset);
                     //MAC_tx(buf, len);
-    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
-    if (len > MAX_TX_MSGLEN)
-    {
-        debug("FHSSxmit message too long");
-                    appReturn( 1, (__xdata u8*)&len);
-        break;
-    }
+                    /////// for some strange reason, if we call this in MAC_tx it dies, but not from here. ugh.
+                    if (len > MAX_TX_MSGLEN)
+                    {
+                        debug("FHSSxmit message too long");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
 
-    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
-    {
-        debug("still waiting on the last packet");
-                    appReturn( 1, (__xdata u8*)&len);
-        break;
-    }
-    g_txMsgQueue[macdata.txMsgIdx][0] = len;
-    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], buf, len);
+                    if (g_txMsgQueue[macdata.txMsgIdx][0] != 0)
+                    {
+                        debug("still waiting on the last packet");
+                                    appReturn( 1, (__xdata u8*)&len);
+                        break;
+                    }
 
-    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
-    {
-        macdata.txMsgIdx = 0;
-    }
+                    g_txMsgQueue[macdata.txMsgIdx][0] = len;
+                    memcpy(&g_txMsgQueue[macdata.txMsgIdx][1], &buf[1], len);
+
+                    if (++macdata.txMsgIdx >= MAX_TX_MSGS)
+                    {
+                        macdata.txMsgIdx = 0;
+                    }
 
                     appReturn( 1, (__xdata u8*)&len);
                     break;
                     
                 case FHSS_SET_CHANNELS:
-                    macdata.NumChannels = (__xdata u16)*buf;
+                    macdata.NumChannels = (__xdata u16)buf[0];
                     if (macdata.NumChannels <= MAX_CHANNELS)
                     {
-                        buf += 2;
-                        memcpy(&g_Channels[0], buf, macdata.NumChannels);
+                        //buf += 2;
+                        memcpy(&g_Channels[0], &buf[2], macdata.NumChannels);
                         appReturn( 2, (u8*)&macdata.NumChannels);
                     } else {
                         appReturn( 8, (__xdata u8*)"NO DEAL");
@@ -767,7 +1043,7 @@ int appHandleEP5()
                     break;
 
                 case FHSS_CHANGE_CHANNEL:
-                    PHY_set_channel(*buf);
+                    PHY_set_channel(buf[0]);
                     appReturn( 1, buf);
                     break;
 
@@ -783,7 +1059,7 @@ int appHandleEP5()
 
                 // FIXME: do we even need g_MAC_threshold anymore?
                 case FHSS_SET_MAC_THRESHOLD:
-                    macdata.MAC_threshold = *buf;
+                    macdata.MAC_threshold = buf[0];
                     appReturn( 1, buf);
                     break;
 
@@ -792,6 +1068,8 @@ int appHandleEP5()
                     break;
 
                 case FHSS_SET_MAC_DATA:
+                    debugx(buf);
+                    debughex(buf[0]);
                     memcpy((__xdata u8*)&macdata, (__xdata u8*)*buf, sizeof(macdata));
                     appReturn( sizeof(macdata), buf);
                     break;
@@ -802,14 +1080,14 @@ int appHandleEP5()
                     break;
 
                 case FHSS_START_SYNC:
-                    MAC_sync(*buf);
+                    MAC_sync(buf[0]);
                     appReturn( 1, buf);
                     break;
                     
                 case FHSS_SET_STATE:
                     // store the main timer value for beginning of this phase.
                     macdata.tLastStateChange = clock;
-                    macdata.mac_state = (u8)*buf;
+                    macdata.mac_state = (u8)buf[0];
                     
                     // if macdata.mac_state is > 2, make sure the T2 interrupt is set
                     // if macdata.mac_state <= 2, make sure T2 interrupt is ignored
@@ -893,7 +1171,7 @@ void appHandleEP0OUT(void)
  * data is sent back through calls to either setup_send_ep0 or setup_sendx_ep0 for xdata vars    *
  * theoretically you can process stuff without the IN-direction bit, but we've found it is better*
  * to handle OUT packets in appHandleEP0OUTdone, which is called when the last packet is complete*/
-int appHandleEP0(USB_Setup_Header* pReq)
+int appHandleEP0(__xdata USB_Setup_Header* pReq)
 {
 #ifdef VIRTUAL_COM
     pReq = 0;

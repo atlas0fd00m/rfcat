@@ -34,8 +34,8 @@ char vcom_getchar();
 void vcom_putchar(char c);
 void vcom_flush();
 
-void vcom_putstr(char* buff);
-void vcom(char* buff);
+void vcom_putstr(char* __xdata  buff);
+void vcom(char* __xdata  buff);
 //void vcom_up();
 //void vcom_down();
 void usb_up(void);
