@@ -23,305 +23,305 @@ packets_sent = 0
 last_sent = 0
 
 class MSFHandler(BaseHTTPRequestHandler):
-	def status(self):
-		status = {}
-		hardware = nic.getBuildInfo()
-		hw_version = ""
-		fw_version = nic.reprSoftwareConfig().split(':')[1].lstrip()
-		try:
-			hw_version = hardware.split('r')[1]
-		except:
-			hw_version = "not supported"
-		status["operational"] = 1 # Possibly connect this to ping?
-		status["hw_specialty"] = { "rftransceiver": True }
-		status["hw_capabilities"] = { "cc11xx": True}
-		status["last_10_errors"] = last_errors
-		status["api_version"] = "0.0.2"
-		status["fw_version"] = fw_version
-		status["hw_version"] = hw_version
-		status["device_name"] = hardware.split(' ')[0]
-		return status
+    def status(self):
+        status = {}
+        hardware = nic.getBuildInfo()
+        hw_version = ""
+        fw_version = nic.reprSoftwareConfig().split(':')[1].lstrip()
+        try:
+            hw_version = hardware.split('r')[1]
+        except:
+            hw_version = "not supported"
+        status["operational"] = 1 # Possibly connect this to ping?
+        status["hw_specialty"] = { "rftransceiver": True }
+        status["hw_capabilities"] = { "cc11xx": True}
+        status["last_10_errors"] = last_errors
+        status["api_version"] = "0.0.2"
+        status["fw_version"] = fw_version
+        status["hw_version"] = hw_version
+        status["device_name"] = hardware.split(' ')[0]
+        return status
 
-	def statistics(self):
-		stats = {}
-		stats["uptime"] = int(time.time()) - starttime
-		stats["packet_stats"] = packets_sent
-		stats["last_request"] = last_sent
-		stats["voltage"] = "0.0v"
-		return stats
+    def statistics(self):
+        stats = {}
+        stats["uptime"] = int(time.time()) - starttime
+        stats["packet_stats"] = packets_sent
+        stats["last_request"] = last_sent
+        stats["voltage"] = "0.0v"
+        return stats
 
-	def datetime(self):
-		return { "sytem_datetime": int(time.time()) }
+    def datetime(self):
+        return { "sytem_datetime": int(time.time()) }
 
-	def timezone(self):
-		return { "system_timezone": time.strftime("%Z") }
+    def timezone(self):
+        return { "system_timezone": time.strftime("%Z") }
 
-	def supported_idx(self):
-		return { "indexes": [ nic.idx ] }
+    def supported_idx(self):
+        return { "indexes": [ nic.idx ] }
 
-	def reset(self):
-		nic.resetup()
-		return { "status": "Resetting" }
+    def reset(self):
+        nic.resetup()
+        return { "status": "Resetting" }
 
-	def set_freq(self, args):
-		mhz = 24
-		if not "freq" in args:
-			return self.not_supported()
-		if "mhz" in args:
-			mhz = int(args["mhz"])
-		nic.setFreq(int(args["freq"][0]), mhz)
-		return { "success": True }
+    def set_freq(self, args):
+        mhz = 24
+        if not "freq" in args:
+            return self.not_supported()
+        if "mhz" in args:
+            mhz = int(args["mhz"])
+        nic.setFreq(int(args["freq"][0]), mhz)
+        return { "success": True }
 
-	def get_modulations(self):
-		mods = [ "2FSK", "GFSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester", "MSK/Manchester" ]
-		return mods
+    def get_modulations(self):
+        mods = [ "2FSK", "GFSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester", "MSK/Manchester" ]
+        return mods
 
-	def set_modulation(self, args):
-		if not "mod" in args:
-			return self.not_supported()
-		modvalue = -1
-		for modv, modstr in MODULATIONS.items():
-			if modstr.split(' ')[0] == args["mod"][0]:
-				modvalue = modv
-		if modvalue == -1:
-			return self.not_supported()
-		try:
-			nic.setMdmModulation(modvalue)
-		except:
-			return { "success": False }
-		return { "success": True }
+    def set_modulation(self, args):
+        if not "mod" in args:
+            return self.not_supported()
+        modvalue = -1
+        for modv, modstr in MODULATIONS.items():
+            if modstr.split(' ')[0] == args["mod"][0]:
+                modvalue = modv
+        if modvalue == -1:
+            return self.not_supported()
+        try:
+            nic.setMdmModulation(modvalue)
+        except:
+            return { "success": False }
+        return { "success": True }
 
-	# Fixed Len
-	def make_packet_flen(self, args):
-		if not "len" in args:
-			return self.not_supported()
-		try:
-			nic.makePktFLEN(int(args["len"][0]))
-		except:
-			return { "success": False }
-		return { "success": True }
+    # Fixed Len
+    def make_packet_flen(self, args):
+        if not "len" in args:
+            return self.not_supported()
+        try:
+            nic.makePktFLEN(int(args["len"][0]))
+        except:
+            return { "success": False }
+        return { "success": True }
 
-	# Variable Len
-	def make_packet_vlen(self, args):
-		if not "len" in args:
-			return self.not_supported()
-		try:
-			nic.makePktVLEN(int(args["len"][0]))
-		except:
-			return { "success": False }
-		return { "success": True }
+    # Variable Len
+    def make_packet_vlen(self, args):
+        if not "len" in args:
+            return self.not_supported()
+        try:
+            nic.makePktVLEN(int(args["len"][0]))
+        except:
+            return { "success": False }
+        return { "success": True }
 
-        def set_mode(self, args):
-		if not "mode" in args:
-			return self.not_supported()
-		mode = args["mode"][0]
-		if mode == "TX" or mode == "tx":
-			nic.setModeTX()
-		elif mode == "RX" or mode == "rx":
-			nic.setModeRX()
-		elif mode == "IDLE" or mode == "idle":
-			nic.setModeIDLE()
-		else:
-			return self.not_supported()
-		return { "success": True }
+    def set_mode(self, args):
+        if not "mode" in args:
+            return self.not_supported()
+        mode = args["mode"][0]
+        if mode == "TX" or mode == "tx":
+            nic.setModeTX()
+        elif mode == "RX" or mode == "rx":
+            nic.setModeRX()
+        elif mode == "IDLE" or mode == "idle":
+            nic.setModeIDLE()
+        else:
+            return self.not_supported()
+        return { "success": True }
 
-	def enablePktCRC(self):
-		nic.setEnablePktCRC()
-		return { "success": True }
+    def enablePktCRC(self):
+        nic.setEnablePktCRC()
+        return { "success": True }
 
-	def enableManchester(self):
-		nic.setEnableMdmManchester()
-		return { "success": True}
+    def enableManchester(self):
+        nic.setEnableMdmManchester()
+        return { "success": True}
 
-	def set_channel(self, args):
-		if not "channel" in args:
-			return self.not_supported()
-		nic.setChannel(int(args["channel"]))
-		return { "success": True }
+    def set_channel(self, args):
+        if not "channel" in args:
+            return self.not_supported()
+        nic.setChannel(int(args["channel"]))
+        return { "success": True }
 
-	def set_channel_bandwidth(self, args):
-		mhz = 24
-		if not "bw" in args:
-			return self.not_supported()
-		if "mhz" in args:
-			mhz = int(args["mhz"][0])
-		nic.setMdmChanBW(int(args["bw"]), mhz)
-		return { "success": True }
+    def set_channel_bandwidth(self, args):
+        mhz = 24
+        if not "bw" in args:
+            return self.not_supported()
+        if "mhz" in args:
+            mhz = int(args["mhz"][0])
+        nic.setMdmChanBW(int(args["bw"]), mhz)
+        return { "success": True }
 
-	def set_channel_spc(self, args):
-		chanspc = None
-		chanspc_m = None
-		chanspc_e = None
-		mhz = 24
-		if "chanspc" in args:
-			chanspc = args["chanspc"]
-		if "chanspc_m" in args:
-			chanspc_m = args["chanspc_m"]
-		if "chanspc_e" in args:
-			chanspc_e = args["chanspc_e"]
-		try:
-			nic.setMdmChanSpc(chanspc, chanspc_m, chanspc_e, mhz)
-		except:
-			return { "success": False }
-		return { "success": True }
+    def set_channel_spc(self, args):
+        chanspc = None
+        chanspc_m = None
+        chanspc_e = None
+        mhz = 24
+        if "chanspc" in args:
+            chanspc = args["chanspc"]
+        if "chanspc_m" in args:
+            chanspc_m = args["chanspc_m"]
+        if "chanspc_e" in args:
+            chanspc_e = args["chanspc_e"]
+        try:
+            nic.setMdmChanSpc(chanspc, chanspc_m, chanspc_e, mhz)
+        except:
+            return { "success": False }
+        return { "success": True }
 
-	def set_baud_rate(self, args):
-		mhz = 24
-		if not "rate" in args:
-			return self.not_supported()
-		if "mhz" in args:
-			mhz = int(args["mhz"][0])
-		try:
-			nic.setMdmDRate(int(args["rate"][0]), mhz)
-		except:
-			return { "success": False }
-		return { "success": True }
+    def set_baud_rate(self, args):
+        mhz = 24
+        if not "rate" in args:
+            return self.not_supported()
+        if "mhz" in args:
+            mhz = int(args["mhz"][0])
+        try:
+            nic.setMdmDRate(int(args["rate"][0]), mhz)
+        except:
+            return { "success": False }
+        return { "success": True }
 
-	def set_deviation(self, args):
-		mhz = 24
-		if not "deviat" in args:
-			return self.not_supported()
-		if "mhz" in args:
-			mhz = int(args["mhz"][0])
-		try:
-			nic.setMdmDeviatn(int(args["deviat"][0]), mhz)
-		except:
-			return { "success": False }
-		return { "success": True }
+    def set_deviation(self, args):
+        mhz = 24
+        if not "deviat" in args:
+            return self.not_supported()
+        if "mhz" in args:
+            mhz = int(args["mhz"][0])
+        try:
+            nic.setMdmDeviatn(int(args["deviat"][0]), mhz)
+        except:
+            return { "success": False }
+        return { "success": True }
 
-	def set_sync_word(self, args):
-		if not "word" in args:
-			return self.not_supported()
-		nic.setMdmSyncWord(int(args["word"][0]))
-		return { "success": True}
+    def set_sync_word(self, args):
+        if not "word" in args:
+            return self.not_supported()
+        nic.setMdmSyncWord(int(args["word"][0]))
+        return { "success": True}
 
-	def set_sync_mode(self, args):
-		if not "mode" in args:
-			return self.not_supported()
-		nic.setMdmSyncMode(int(args["mode"][0]))
-		return { "success": True }
+    def set_sync_mode(self, args):
+        if not "mode" in args:
+            return self.not_supported()
+        nic.setMdmSyncMode(int(args["mode"][0]))
+        return { "success": True }
 
-	def set_number_preamble(self, args):
-		if not "num" in args:
-			return self.not_supported()
-		nic.setMdmNumPreamble(int(args["num"][0]))
-		return { "success": True }
+    def set_number_preamble(self, args):
+        if not "num" in args:
+            return self.not_supported()
+        nic.setMdmNumPreamble(int(args["num"][0]))
+        return { "success": True }
 
-	def set_maxpower(self):
-		nic.setMaxPower()
-		return { "success": True }
+    def set_maxpower(self):
+        nic.setMaxPower()
+        return { "success": True }
 
-	def set_power(self, args):
-		if not "power" in args:
-			return self.not_supported()
-		nic.setPower(int(args["power"][0]))
-		return { "success": True }
+    def set_power(self, args):
+        if not "power" in args:
+            return self.not_supported()
+        nic.setPower(int(args["power"][0]))
+        return { "success": True }
 
-	def rfxmit(self, args):
-		repeat = 0
-		offset = 0
-		if not "data" in args:
-			return self.not_supported()
-		if "repeat" in args:
-			repeat = int(args["repeat"][0])
-		if "offset" in args:
-			offset = int(args["offset"][0])
-                data = base64.b64decode(args["data"][0])
-		nic.RFxmit(data, repeat, offset)
-		return { "success": True } # Should do some checks here eventually
+    def rfxmit(self, args):
+        repeat = 0
+        offset = 0
+        if not "data" in args:
+            return self.not_supported()
+        if "repeat" in args:
+            repeat = int(args["repeat"][0])
+        if "offset" in args:
+            offset = int(args["offset"][0])
+        data = base64.b64decode(args["data"][0])
+        nic.RFxmit(data, repeat, offset)
+        return { "success": True } # Should do some checks here eventually
 
-	def rfrecv(self, args):
-		timeout=USB_RX_WAIT
-		blocksize=None
-		if "timeout" in args:
-			timeout = int(args["timeout"][0])
-		if "blocksize" in args:
-			blocksize = int(args["blocksize"][0])
-		try:
-			data = nic.RFrecv(timeout, blocksize)
-		except:
-			return {}
-		msg, ts = data
-		return { "data": base64.b64encode(msg), "timestamp": ts }
-		
+    def rfrecv(self, args):
+        timeout=USB_RX_WAIT
+        blocksize=None
+        if "timeout" in args:
+            timeout = int(args["timeout"][0])
+        if "blocksize" in args:
+            blocksize = int(args["blocksize"][0])
+        try:
+            data = nic.RFrecv(timeout, blocksize)
+        except:
+            return {}
+        msg, ts = data
+        return { "data": base64.b64encode(msg), "timestamp": ts }
+        
 
-	def not_supported(self):
-		return { "status": "not supported" }
+    def not_supported(self):
+        return { "status": "not supported" }
 
-        def send(self, data, resp=200):
-		self.send_response(resp)
-		self.send_header('Content-type','application/json')
-		self.end_headers()
-		self.wfile.write(json.dumps(data))
-		return
-		
-	def do_GET(self):
-		url = urlparse(self.path)
-		args = parse_qs(url.query)
-		if self.path=="/status":
-			self.send(self.status())
-		elif self.path=="/statistics":
-			self.send(self.statistics())
-		elif self.path=="/settings/datetime":
-			self.send(self.datetime())
-		elif self.path=="/settings/timezone":
-			self.send(self.timezone())
-		elif self.path=="/control/factory_reset":
-			self.send(self.reset())
-		elif self.path=="/rftransceiver/supported_idx":
-			self.send(self.supported_idx())
-		elif self.path.startswith("/rftransceiver/"):
-			re_idx = re.compile("/rftransceiver/(\d+)/")
-			m = re_idx.match(self.path)
-			if m:
-				idx = m.group(1)
-				if self.path.find("/set_freq?") > -1:
-					self.send(self.set_freq(args))
-				elif self.path.find("/get_modulations") > -1:
-					self.send(self.get_modulations())
-				elif self.path.find("/set_modulation?") > -1:
-					self.send(self.set_modulation(args))
-				elif self.path.find("/set_mode?") > -1:
-					self.send(self.set_mode(args))
-				elif self.path.find("/make_packet_flen?") > -1:
-					self.send(self.make_packet_flen(args))
-				elif self.path.find("/make_packet_vlen?") > -1:
-					self.send(self.make_packet_vlen(args))
-				elif self.path.find("/enable_packet_crc") > -1:
-					self.send(self.enablePktCRC())
-				elif self.path.find("/enable_manchester") > -1:
-					self.send(self.enableManchester())
-				elif self.path.find("/set_channel?") > -1:
-					self.send(self.set_channel(args))
-				elif self.path.find("/set_channel_bandwidth?") > -1:
-					self.send(self.set_channel_bandhwidth(args))
-				elif self.path.find("/set_channel_spc") > -1:
-					self.send(self.set_channel_spc(args))
-				elif self.path.find("/set_baud_rate?") > -1:
-					self.send(self.set_baud_rate(args))
-				elif self.path.find("/set_deviation?") > -1:
-					self.send(self.set_deviation(args))
-				elif self.path.find("/set_sync_word?") > -1:
-					self.send(self.set_sync_word(args))
-				elif self.path.find("/set_sync_mode?") > -1:
-					self.send(self.set_sync_mode(args))
-				elif self.path.find("/set_number_preamble?") > -1:
-					self.send(self.set_number_preamble(args))
-				elif self.path.find("/set_maxpower") > -1:
-					self.send(self.set_maxpower())
-				elif self.path.find("/set_power?") > -1:
-					self.send(self.set_power(args))
-				elif self.path.find("/rfxmit") > -1:
-					self.send(self.rfxmit(args))
-				elif self.path.find("/rfrecv") > -1:
-					self.send(self.rfrecv(args))
-				else:
-					self.send(self.not_supported(), 404)
-			else:
-				self.send(self.not_supported(), 404)
-		else:
-			self.send(self.not_supported(), 404)
-		return
+    def send(self, data, resp=200):
+        self.send_response(resp)
+        self.send_header('Content-type','application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps(data))
+        return
+        
+    def do_GET(self):
+        url = urlparse(self.path)
+        args = parse_qs(url.query)
+        if self.path=="/status":
+            self.send(self.status())
+        elif self.path=="/statistics":
+            self.send(self.statistics())
+        elif self.path=="/settings/datetime":
+            self.send(self.datetime())
+        elif self.path=="/settings/timezone":
+            self.send(self.timezone())
+        elif self.path=="/control/factory_reset":
+            self.send(self.reset())
+        elif self.path=="/rftransceiver/supported_idx":
+            self.send(self.supported_idx())
+        elif self.path.startswith("/rftransceiver/"):
+            re_idx = re.compile("/rftransceiver/(\d+)/")
+            m = re_idx.match(self.path)
+            if m:
+                idx = m.group(1)
+                if self.path.find("/set_freq?") > -1:
+                    self.send(self.set_freq(args))
+                elif self.path.find("/get_modulations") > -1:
+                    self.send(self.get_modulations())
+                elif self.path.find("/set_modulation?") > -1:
+                    self.send(self.set_modulation(args))
+                elif self.path.find("/set_mode?") > -1:
+                    self.send(self.set_mode(args))
+                elif self.path.find("/make_packet_flen?") > -1:
+                    self.send(self.make_packet_flen(args))
+                elif self.path.find("/make_packet_vlen?") > -1:
+                    self.send(self.make_packet_vlen(args))
+                elif self.path.find("/enable_packet_crc") > -1:
+                    self.send(self.enablePktCRC())
+                elif self.path.find("/enable_manchester") > -1:
+                    self.send(self.enableManchester())
+                elif self.path.find("/set_channel?") > -1:
+                    self.send(self.set_channel(args))
+                elif self.path.find("/set_channel_bandwidth?") > -1:
+                    self.send(self.set_channel_bandhwidth(args))
+                elif self.path.find("/set_channel_spc") > -1:
+                    self.send(self.set_channel_spc(args))
+                elif self.path.find("/set_baud_rate?") > -1:
+                    self.send(self.set_baud_rate(args))
+                elif self.path.find("/set_deviation?") > -1:
+                    self.send(self.set_deviation(args))
+                elif self.path.find("/set_sync_word?") > -1:
+                    self.send(self.set_sync_word(args))
+                elif self.path.find("/set_sync_mode?") > -1:
+                    self.send(self.set_sync_mode(args))
+                elif self.path.find("/set_number_preamble?") > -1:
+                    self.send(self.set_number_preamble(args))
+                elif self.path.find("/set_maxpower") > -1:
+                    self.send(self.set_maxpower())
+                elif self.path.find("/set_power?") > -1:
+                    self.send(self.set_power(args))
+                elif self.path.find("/rfxmit") > -1:
+                    self.send(self.rfxmit(args))
+                elif self.path.find("/rfrecv") > -1:
+                    self.send(self.rfrecv(args))
+                else:
+                    self.send(self.not_supported(), 404)
+            else:
+                self.send(self.not_supported(), 404)
+        else:
+            self.send(self.not_supported(), 404)
+        return
 
 class CC1111NIC_MSFRelay(cmd.Cmd):
     intro = """
@@ -333,7 +333,7 @@ class CC1111NIC_MSFRelay(cmd.Cmd):
         self.printable = True
 
         #nic = FHSSNIC(nicidx)
-	global nic
+        global nic
         nic = RfCat(nicidx)
         self._ip = ip
         self._nicport = nicport
@@ -349,12 +349,12 @@ class CC1111NIC_MSFRelay(cmd.Cmd):
             try:
                 buf = ''
                 self._nicsock = HTTPServer((self._ip, self._nicport), MSFHandler)
-		starttime = int(time.time())
-		print("RfCat MSFRelay running.")
-		self._nicsock.serve_forever()
+                starttime = int(time.time())
+                print("RfCat MSFRelay running.")
+                self._nicsock.serve_forever()
             except KeyboardInterrupt:
-		self._nicsock.socket.close()
-		nic.cleanup()
+                self._nicsock.socket.close()
+                nic.cleanup()
                 self._go = False
             except:
                 sys.excepthook(*sys.exc_info())
