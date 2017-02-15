@@ -21,6 +21,8 @@ last_errors = 0
 starttime = 0
 packets_sent = 0
 last_sent = 0
+username = None
+password = None
 
 class MSFHandler(BaseHTTPRequestHandler):
     def status(self):
@@ -255,7 +257,23 @@ class MSFHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data))
         return
         
+    def do_AUTHHEAD(self):
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm=\"RfCat MSF Relay\"')
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write("Please Authenticate")
+
     def do_GET(self):
+        if not password == None:
+            if self.headers.getheader('Authorization') == None:
+                print("Did not authenticate")
+                self.do_AUTHHEAD()
+                return
+            if not self.headers.getheader('Authorization') == 'Basic '+base64.b64encode(username + ":" + password):
+                print("Bad Authentication")
+                self.do_AUTHHEAD()
+                return
         url = urlparse(self.path)
         args = parse_qs(url.query)
         if self.path=="/status":
@@ -362,7 +380,29 @@ class CC1111NIC_MSFRelay(cmd.Cmd):
 
 
 if __name__ == "__main__":
-    dongleserver = CC1111NIC_MSFRelay()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--index', default=0, type=int)
+    parser.add_argument('-u', '--user', default="msf_relay", help='HTTP Username', type=str)
+    parser.add_argument('-p', '--password', default="rfcat_relaypass", help='HTTP Password', type=str)
+    parser.add_argument('-P', '--Port', default=8080, type=int)
+    parser.add_argument('--noauth', default=False, action="store_true", help='Do not require authentication')
+    parser.add_argument('--localonly', default=False, action="store_true", help='Listen on localhost only')
+
+    ifo = parser.parse_args()
+
+    username = ifo.user
+    password = ifo.password
+    ip = "0.0.0.0"
+    nicport = ifo.Port
+    if ifo.noauth:
+         username = None
+         password = None
+    if ifo.localonly:
+         host = "127.0.0.1"
+
+    dongleserver = CC1111NIC_MSFRelay(ifo.index, ip, nicport)
     
 import atexit
 atexit.register(cleanupInteractiveAtExit)
