@@ -228,7 +228,7 @@ class MSFHandler(BaseHTTPRequestHandler):
             repeat = int(args["repeat"][0])
         if "offset" in args:
             offset = int(args["offset"][0])
-        data = base64.b64decode(args["data"][0])
+        data = base64.urlsafe_b64decode(args["data"][0])
         nic.RFxmit(data, repeat, offset)
         return { "success": True } # Should do some checks here eventually
 
@@ -244,7 +244,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         except:
             return {}
         msg, ts = data
-        return { "data": base64.b64encode(msg), "timestamp": ts }
+        return { "data": base64.urlsafe_b64encode(msg), "timestamp": ts }
         
 
     def not_supported(self):
