@@ -1,0 +1,116 @@
+RfCat MSF Relay
+===============
+
+The RfCat MSF Relay is a lightweight webserver that provides
+Metasploit Hardware Bridge support.  Many of the python methods
+are available interfactive from either the Metasploit hwbridge
+interactive shell or from Metasploit modules written to support
+the rftransceiver extension.
+
+For details on the RFTransceiver extension API see:
+http://OpenGarages.org/hwbridge
+
+To download Metasploit: https://www.metasploit.com/
+
+Usage
+=====
+
+With a RfCat compatiable device plugged into a machine (ie YardStickOne)
+run rfcat_msfrelay.  It will start a webserver and report
+
+  RfCat MSFRelay running.
+
+By default it only listens to localhost and has a default username:password
+of msf_relay:rfcat_relaypass.  All of these options can be altered via
+command line arguments for rfcat_msfrelay.  Once running can launch Metasploit.
+
+```
+./msfconsole -q 
+msf > use auxiliary/client/hwbridge/connect 
+msf auxiliary(connect) > set httpusername msf_relay
+httpusername => msf_relay
+msf auxiliary(connect) > set httppassword rfcat_relaypass
+httppassword => rfcat_relaypass
+msf auxiliary(connect) > run
+
+[*] Attempting to connect to 127.0.0.1...
+[*] Hardware bridge interface session 1 opened (127.0.0.1 -> 127.0.0.1) at 2017-03-11 17:16:23 -0800
+[+] HWBridge session established
+[*] HW Specialty: {"rftransceiver"=>true}  Capabilities: {"cc11xx"=>true}
+[!] NOTICE:  You are about to leave the matrix.  All actions performed on this hardware bridge
+[!]          could have real world consequences.  Use this module in a controlled testing
+[!]          environment and with equipment you are authorized to perform testing on.
+[*] Auxiliary module execution completed
+msf auxiliary(connect) > sessions 
+
+Active sessions
+===============
+
+  Id  Type                   Information    Connection
+  --  ----                   -----------    ----------
+  1   hwbridge cmd/hardware  rftransceiver  127.0.0.1 -> 127.0.0.1 (127.0.0.1)
+
+msf auxiliary(connect) > sessions -i 1
+[*] Starting interaction with 1...
+
+hwbridge > help
+
+Core Commands
+=============
+
+    Command              Description
+    -------              -----------
+    ?                    Help menu
+    bgkill               Kills a background meterpreter script
+    bglist               Lists running background scripts
+    bgrun                Executes a meterpreter script as a background thread
+    exit                 Terminate the hardware bridge session
+    help                 Help menu
+    info                 Displays information about a Post module
+    irb                  Drop into irb scripting mode
+    load                 Load one or more meterpreter extensions
+    load_custom_methods  Loads custom HW commands if any
+    reboot               Reboots the device.  Usually only supported by stand-alone devices
+    reset                Resets the device.  Some devices this is a full factory reset
+    run                  Executes a meterpreter script or Post module
+    specialty            Hardware devices specialty
+    status               Fetch bridge status information
+
+
+RFtransceiver Commands
+======================
+
+    Command            Description
+    -------            -----------
+    baud               sets the baud rate
+    channel            sets channel
+    channel_bw         sets the channel bandwidth
+    deviation          sets the deviation
+    enable_crc         enables crc
+    enable_manchester  enales manchester encoding
+    flen               sets the fixed length packet size
+    freq               sets the frequency
+    idx                sets an active idx
+    maxpower           sets max power
+    modulation         sets the modulation
+    power              sets the power level
+    preamble           sets the preamble number
+    recv               receive a packet of data
+    supported_idx      suppored USB indexes
+    sync_word          sets the sync word
+    vlen               sets the variable lenght packet size
+    xmit               transmits some data
+
+hwbridge > run post/hardware/rftransceiver/...
+```
+
+Notes
+=====
+Not all methods have been ported to Metasploit.  The typical workflow
+is to do your initial research via rfcat and use Metasploit just
+for the results of that research.  Metasploit works better as an
+exploit framework than a research framework.  However, if you feel
+that there are some useful methods missing that you would want to see,
+please file an issue on the Metasploit github page:
+https://github.com/rapid7/metasploit-framework
+
