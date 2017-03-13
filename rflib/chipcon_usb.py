@@ -1,11 +1,19 @@
 #!/usr/bin/env ipython
-import sys, threading, time, struct, select
+import os
+import sys
 import usb
+import time
+import struct
+import select
+import threading
 
 import bits
 from chipcondefs import *
 from rflib_defs import *
 from rflib_version import *
+
+if os.name == 'nt':
+    import msvcrt
 
 DEFAULT_USB_TIMEOUT = 1000
 
@@ -124,7 +132,10 @@ CHIPS = {
 
 
 def keystop(delay=0):
-    return len(select.select([sys.stdin],[],[],delay)[0])
+    if os.name == 'posix':
+        return len(select.select([sys.stdin],[],[],delay)[0])
+    else:
+        return msvcrt.kbhit()
 
 def getRfCatDevices():
     '''
@@ -291,7 +302,6 @@ class USBDongle:
         self._do=None
         if self._bootloader: 
             return
-        #self._threadGo = True
         if self._debug: print >>sys.stderr,("waiting (resetup) %x" % self.idx)
         while (self._do==None):
             try:
@@ -307,7 +317,6 @@ class USBDongle:
                     print >>sys.stderr,("Error in resetup():" + repr(e))
                 #if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
                 time.sleep(1)
-
 
 
     ########  BASE FOUNDATIONAL "HIDDEN" CALLS ########

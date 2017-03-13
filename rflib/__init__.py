@@ -39,8 +39,14 @@ class RfCat(FHSSNIC):
         sys.stdin.read(1)
         self.lowballRestore()
 
-    def specan(self, basefreq=902e6, inc=250e3, count=104):
-        freq, delta = self._doSpecAn(basefreq, inc, count)
+    def specan(self, centfreq=915e6, inc=250e3, count=104):
+        '''
+        Enter Spectrum Analyzer mode.
+        this sets the mode of the dongle to send data, and brings up the GUI.
+
+        centfreq is the center frequency
+        '''
+        freq, delta = self._doSpecAn(centfreq, inc, count)
 
         import rflib.ccspecan as rfspecan
         rfspecan.ensureQapp()
@@ -51,12 +57,18 @@ class RfCat(FHSSNIC):
         window.show()
         rfspecan._qt_app.exec_()
         
-    def _doSpecAn(self, basefreq, inc, count):
+    def _doSpecAn(self, centfreq, inc, count):
         '''
         store radio config and start sending spectrum analysis data
+        
+        centfreq = Center Frequency
         '''
         if count>255:
             raise Exception("sorry, only 255 samples per pass... (count)")
+
+        spectrum = (count * inc) 
+        halfspec = spectrum / 2.0
+        basefreq = centfreq - halfspec
         if (count * inc) + basefreq > MAX_FREQ:
             raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" %
                     (basefreq, count, inc))
@@ -81,8 +93,8 @@ class RfCat(FHSSNIC):
         self.setRadioConfig()
 
 
-    def rf_configure(*args, **k2args):
-        pass
+    def rf_configure(*args, **kwargs):
+        self.setRFparameters(*args, **kwargs)
 
     def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
         buf = ''
