@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
     parser.add_argument('-i', '--index', default=0, type=int) 
     parser.add_argument('-s', '--specan', default=False, action="store_true", help='start spectrum analyzer')
-    parser.add_argument('-f', '--basefreq', default=902e6, type=float) 
+    parser.add_argument('-f', '--centfreq', default=902e6, type=float) 
     parser.add_argument('-c', '--inc', default=250e3, type=float) 
     parser.add_argument('-n', '--specchans', default=104, type=int) 
     parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order to flash the dongle)')
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         exit(0)
 
     elif ifo.specan:
-        RfCat(ifo.index).specan(ifo.basefreq,ifo.inc,ifo.specchans)
+        RfCat(ifo.index).specan(ifo.centfreq,ifo.inc,ifo.specchans)
 
     elif ifo.research:
         interactive(ifo.index, DongleClass=RfCat, intro=intro)
@@ -58,6 +58,5 @@ if __name__ == "__main__":
     else:
         # do the full-rfcat thing
         d = RfCat(ifo.index, debug=False)
-        d.rf_configure(**ifo.__dict__)
         d.rf_redirection((sys.stdin, sys.stdout))
 
