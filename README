@@ -12,11 +12,12 @@ welcome to the rfcat project
 the goals of the project are to reduce the time for security researchers to create needed tools for analyzing unknown targets, to aid in reverse-engineering of hardware, and to satiate my rf lust.
 
 == REQUIREMENTS ==
-RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff".
+RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
 
 Other requirements:
 * python usb
 * libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
+* pyreadline (especially for Windows)
 
 Build Requirements:
 * Make
