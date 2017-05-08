@@ -957,6 +957,19 @@ class NICxx11(USBDongle):
         radiocfg.mdmcfg4 |= ((chanbw_e<<6) | (chanbw_m<<4))
         self.setRFRegister(MDMCFG4, (radiocfg.mdmcfg4))
 
+        # from http://www.cs.jhu.edu/~carlson/download/datasheets/ask_ook_settings.pdf
+        if bw > 102e3:
+            self.setRFRegister(FREND1, 0xb6)
+        else:
+            self.setRFRegister(FREND1, 0x56)
+
+        if bw > 325e3:
+            self.setRFRegister(TEST2, 0x88)
+            self.setRFRegister(TEST1, 0x31)
+        else:
+            self.setRFRegister(TEST2, 0x81)
+            self.setRFRegister(TEST1, 0x35)
+
     def getMdmChanBW(self, mhz=24, radiocfg=None):
         if radiocfg==None:
             self.getRadioConfig()
