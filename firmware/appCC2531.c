@@ -127,7 +127,7 @@ int appHandleEP5()
  *  devices.                                                                                     *
  *************************************************************************************************/
 
-static void appInitRf(void)
+void appInitRf(void)
 {
 #if 0
     IOCFG2      = 0x00;
