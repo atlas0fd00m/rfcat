@@ -151,7 +151,7 @@ def print_usage():
   print """
 CC Bootloader Download Utility
 
-Usage:  ./bootload.py serial_port command
+Usage:  %s serial_port command
 
 Commands:
 
@@ -193,7 +193,7 @@ Commands:
   verify <hex_file>
 
     Verify hex_file matches device flash memory.
-  """
+  """ % sys.argv[0]
 
 if __name__ == '__main__':
   import sys
