@@ -207,7 +207,7 @@ int appHandleEP0(USB_Setup_Header* pReq)
  *  devices.                                                                                     *
  *************************************************************************************************/
 
-static void appInitRf(void)
+void appInitRf(void)
 {
     IOCFG2      = 0x00;
     IOCFG1      = 0x00;

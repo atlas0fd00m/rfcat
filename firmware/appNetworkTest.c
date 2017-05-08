@@ -147,7 +147,7 @@ int appHandleEP5()
  *  devices.                                                                                     *
  *************************************************************************************************/
 
-static void appInitRf(void)
+void appInitRf(void)
 {
     // initial radio state.  this is easily changed from the client, but
     // most cases it's far superior to have a sane initial rf config.
