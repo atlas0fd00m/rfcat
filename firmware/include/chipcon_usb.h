@@ -4,7 +4,7 @@
 #include "global.h"
 #include "chipcon_usbdebug.h"
 
-#define     EP0_MAX_PACKET_SIZE     64
+#define     EP0_MAX_PACKET_SIZE     32
 #define     EP5_MAX_PACKET_SIZE     64
 #define     EP5OUT_MAX_PACKET_SIZE  64
 #define     EP5IN_MAX_PACKET_SIZE   64
