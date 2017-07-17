@@ -375,15 +375,22 @@ void usb_arm_ep0IN(){
      * should queue up and send one packet this run.... and recalculate bytesleft so we hit the next packet next run.
      */
     u8  tlen;
+    u8 last_pkt = 0;
     u8  csReg = USBCS0_INPKT_RDY;
 
     USBINDEX = 0;
-    
-    if (ep0.INbytesleft > EP0_MAX_PACKET_SIZE)
+
+    /* If INbytesleft > EP0_MAX_PACKET_SIZE, there's more data
+     * If INbytesleft == EP0_MAX_PACKET_SIZE, there needs to be a following empty packet
+     */
+    if (ep0.INbytesleft >= EP0_MAX_PACKET_SIZE)
+    {
         tlen = EP0_MAX_PACKET_SIZE;
+    }
     else
     {
         tlen = ep0.INbytesleft;
+        last_pkt = 1;
         csReg |= USBCS0_DATA_END;
     }
 
@@ -394,7 +401,8 @@ void usb_arm_ep0IN(){
         ep0.INbuf++;
     }
     USBCS0  |= csReg;
-    if (ep0.INbytesleft == 0)
+
+    if (last_pkt)
         ep0.epstatus = EP_STATE_IDLE;
 }
 
