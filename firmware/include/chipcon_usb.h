@@ -358,6 +358,7 @@ typedef struct USB_Request_Type {
 
 // extern global variables
 extern __code u8 USBDESCBEGIN[];
+extern __code u8 USBDESCWCID[];
 extern USB_STATE usb_data;
 extern __xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
 extern __xdata u8  usb_ep5_OUTbuf[EP5OUT_BUFFER_SIZE];               // these get pointed to by the above structure
@@ -415,6 +416,7 @@ void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 #define     EP0_CMD_PEEKX                   0x02
 #define     EP0_CMD_PING0                   0x03
 #define     EP0_CMD_PING1                   0x04
+#define     EP0_CMD_WCID                    0xfd
 #define     EP0_CMD_RESET                   0xfe
 #define     EP0_CMD_GET_FREQ                0xff
 
