@@ -116,11 +116,12 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
 {
     u16 loop;
     u8 firsttime=1;
+    u8 more_pkts=0;
     USBINDEX=5;
 
     lastCode[0] = LC_TXDATA_START;
 
-    while (len>0)
+    while (firsttime || more_pkts)
     {
         // if we do this in the loop, for some reason ep5.flags never clears between frames.  
         // don't know why since this bit is cleared in the USB ISR.
@@ -152,16 +153,28 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
             USBF5 = cmd;
             USBF5 = len & 0xff;
             USBF5 = len >> 8;
-            if (len>EP5IN_MAX_PACKET_SIZE-5)
+            if (len>=EP5IN_MAX_PACKET_SIZE-5)
+            {
                 loop=EP5IN_MAX_PACKET_SIZE-5;
+                more_pkts = 1;
+            }
             else
+            {
                 loop=len;
+                more_pkts = 0;
+            }
 
         } else {
-            if (len>EP5IN_MAX_PACKET_SIZE)
+            if (len>=EP5IN_MAX_PACKET_SIZE)
+            {
                 loop=EP5IN_MAX_PACKET_SIZE;
+                more_pkts = 1;
+            }
             else
+            {
                 loop=len;
+                more_pkts = 0;
+            }
         }
 
 
