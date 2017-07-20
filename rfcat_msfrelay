@@ -210,7 +210,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         return { "success": True }
 
     def set_lowball(self):
-        nic.lowball()
+        nic.lowball(1)
         return { "success": True }
 
     def set_maxpower(self):
