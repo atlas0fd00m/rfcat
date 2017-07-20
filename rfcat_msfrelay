@@ -209,6 +209,10 @@ class MSFHandler(BaseHTTPRequestHandler):
         nic.setMdmNumPreamble(int(args["num"][0]))
         return { "success": True }
 
+    def set_lowball(self):
+        nic.lowball()
+        return { "success": True }
+
     def set_maxpower(self):
         nic.setMaxPower()
         return { "success": True }
@@ -312,7 +316,7 @@ class MSFHandler(BaseHTTPRequestHandler):
                 elif self.path.find("/set_channel?") > -1:
                     self.send(self.set_channel(args))
                 elif self.path.find("/set_channel_bandwidth?") > -1:
-                    self.send(self.set_channel_bandhwidth(args))
+                    self.send(self.set_channel_bandwidth(args))
                 elif self.path.find("/set_channel_spc") > -1:
                     self.send(self.set_channel_spc(args))
                 elif self.path.find("/set_baud_rate?") > -1:
@@ -325,6 +329,8 @@ class MSFHandler(BaseHTTPRequestHandler):
                     self.send(self.set_sync_mode(args))
                 elif self.path.find("/set_number_preamble?") > -1:
                     self.send(self.set_number_preamble(args))
+                elif self.path.find("/set_lowball") > -1:
+                    self.send(self.set_lowball())
                 elif self.path.find("/set_maxpower") > -1:
                     self.send(self.set_maxpower())
                 elif self.path.find("/set_power?") > -1:
