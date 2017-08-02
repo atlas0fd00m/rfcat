@@ -519,6 +519,11 @@ __xdata u8* usbGetDescriptorPrimitive(u8 wantedType, u8 index){
     __xdata u8* __xdata  tmpdesc;
 #endif
     __xdata u8* descPtr = (__xdata u8*)&USBDESCBEGIN;                 // start of data... sorta
+    if((wantedType == USB_DESC_STRING) && (index == 0xEE))
+    {
+        // We index strings in order, WCID expects it to be at index 0xEE
+        index = 0x04;
+    }
 
     descType = *(descPtr+1);
 
@@ -864,6 +869,21 @@ int _usb_internal_handle_vendor(USB_Setup_Header* __xdata  pReq)
                 break;
             case EP0_CMD_PING1:
                 setup_sendx_ep0((__xdata u8*)&ep0.OUTbuf[0], 16);//ep0.OUTlen);
+                break;
+            case EP0_CMD_WCID:
+                if((pReq->wIndex == 0x0004) && (USBDESCWCID))
+                {
+                    if(pReq->wLength > USBDESCWCID[0])
+                    {
+                        setup_sendx_ep0((__xdata u8*)&USBDESCWCID[0], USBDESCWCID[0]);
+                    } else {
+                        setup_sendx_ep0((__xdata u8*)&USBDESCWCID[0], pReq->wLength);
+                    }
+                }
+                if(pReq->wIndex == 0x0005)
+                {
+                    setup_sendx_ep0((__xdata u8*)0x00, 0);
+                }
                 break;
             case EP0_CMD_RESET:
                 if (strncmp((char*)&(pReq->wValue), "RSTN", 4))           // therefore, ->wValue == "RS" and ->wIndex == "TN" or no reset
@@ -1383,14 +1403,14 @@ __code u8 USBDESCBEGIN [] =
 // Device descriptor
                18,                      // bLength 
                USB_DESC_DEVICE,         // bDescriptorType
-               LE_WORD(0x0110),              // bcdUSB
+               LE_WORD(0x0200),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
                EP0_MAX_PACKET_SIZE,     //   EP0_PACKET_SIZE
                LE_WORD(ID_VENDOR),      // idVendor
                LE_WORD(ID_PRODUCT),      // idProduct
-               LE_WORD(0x0100),         // bcdDevice             (change to hardware version)
+               LE_WORD(0x0101),         // bcdDevice             (change to hardware version)
                0x01,                    // iManufacturer
                0x02,                    // iProduct
                USB_SERIAL_STRIDX_BYTE,  // iSerialNumber
@@ -1399,7 +1419,7 @@ __code u8 USBDESCBEGIN [] =
 // Device Qualifier
                10,                      // bLength 
                USB_DESC_DEVICE_QUALIFIER,  // bDescriptorType
-               LE_WORD(0x0110),              // bcdUSB
+               LE_WORD(0x0200),              // bcdUSB
                0x00,                    // bDeviceClass - defined at interface
                0x00,                    // bDeviceSubClass
                0x00,                    // bDeviceProtocol
@@ -1423,9 +1443,9 @@ __code u8 USBDESCBEGIN [] =
                0x00,                    // bInterfaceNumber
                0x00,                    // bAlternateSetting
                0x02,                    // bNumEndpoints
-               0x00,                    // bInterfaceClass
-               0x00,                    // bInterfaceSubClass
-               0x01,                    // bInterfaceProcotol
+               0xFF,                    // bInterfaceClass
+               0xFF,                    // bInterfaceSubClass
+               0xFF,                    // bInterfaceProcotol
                0x00,                    // iInterface
 
 // Endpoint descriptor (EP5 IN)
@@ -1459,9 +1479,26 @@ __code u8 USBDESCBEGIN [] =
                10,                      // bLength
                USB_DESC_STRING,         // bDescriptorType
                USB_DEVICE_SERIAL_NUMBER
-          
+// Serial number
+               18,                      // bLength
+               USB_DESC_STRING,         // bDescriptorType
+               'M', 0x00, 'S', 0x00, 'F', 0x00, 'T', 0x00,
+               '1', 0x00, '0', 0x00, '0', 0x00,
+               EP0_CMD_WCID, // vendor request code for further descriptor
 // END OF STRINGS (len 0, type ff)
                0, 0xff
+};
+__code u8 USBDESCWCID [] = {
+	0x28, 0x00, 0x00, 0x00,  // bLength
+	LE_WORD(0x0100),        // WCID version
+	LE_WORD(0x0004),        // WICD descriptor index
+	0x01,                    //bNumSections
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00, //Reserved
+	0x00,        //bInterfaceNumber
+	0x01,        //Reserved
+	'W', 'I', 'N', 'U', 'S', 'B', 0x00,0x00, //Compatible ID, padded with zeros
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, //Sub-compatible ID
+	0x00,0x00,0x00,0x00,0x00,0x00            //Reserved
 };
 #else
 {
