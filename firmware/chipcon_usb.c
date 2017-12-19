@@ -3,7 +3,6 @@
 #include "chipcon_dma.h"
 #include "bootloader.h"
 
-
 /*************************************************************************************************
  * welcome to the chipcon_usb library.
  * this lib was designed to be the basis for your usb-app on the cc1111 radio.  hack fun!
@@ -45,6 +44,8 @@ __xdata int (*cb_ep0outdone)(void);
 __xdata int (*cb_ep0out)(void);
 __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
+
+__code u8 deviceserialnumber[] = QUOTE(DEVICE_SERIAL_NUMBER);
 
 #ifdef SDCC
   __code u8 sdccver[] = "SDCCv" QUOTE(SDCC);
@@ -1168,6 +1169,10 @@ void processOUTEP5(void)
                 appReturn(2, ptr);
                 break;
 
+            case CMD_DEVICE_SERIAL_NUMBER:
+                txdata(ep5.OUTapp, ep5.OUTcmd, 4, (__xdata u8*)deviceserialnumber);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }
@@ -1387,9 +1392,6 @@ void debugEP0Req(u8 * __xdata pReq)
 #endif
 
 }
-
-
-
 
 /*************************************************************************************************
  * setup Config Descriptor  (see cc1111.h for defaults and fields to change)                     *
