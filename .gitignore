@@ -1,0 +1,12 @@
+**/*.pyc
+firmware/.serial
+firmware/*.asm
+firmware/*.ihx
+firmware/*.lk
+firmware/*.lst
+firmware/*.map
+firmware/*.mem
+firmware/*.rel
+firmware/*.rst
+firmware/*.sym
+firmware/bins/*

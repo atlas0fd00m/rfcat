@@ -69,6 +69,7 @@ SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
 SYS_CMD_CLEAR_CODES             = 0x90
+SYS_CMD_DEVICE_SERIAL_NUMBER    = 0x91
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00
 EP0_CMD_GET_ADDRESS             = 0x01
@@ -852,6 +853,10 @@ class USBDongle:
             
     def getCompilerInfo(self):
         r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, '')
+        return r
+
+    def getDeviceSerialNumber(self):
+        r, t = self.send(APP_SYSTEM, SYS_CMD_DEVICE_SERIAL_NUMBER, '')
         return r
             
     def getInterruptRegisters(self):
