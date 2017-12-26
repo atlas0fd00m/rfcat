@@ -35,6 +35,9 @@ __xdata u8   ep0req;
 __xdata u16  ep0len;
 __xdata u16  ep0value;
 
+__xdata u8 usbDeviceSerialNumber[9] = { USB_DEVICE_SERIAL_NUMBER 18 };
+__xdata u8 deviceSerialNumber[4];
+
 //__xdata dmacfg_t usbdma;
 __xdata DMA_DESC *usbdma;
 __data u8 usbdmachan, usbdmaarm;
@@ -44,8 +47,6 @@ __xdata int (*cb_ep0outdone)(void);
 __xdata int (*cb_ep0out)(void);
 __xdata int (*cb_ep0vendor)(USB_Setup_Header* __xdata );
 __xdata int (*cb_ep5)(void);
-
-__code u8 deviceserialnumber[] = QUOTE(DEVICE_SERIAL_NUMBER);
 
 #ifdef SDCC
   __code u8 sdccver[] = "SDCCv" QUOTE(SDCC);
@@ -1170,7 +1171,8 @@ void processOUTEP5(void)
                 break;
 
             case CMD_DEVICE_SERIAL_NUMBER:
-                txdata(ep5.OUTapp, ep5.OUTcmd, 4, (__xdata u8*)deviceserialnumber);
+		convertUsbDeviceSerialNumberToString(deviceSerialNumber);
+                txdata(ep5.OUTapp, ep5.OUTcmd, 4, (__xdata u8*)deviceSerialNumber);
                 break;
 
             default:
@@ -1391,6 +1393,17 @@ void debugEP0Req(u8 * __xdata pReq)
     }
 #endif
 
+}
+
+/* strip out the null bytes from the USB device serial number stored in the USB decriptor array */
+void convertUsbDeviceSerialNumberToString(u8 * __xdata deviceSerialNumber)
+{	
+    u8 loop;
+
+    for (loop = 0; loop < 4; loop++)
+    {
+        deviceSerialNumber[loop] = usbDeviceSerialNumber[(loop * 2)];
+    }
 }
 
 /*************************************************************************************************
