@@ -7,7 +7,7 @@ sn_header = """// Serial number
 """
 
 try:
-    ser = int(file(".serial", 'rb').read(), 16) #+ 1
+    ser = int(file(".serial", 'rb').read(), 16) + 1
 except IOError:
     ser = 0
 
