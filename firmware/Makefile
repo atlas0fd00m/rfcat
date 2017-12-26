@@ -2,7 +2,6 @@
 BOOTLOADER_SIZE = 0x1400
 LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
 USB_DEVICE_SERIAL_NUMBER="`./new_serial.py`"
-DEVICE_SERIAL_NUMBER="`cat .serial`"
 
 CC=sdcc
 CFLAGS=-Iinclude -DBUILD_VERSION=`../revision.sh`
@@ -32,7 +31,7 @@ ys1fw: RfCatYS1
 # helper targets 
 chipcon_usb.rel: chipcon_usb.c include/*.h
 	#./new_serial.py
-	$(CC) $(CFLAGS) $(DEFINES)  -DUSB_DEVICE_SERIAL_NUMBER=$(USB_DEVICE_SERIAL_NUMBER) -DDEVICE_SERIAL_NUMBER=$(DEVICE_SERIAL_NUMBER) -c chipcon_usb.c
+	$(CC) $(CFLAGS) $(DEFINES)  -DUSB_DEVICE_SERIAL_NUMBER=$(USB_DEVICE_SERIAL_NUMBER) -c chipcon_usb.c
 
 %.rel: %.c include/*.h
 	$(CC) $(CFLAGS) $(DEFINES) -c $<
@@ -344,13 +343,9 @@ installRfCatDonsDongle: RfCatDons.hex
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-#	rfcat_bootloader /dev/RFCAT_BL_D erase_all
-#	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
-#	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
-	./rfcat_bootloader /dev/ttyACM0 erase_all
-	./rfcat_bootloader /dev/ttyACM0 download bins/RfCatDonsCCBootloader.hex
-	./rfcat_bootloader /dev/ttyACM0 verify bins/RfCatDonsCCBootloader.hex && ./rfcat_bootloader /dev/ttyACM0 run
-
+	rfcat_bootloader /dev/RFCAT_BL_D erase_all
+	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
 
 installRfCatYS1: RfCatYS1.hex
 	goodfet.cc erase
