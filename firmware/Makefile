@@ -356,9 +356,9 @@ installRfCatDonsDongle: RfCatDons.hex
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
 	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
-	./rfcat_bootloader /dev/ttyACM0 erase_all
-	./rfcat_bootloader /dev/ttyACM0 download bins/RfCatDonsCCBootloader.hex
-	./rfcat_bootloader /dev/ttyACM0 verify bins/RfCatDonsCCBootloader.hex && ./rfcat_bootloader /dev/ttyACM0 run
+	rfcat_bootloader /dev/RFCAT_BL_D erase_all
+	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
+	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
 
 installRfCatYS1: RfCatYS1.hex
 	goodfet.cc erase
