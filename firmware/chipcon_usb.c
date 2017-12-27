@@ -25,8 +25,6 @@
 
 extern u8 transmit(__xdata u8* __xdata  buf, u16 len, u16 repeat, u16 offset);
 
-extern u8 ledMode;
-
 USB_STATE usb_data;
 __xdata u8  usb_ep0_OUTbuf[EP0_MAX_PACKET_SIZE];                  // these get pointed to by the above structure
 __xdata u8  usb_ep5_OUTbuf[EP5OUT_BUFFER_SIZE];                   // these get pointed to by the above structure
@@ -1186,6 +1184,9 @@ void processOUTEP5(void)
                         ledMode = 1;
                         break;
                     case LEDST_OFF:
+                        ledMode = 0;
+                        break;
+                    default:
                         ledMode = 0;
                         break;
                 }

@@ -409,12 +409,12 @@ class NICxx11(USBDongle):
 
     ##### GETTER/SETTERS for Radio Config/Status #####
     ### radio state
-    def setLedMode(self, ledmode, parms=''):
+    def setLedMode(self, ledmode):
         '''
         sets the led state to "ledmode"
         '''
         self._ledmode = ledmode
-        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, "%c" % (self._ledmode) + parms)
+        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, "%c" % (self._ledmode))
 
     def getMARCSTATE(self, radiocfg=None):
         if radiocfg is None:

@@ -49,9 +49,6 @@ volatile __xdata DMA_DESC rfDMA;
 __xdata MAC_DATA_t macdata;
 volatile __xdata u8 bRepeatMode = 0;
 
-// LED on/off
-volatile __xdata u8 ledMode = 1;
-
 /*************************************************************************************************
  * RF helpers                                                                                    *
  ************************************************************************************************/

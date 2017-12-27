@@ -4,7 +4,8 @@
 __xdata u8 lastCode[2];
 __xdata u32 clock;
 
-
+// ENABLE/DISABLE LED(s)
+__xdata u8 ledMode = 1;
 
 void sleepMillis(int ms) 
 {
