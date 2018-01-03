@@ -74,7 +74,7 @@ extern __xdata u32 clock;
 // USB activities
 #ifdef CHRONOSDONGLE
     #define USB_ENABLE_PIN              P1_1
-##elif defined SRFSTICK
+#elif defined SRFSTICK
     #define USB_ENABLE_PIN              P2_0
 #else
     #define USB_ENABLE_PIN              P1_0
