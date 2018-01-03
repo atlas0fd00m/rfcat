@@ -40,6 +40,7 @@ extern __xdata u32 clock;
 #define LC_TXDATA_COMPLETED_FRAME       0x13
 #define LC_TXDATA_COMPLETED_MESSAGE     0x14
 
+#define LC_DEVICE_SERIAL_NUMBER         0x13f0
 
 // lastCode[1]: Errors
 #define LCE_NO_ERROR                            0x0

@@ -35,7 +35,6 @@ __xdata u8   ep0req;
 __xdata u16  ep0len;
 __xdata u16  ep0value;
 
-__xdata u8 usbDeviceSerialNumber[9] = { USB_DEVICE_SERIAL_NUMBER 18 };
 __xdata u8 deviceSerialNumber[4];
 
 //__xdata dmacfg_t usbdma;
@@ -1171,8 +1170,10 @@ void processOUTEP5(void)
                 break;
 
             case CMD_DEVICE_SERIAL_NUMBER:
-		convertUsbDeviceSerialNumberToString(deviceSerialNumber);
-                txdata(ep5.OUTapp, ep5.OUTcmd, 4, (__xdata u8*)deviceSerialNumber);
+                ptr = (__xdata u8*) LC_DEVICE_SERIAL_NUMBER;
+
+                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp, ep5.OUTcmd, 16, (__xdata u8*)deviceSerialNumber);
                 break;
 
             default:
@@ -1396,6 +1397,7 @@ void debugEP0Req(u8 * __xdata pReq)
 }
 
 /* strip out the null bytes from the USB device serial number stored in the USB decriptor array */
+/*
 void convertUsbDeviceSerialNumberToString(u8 * __xdata deviceSerialNumber)
 {	
     u8 loop;
@@ -1405,6 +1407,7 @@ void convertUsbDeviceSerialNumberToString(u8 * __xdata deviceSerialNumber)
         deviceSerialNumber[loop] = usbDeviceSerialNumber[(loop * 2)];
     }
 }
+*/
 
 /*************************************************************************************************
  * setup Config Descriptor  (see cc1111.h for defaults and fields to change)                     *
