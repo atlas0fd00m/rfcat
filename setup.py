@@ -16,16 +16,17 @@ try:
 except:
     sys.excepthook(*sys.exc_info())
 
-setup  (name        = 'rfcat',
-        version     = '1.0',
-        description = "the swiss army knife of subGHz",
-        author = 'atlas of d00m',
+setup  (name         = 'rfcat',
+        version      = '1.0',
+        description  = "the swiss army knife of subGHz",
+        author       = 'atlas of d00m',
         author_email = 'atlas@r4780y.com',
+        url          = 'https://github.com/lytrix/rfcat',
+        download_url = 'https://github.com/lytrix/rfcat/archive/1.0.tar.gz',
+        keywords     = ['radio', 'subghz'],
         #include_dirs = [],
-        packages  = packages,
+        packages     = packages,
         package_data = pkgdata,
-        ext_modules = mods,
-        scripts = scripts
-       )
-
-
+        ext_modules  = mods,
+        scripts      = scripts
+        )
