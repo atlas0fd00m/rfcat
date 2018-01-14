@@ -35,8 +35,6 @@ __xdata u8   ep0req;
 __xdata u16  ep0len;
 __xdata u16  ep0value;
 
-__xdata u8 deviceSerialNumber[4];
-
 //__xdata dmacfg_t usbdma;
 __xdata DMA_DESC *usbdma;
 __data u8 usbdmachan, usbdmaarm;
@@ -1170,10 +1168,8 @@ void processOUTEP5(void)
                 break;
 
             case CMD_DEVICE_SERIAL_NUMBER:
-                ptr = (__xdata u8*) LC_DEVICE_SERIAL_NUMBER;
-
                 ep5.OUTbytesleft = 0;
-                txdata(ep5.OUTapp, ep5.OUTcmd, 16, (__xdata u8*)deviceSerialNumber);
+                txdata(ep5.OUTapp, ep5.OUTcmd, 16, (__xdata u8*)LC_DEVICE_SERIAL_NUMBER);
                 break;
 
             default:
