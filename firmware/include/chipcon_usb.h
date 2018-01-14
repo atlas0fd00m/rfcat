@@ -391,9 +391,9 @@ void registerCb_ep0Out(int (*callback)(void));
 void registerCb_ep0Vendor(int (*callback)(USB_Setup_Header*  pReq));
 void registerCb_ep5(int (*callback)(void));
 
+
 void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 
-void convertUsbDeviceSerialNumberToString(u8 * __xdata deviceSerialNumber);
 
 #define     CMD_PEEK        0x80
 #define     CMD_POKE        0x81

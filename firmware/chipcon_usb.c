@@ -1392,19 +1392,6 @@ void debugEP0Req(u8 * __xdata pReq)
 
 }
 
-/* strip out the null bytes from the USB device serial number stored in the USB decriptor array */
-/*
-void convertUsbDeviceSerialNumberToString(u8 * __xdata deviceSerialNumber)
-{	
-    u8 loop;
-
-    for (loop = 0; loop < 4; loop++)
-    {
-        deviceSerialNumber[loop] = usbDeviceSerialNumber[(loop * 2)];
-    }
-}
-*/
-
 /*************************************************************************************************
  * setup Config Descriptor  (see cc1111.h for defaults and fields to change)                     *
  ************************************************************************************************/
