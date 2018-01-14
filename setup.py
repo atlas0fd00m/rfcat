@@ -28,5 +28,7 @@ setup  (name         = 'rfcat',
         packages     = packages,
         package_data = pkgdata,
         ext_modules  = mods,
-        scripts      = scripts
-        )
+        scripts       = scripts
+       )
+
+
