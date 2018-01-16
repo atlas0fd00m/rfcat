@@ -28,7 +28,39 @@ setup  (name         = 'rfcat',
         packages     = packages,
         package_data = pkgdata,
         ext_modules  = mods,
-        scripts       = scripts
+        scripts      = scripts,
+        classifiers  = [
+                        # How mature is this project? Common values are
+                        #   3 - Alpha
+                        #   4 - Beta
+                        #   5 - Production/Stable
+                        'Development Status :: 3 - Alpha',
+
+                        # Indicate who your project is intended for
+                        'Intended Audience :: Security Researchers',
+                        'Topic :: Analysing :: Reverse Engineering',
+
+                        # Pick your license as you wish (should match "license" above)
+                         'License :: BSD',
+
+                        # Specify the Python versions you support here. In particular, ensure
+                        # that you indicate whether you support Python 2, Python 3 or both.
+                        'Programming Language :: Python :: 2',
+                        'Programming Language :: Python :: 2.6',
+                        'Programming Language :: Python :: 2.7',
+                        # 'Programming Language :: Python :: 3',
+                        # 'Programming Language :: Python :: 3.2',
+                        # 'Programming Language :: Python :: 3.3',
+                        'Programming Language :: Python :: 3.4',
+                        ],
+        install_requires = [
+                             'pyusb>=1.0.0',
+                             'libusb>=1.0.0',
+                             'PySide==1.2.2',
+                           ],
+        python_requires='>2.0, <3.0',
+        py_modules= ["bits", "cc111Xhparser", "cc1111client",
+                     "ccrecvdump", "ccspecan","chipcon_nic",
+                     "chipcon_usb", "chipcondefs", "intelhex",
+                     "rflib_defs", "rflib_version"],
        )
-
-
