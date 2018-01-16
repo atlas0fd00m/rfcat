@@ -36,12 +36,12 @@ setup  (name         = 'rfcat',
                         #   5 - Production/Stable
                         'Development Status :: 3 - Alpha',
 
-                        # Indicate who your project is intended for
-                        'Intended Audience :: Security Researchers',
-                        'Topic :: Analysing :: Reverse Engineering',
+                        # Indicate who your project is intended for: See info here: https://pypi.python.org/pypi/classifiers
+                        'Intended Audience :: Telecommunications Industry'
+                        'Topic :: Communications',
 
                         # Pick your license as you wish (should match "license" above)
-                         'License :: BSD',
+                         'License :: OSI Approved :: BSD License',
 
                         # Specify the Python versions you support here. In particular, ensure
                         # that you indicate whether you support Python 2, Python 3 or both.
@@ -51,14 +51,10 @@ setup  (name         = 'rfcat',
                         # 'Programming Language :: Python :: 3',
                         # 'Programming Language :: Python :: 3.2',
                         # 'Programming Language :: Python :: 3.3',
-                        'Programming Language :: Python :: 3.4',
+                        # 'Programming Language :: Python :: 3.4',
                         ],
-        install_requires = [
-                             'pyusb>=1.0.0',
-                             'libusb>=1.0.0',
-                             'PySide==1.2.2',
-                           ],
-        python_requires='>2.0, <3.0',
+        install_requires = ['pyusb>=1.0.0', 'libusb>=1.0.0', 'PySide==1.2.2'],
+        python_requires= ['>2.0, <3.0'],
         py_modules= ["bits", "cc111Xhparser", "cc1111client",
                      "ccrecvdump", "ccspecan","chipcon_nic",
                      "chipcon_usb", "chipcondefs", "intelhex",
