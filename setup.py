@@ -22,7 +22,7 @@ except:
 
 # Readme function to show readme as a desription in pypi
 def readme():
-    with open('README.md') as f:
+    with open('./README.md') as f:
         return f.read()
 
 
