@@ -1,0 +1,18 @@
+include LICENSE
+include LICENSE.CC-Bootloader
+
+include README.rst
+include README.nonroot
+include README.msfrelay
+include README.immesniff
+include FAQ
+include TODO
+
+include package.sh
+include revision.sh
+
+include rfcat_msfrelay
+include rfcat_server
+
+recursive-include firmware *
+recursive-include etc *

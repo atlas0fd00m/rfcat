@@ -1,5 +1,6 @@
 import sys
 import os
+import codecs
 from distutils.core import setup, Extension
 
 packages = ['rflib', 'vstruct', 'vstruct.defs']
@@ -22,12 +23,12 @@ except:
 
 # Readme function to show readme as a desription in pypi
 def readme():
-    with open('./README.md') as f:
+    with codecs.open('README.rst', encoding='utf-8') as f:
         return f.read()
 
 
-setup  (name             = 'rfcat',
-        version          = '1.0.0',
+setup  (name             = 'rfcattest',
+        version          = '1.0.9',
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
@@ -64,10 +65,6 @@ setup  (name             = 'rfcat',
                             # 'Programming Language :: Python :: 3.3',
                             # 'Programming Language :: Python :: 3.4',
                            ],
-        install_requires = ['pyusb>=1.0.0', 'libusb>=1.0.0', 'PySide==1.2.2'],
-        python_requires  = ['>2.0, <3.0'],
-        py_modules       = ["bits", "cc111Xhparser", "cc1111client",
-                            "ccrecvdump", "ccspecan","chipcon_nic",
-                            "chipcon_usb", "chipcondefs", "intelhex",
-                            "rflib_defs", "rflib_version"],
+        install_requires = ['pyusb>=1.0.0', 'libusb>=1.0.21b2', 'PySide==1.2.2'],
+        python_requires  = '>2.0,<3.0.0'
         )
