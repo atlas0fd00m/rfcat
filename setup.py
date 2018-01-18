@@ -27,14 +27,14 @@ def readme():
         return f.read()
 
 
-setup  (name             = 'rfcattest',
-        version          = '1.0.9',
+setup  (name             = 'rfcat',
+        version          = '1.0.1',
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
         author_email     = 'atlas@r4780y.com',
-        url              = 'https://github.com/lytrix/rfcat',
-        download_url     = 'https://github.com/lytrix/rfcat/archive/1.0.tar.gz',
+        url              = 'https://github.com/atlas0fd00m/rfcat',
+        download_url     = 'https://github.com/atlas0fd00m/rfcat/archive/1.0.1.tar.gz',
         keywords         = ['radio', 'subghz'],
         #include_dirs = [],
         packages         = packages,
