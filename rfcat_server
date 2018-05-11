@@ -279,10 +279,10 @@ class CC1111NIC_Server(cmd.Cmd):
 
     def do_modulation(self, line):
         '''
-        * MODULATION - set the RF modulation scheme.  values include "2FSK", "GFSK", "MSK", "ASK_OOK".  note: GFSK/OOK/ASK only up to 250kbaud, MSK only above 26kbaud and no manchester encoding.
+        * MODULATION - set the RF modulation scheme.  values include "2FSK", "GFSK", "4FSK", "MSK", "ASK_OOK".  note: GFSK/OOK/ASK only up to 250kbaud, MSK only above 26kbaud and no manchester encoding.
         '''
-        if not len(line) or line not in ("2FSK", "GFSK", "MSK", "ASK_OOK"):
-            self.Print('need to give me one of the values "2FSK", "GFSK", "MSK", "ASK_OOK"  got: "%s"' % line)
+        if not len(line) or line not in ("2FSK", "GFSK", "4FSK", "MSK", "ASK_OOK"):
+            self.Print('need to give me one of the values "2FSK", "GFSK", "4FSK" (experimental), "MSK", "ASK_OOK"  got: "%s"' % line)
             return
 
         mod = eval("MOD_"+line.strip())
