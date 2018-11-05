@@ -1478,7 +1478,7 @@ class NICxx11(USBDongle):
                 if RegExpSearch is not None:
                     ynext = y
                     for loop in range(8):
-                        if (re.Search(RegExpSearch, ynext) is not None):
+                        if (re.search(RegExpSearch, ynext) is not None):
                             print "    REG EXP SEARCH SUCCESS:",RegExpSearch
                         ynext = bits.shiftString(ynext, 1)
 
