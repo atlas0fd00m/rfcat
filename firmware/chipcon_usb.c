@@ -1177,6 +1177,22 @@ void processOUTEP5(void)
                 appReturn(2, ptr);
                 break;
 
+            case CMD_LEDMODE:
+                switch(*ptr++)
+                {
+                    case LEDST_ON:
+                        ledMode = 1;
+                        break;
+                    case LEDST_OFF:
+                        ledMode = 0;
+                        break;
+                    default:
+                        ledMode = 0;
+                        break;
+                }
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
+                break;
+
             default:
                 txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
         }

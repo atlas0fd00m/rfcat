@@ -126,7 +126,9 @@
 
    SBIT(USBIF,    0xE8, 0); // USB Interrupt Flag
 
-
+// IN LED State
+#define LEDST_OFF		0x00	// off
+#define LEDST_ON		0x01	// on
 
 // Request Types (bmRequestType)
 #define USB_BM_REQTYPE_TGTMASK          0x1f
@@ -409,6 +411,7 @@ void appReturn(__xdata u8 len, __xdata u8* __xdata  response);
 #define     CMD_PARTNUM     0x8e
 #define     CMD_RESET       0x8f
 #define     CMD_CLEAR_CODES 0x90
+#define     CMD_LEDMODE	    0x93
 
 #define     EP0_CMD_GET_DEBUG_CODES         0x00
 #define     EP0_CMD_GET_ADDRESS             0x01

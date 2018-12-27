@@ -20,6 +20,8 @@
 extern __xdata u8 lastCode[2];
 extern __xdata u32 clock;
 
+extern __xdata u8 ledMode;
+
 //////////////  DEBUG   //////////////
 //#define VIRTUAL_COM
 //#define RADIO_EU 
