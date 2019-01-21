@@ -81,7 +81,11 @@ extern __xdata u8 ledMode;
 #else
     #define USB_ENABLE_PIN              P1_0
 #endif
+
+// NOP macro which may be defined elsewhere
+#ifndef NOP
 #define NOP()                       __asm; nop; __endasm;
+#endif
 
 // USB data buffer
 #define BUFFER_AVAILABLE		0x00
