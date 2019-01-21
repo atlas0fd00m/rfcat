@@ -8,7 +8,7 @@
 #define     EP5_MAX_PACKET_SIZE     64
 #define     EP5OUT_MAX_PACKET_SIZE  64
 #define     EP5IN_MAX_PACKET_SIZE   64
-// EP5OUT_BUFFER_SIZE must match rflib/cc1111client.py definition
+// EP5OUT_BUFFER_SIZE must match rflib/chipcon_usb.py definition
 #define     EP5OUT_BUFFER_SIZE      516 // data buffer size + 4
 
 #define     EP_STATE_IDLE      0
