@@ -65,6 +65,10 @@ setup  (name             = 'rfcat',
                             # 'Programming Language :: Python :: 3.3',
                             # 'Programming Language :: Python :: 3.4',
                            ],
-        install_requires = ['pyusb>=1.0.0', 'libusb>=1.0.21b2', 'PySide==1.2.2'],
+        install_requires = [
+                            'pyusb>=1.0.0',
+                            'libusb>=1.0.21b2',
+                            'PySide2==5.12.0'
+                           ],
         python_requires  = '>2.0,<3.0.0'
         )

@@ -26,13 +26,13 @@ import threading
 import rflib
 import cPickle as pickle
 
-from PySide import QtCore, QtGui
-from PySide.QtCore import Qt, QPointF, QLineF
+from PySide2 import QtCore, QtGui, QtWidgets
+from PySide2.QtCore import Qt, QPointF, QLineF
 
 def ensureQapp():
     global _qt_app
     if not globals().get("_qt_app"):
-        _qt_app = QtGui.QApplication([])
+        _qt_app = QtWidgets.QApplication([])
 
 
 APP_SPECAN   = 0x43
@@ -86,9 +86,9 @@ class SpecanThread(threading.Thread):
         self.join(3.0)
         self._stopped = True
 
-class RenderArea(QtGui.QWidget):
+class RenderArea(QtWidgets.QWidget):
     def __init__(self, data, low_freq=2.400e9, high_freq=2.483e9, freq_step=1e6, delay=0, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         
         self._graph = None
         self._reticle = None
@@ -313,9 +313,9 @@ class RenderArea(QtGui.QWidget):
         delta = tmp * range
         return self._high_dbm - delta
 
-class Window(QtGui.QWidget):
+class Window(QtWidgets.QWidget):
     def __init__(self, data, low_freq, high_freq, spacing, delay=.01, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self._low_freq = low_freq
         self._high_freq = high_freq
@@ -326,7 +326,7 @@ class Window(QtGui.QWidget):
         
         self.render_area = RenderArea(self._data, low_freq, high_freq, spacing, delay)
 
-        main_layout = QtGui.QGridLayout()
+        main_layout = QtWidgets.QGridLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.render_area, 0, 0)
         self.setLayout(main_layout)
@@ -437,7 +437,7 @@ class Window(QtGui.QWidget):
         print 'Unsupported key pressed:', key
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     f = sys.argv[1]
     fbase = eval(sys.argv[2])
     fhigh = eval(sys.argv[3])
