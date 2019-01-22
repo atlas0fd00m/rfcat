@@ -24,7 +24,7 @@ The goals of the project are to reduce the time for security researchers to crea
 
 ## REQUIREMENTS
 
-RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
+RfCat currently requires Python 2.7.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
 
 ### Other requirements
 
