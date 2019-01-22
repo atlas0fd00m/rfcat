@@ -345,7 +345,7 @@ If you have configured your system to allow non-root use:
    -  d.debug()
    -  d.RFxmit(‘blahblahblah’)
    -  d.RFrecv()
-   -  print d.reprRadioConfig()
+   -  print(d.reprRadioConfig())
    -  d.setMdmDRate(19200) # this sets the modem baud rate (or DataRate)
    -  d.setPktPQT(0) # this sets the preamble quality threshold to 0
    -  d.setEnableMdmFEC(True) # enables the convolutional Forward Error
