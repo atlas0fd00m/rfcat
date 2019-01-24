@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import struct
 
 fmtsLSB = [None, "B", "<H", "<I", "<I", "<Q", "<Q", "<Q", "<Q"]
@@ -230,7 +232,7 @@ def findSyncWordDoubled(byts):
             for frontbits in xrange(16, 40, 2):    #FIXME: if this doesn't work, try 16, then 18+frontbits
                 dwb1 = (bits1 >> (frontbits)) & 3
                 dwb2 = (bits2 >> (frontbits)) & 3
-                print "\tfrontbits: %d \t\t dwb1: %s dwb2: %s" % (frontbits, bin(bits1 >> (frontbits)), bin(bits2 >> (frontbits)))
+                print("\tfrontbits: %d \t\t dwb1: %s dwb2: %s" % (frontbits, bin(bits1 >> (frontbits)), bin(bits2 >> (frontbits))))
                 if dwb2 != dwb1:
                     break
 
@@ -238,17 +240,17 @@ def findSyncWordDoubled(byts):
             for tailbits in xrange(16, -1, -2):
                 dwb1 = (bits1 >> (tailbits)) & 3
                 dwb2 = (bits2 >> (tailbits)) & 3
-                print "\ttailbits: %d\t\t dwb1: %s dwb2: %s" % (tailbits, bin(bits1 >> (tailbits)), bin(bits2 >> (tailbits)))
+                print("\ttailbits: %d\t\t dwb1: %s dwb2: %s" % (tailbits, bin(bits1 >> (tailbits)), bin(bits2 >> (tailbits))))
                 if dwb2 != dwb1:
                     tailbits += 2
                     break
 
             # now, if we have a double syncword, iinm, tailbits + frontbits >= 16
-            print "frontbits: %d\t\t tailbits: %d, bits: %s " % (frontbits, tailbits, bin((bits2>>tailbits & 0xffffffff)))
+            print("frontbits: %d\t\t tailbits: %d, bits: %s " % (frontbits, tailbits, bin((bits2>>tailbits & 0xffffffff))))
             if (frontbits + tailbits >= 16):
                 tbits = bits2 >> (tailbits&0xffff)
                 tbits &= (0xffffffff)
-                print "tbits: %x" % tbits
+                print("tbits: %x" % tbits)
 
                 poss = tbits&0xffffffff
                 if poss not in possDwords:
@@ -311,8 +313,8 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
             if d1 == d2 and d1 > 0:
                 s1 = p1 - size
                 s2 = p2 - size
-                print "s1: %d\t  p1: %d\t  " % (s1, p1)
-                print "s2: %d\t  p2: %d\t  " % (s2, p2)
+                print("s1: %d\t  p1: %d\t  " % (s1, p1))
+                print("s2: %d\t  p2: %d\t  " % (s2, p2))
                 # complete the pattern until the numbers differ or meet
                 while True:
                     p1 += 1
@@ -334,9 +336,9 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
 
                 bitSection, ent = bitSectString(data, s1, s1+length)
                 if ent > minEntropy:
-                    print "success:"
-                    print "  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSection.encode("hex"))
-                    print "  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2))
+                    print("success:")
+                    print("  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSection.encode("hex")))
+                    print("  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2)))
             #else:
             #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
             p2 += 1
@@ -565,12 +567,12 @@ def biphase_mark_coding_encode(data):
 
             last = bit
         if bidx & 1:
-            print "%d - write" % bidx
+            print("%d - write" % bidx)
             out.append(chr(obyte))
         else:
-            print "%d - skip" % bidx
+            print("%d - skip" % bidx)
     if not (bidx & 1):
-        print "%d - write" % bidx
+        print("%d - write" % bidx)
         out.append(chr(obyte))
 
     return ''.join(out)
@@ -637,7 +639,7 @@ def findManchesterData(data, hilo=1):
             pass
 
 def findManchester(data, minbytes=10):
-    print "DEBUG: DATA=" + repr(data)
+    print("DEBUG: DATA=" + repr(data))
     success = []
 
     last = 0
