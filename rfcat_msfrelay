@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # Modified rfcat_server to support Metasploit HWBridge
 
+from __future__ import print_function
+
 import re
 import os
 import sys
