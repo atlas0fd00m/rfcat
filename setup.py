@@ -58,7 +58,6 @@ setup  (name             = 'rfcat',
                             # Specify the Python versions you support here. In particular, ensure
                             # that you indicate whether you support Python 2, Python 3 or both.
                             'Programming Language :: Python :: 2',
-                            'Programming Language :: Python :: 2.6',
                             'Programming Language :: Python :: 2.7',
                             # 'Programming Language :: Python :: 3',
                             # 'Programming Language :: Python :: 3.2',
@@ -70,5 +69,5 @@ setup  (name             = 'rfcat',
                             'libusb>=1.0.21b2',
                             'PySide2==5.12.0'
                            ],
-        python_requires  = '>2.0,<3.0.0'
+        python_requires  = '>=2.7,<3.0.0'
         )
