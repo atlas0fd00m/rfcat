@@ -1,3 +1,4 @@
+firmware/.revision
 firmware/.serial
 firmware/*.asm
 firmware/*.ihx
