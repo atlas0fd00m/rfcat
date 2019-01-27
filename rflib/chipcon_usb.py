@@ -255,7 +255,7 @@ class USBDongle:
 
         dongles.sort()
         if len(dongles) == 0:
-            raise Exception
+            raise Exception("No Dongle Found.  Please insert a RFCAT dongle.")
 
         self.rsema = threading.Lock()
         self.xsema = threading.Lock()
@@ -956,7 +956,7 @@ def unittest(self, mhz=24):
     ndata = self.peek(where, len(data))
     if ndata != data:
         print(" *FAILED*\n '%s'\n '%s'" % (data.encode("hex"), ndata.encode("hex")))
-        raise Exception
+        raise Exception(" *FAILED*\n '%s'\n '%s'" % (data.encode("hex"), ndata.encode("hex")))
     else:
         print("  passed  '%s'" % (ndata.encode("hex")))
 

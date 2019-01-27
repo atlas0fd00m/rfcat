@@ -603,7 +603,7 @@ class NICxx11(USBDongle):
             radiocfg = self.radiocfg
 
         if (mod) & ~MDMCFG2_MOD_FORMAT:
-            raise Exception
+            raise Exception("Please use constants MOD_FORMAT_* to specify modulation and ")
 
         radiocfg.mdmcfg2 &= ~MDMCFG2_MOD_FORMAT
         radiocfg.mdmcfg2 |= (mod)
@@ -662,7 +662,7 @@ class NICxx11(USBDongle):
                     chanspc_m = m
                     break
         if chanspc_e is None or chanspc_m is None:
-            raise Exception
+            raise Exception("ChanSpc does not translate into acceptable parameters.  Should you be changing this?")
 
         #chanspc = 1000000.0 * mhz/pow(2,18) * (256 + chanspc_m) * pow(2, chanspc_e)
         #print "chanspc_e: %x   chanspc_m: %x   chanspc: %f hz" % (chanspc_e, chanspc_m, chanspc)
@@ -679,7 +679,7 @@ class NICxx11(USBDongle):
             radiocfg = self.radiocfg
 
         if maxlen > RF_MAX_TX_BLOCK:
-            raise Exception
+            raise Exception("Packet too large (%d bytes). Maximum variable length packet is %d bytes." % (maxlen, RF_MAX_TX_BLOCK))
 
         radiocfg.pktctrl0 &= ~PKTCTRL0_LENGTH_CONFIG
         radiocfg.pktctrl0 |= 1
@@ -694,7 +694,7 @@ class NICxx11(USBDongle):
             radiocfg = self.radiocfg
 
         if flen > EP5OUT_BUFFER_SIZE - 4:
-            raise Exception
+            raise Exception("Packet too large (%d bytes). Maximum fixed length packet is %d bytes." % (flen, EP5OUT_BUFFER_SIZE - 6))
 
         radiocfg.pktctrl0 &= ~PKTCTRL0_LENGTH_CONFIG
         # if we're sending a large block, pktlen is dealt with by the firmware
@@ -862,7 +862,7 @@ class NICxx11(USBDongle):
         ifBits = int(ifBits + .5)       # rounded evenly
 
         if ifBits >0x1f:
-            raise Exception
+            raise Exception("FAIL:  freq_if is too high?  freqbits: %x (must be <0x1f)" % ifBits)
         radiocfg.fsctrl1 &= ~(0x1f)
         radiocfg.fsctrl1 |= int(ifBits)
         self.setRFRegister(FSCTRL1, (radiocfg.fsctrl1))
@@ -961,7 +961,7 @@ class NICxx11(USBDongle):
                 chanbw_m = m
                 break
         if chanbw_e is None:
-            raise Exception
+            raise Exception("ChanBW does not translate into acceptable parameters.  Should you be changing this?")
 
         bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
@@ -1011,7 +1011,7 @@ class NICxx11(USBDongle):
                 drate_m = m
                 break
         if drate_e is None:
-            raise Exception
+            raise Exception("DRate does not translate into acceptable parameters.  Should you be changing this?")
 
         drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
         if self._debug: print("drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate))
@@ -1055,7 +1055,7 @@ class NICxx11(USBDongle):
                 dev_m = m
                 break
         if dev_e is None:
-            raise Exception
+            raise Exception("Deviation does not translate into acceptable parameters.  Should you be changing this?")
 
         dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
         #print "dev_e: %x   dev_m: %x   deviatn: %f Hz" % (e, m, dev)
@@ -1384,7 +1384,7 @@ class NICxx11(USBDongle):
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
         if not blocksize == None:
             if blocksize > EP5OUT_BUFFER_SIZE: 
-                raise Exception("Blocksize too large. Maximum %d")
+                raise Exception("Blocksize too large. Maximum %d" % EP5OUT_BUFFER_SIZE)
             self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
@@ -1566,7 +1566,7 @@ class NICxx11(USBDongle):
 
     def lowballRestore(self):
         if not hasattr(self, '_last_radiocfg'):
-            raise Exception
+            raise Exception("lowballRestore requires that lowball have been executed first (it saves radio config state!)")
         self.setRadioConfig(self._last_radiocfg)
         self._last_radiocfg = ''
 
