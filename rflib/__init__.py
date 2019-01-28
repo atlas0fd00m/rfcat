@@ -216,7 +216,7 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         import IPython.Shell
         ipsh = IPython.Shell.IPShell(argv=[''], user_ns=lcls, user_global_ns=gbls)
         print(intro)
-        ipsh.mainloop(intro)
+        ipsh.mainloop()
 
     except ImportError as e:
         try:
@@ -225,7 +225,7 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
             ipsh.user_global_ns.update(gbls)
             ipsh.user_global_ns.update(lcls)
             ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
-            ipsh.show_banner(intro)
+            print(intro)
             ipsh.mainloop()
         except ImportError as e:
             try:
@@ -234,11 +234,14 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
                 ipsh.user_global_ns.update(gbls)
                 ipsh.user_global_ns.update(lcls)
                 ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
-                ipsh.mainloop(intro)
-            except ImportError as e:
+
+                print(intro)
+                ipsh.mainloop()
+            except ImportError, e:
                 print(e)
                 shell = code.InteractiveConsole(gbls)
-                shell.interact(intro)
+                print(intro)
+                shell.interact()
 
 
 if __name__ == "__main__":
