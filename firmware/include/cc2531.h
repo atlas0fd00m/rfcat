@@ -46,7 +46,12 @@ SFRX(USBF5,     0x622A);        // Endpoint 5 FIFO
 // USB activities
 #define USB_ENABLE_PIN              P1_0
 //#define USB_ENABLE_PIN              P1_1
+
+// NOP macro which may be defined elsewhere
+#ifndef NOP
 #define NOP()                       __asm; nop; __endasm;
+#endif
+
 #define USB_DISABLE()               SLEEP &= ~SLEEP_USB_EN;
 #define USB_ENABLE()                SLEEP |= SLEEP_USB_EN;
 #define USB_RESET()                 USB_DISABLE(); NOP(); USB_ENABLE();
