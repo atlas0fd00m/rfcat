@@ -37,9 +37,9 @@
 @version    1.1
 '''
 
-
 __docformat__ = "javadoc"
 
+from __future__ import print_function
 
 from array import array
 from binascii import hexlify, unhexlify
@@ -254,7 +254,7 @@ class IntelHex(object):
         """
         s = dikt.copy()
         start_addr = s.get('start_addr')
-        if s.has_key('start_addr'):
+        if 'start_addr' in s:
             del s['start_addr']
         for k in s.keys():
             if type(k) not in (int, long) or k < 0:
@@ -847,8 +847,8 @@ def hex2bin(fin, fout, start=None, end=None, size=None, pad=0xFF):
     """
     try:
         h = IntelHex(fin)
-    except HexReaderError, e:
-        print "ERROR: bad HEX file: %s" % str(e)
+    except HexReaderError as e:
+        print("ERROR: bad HEX file: %s" % str(e))
         return 1
 
     # start, end, size
@@ -865,8 +865,8 @@ def hex2bin(fin, fout, start=None, end=None, size=None, pad=0xFF):
 
     try:
         h.tobinfile(fout, start, end, pad)
-    except IOError, e:
-        print "ERROR: Could not write to file: %s: %s" % (fout, str(e))
+    except IOError as e:
+        print("ERROR: Could not write to file: %s: %s" % (fout, str(e)))
         return 1
 
     return 0
@@ -884,14 +884,14 @@ def bin2hex(fin, fout, offset=0):
     h = IntelHex()
     try:
         h.loadbin(fin, offset)
-    except IOError, e:
-        print 'ERROR: unable to load bin file:', str(e)
+    except IOError as e:
+        print('ERROR: unable to load bin file:', str(e))
         return 1
 
     try:
         h.tofile(fout, format='hex')
-    except IOError, e:
-        print "ERROR: Could not write to file: %s: %s" % (fout, str(e))
+    except IOError as e:
+        print("ERROR: Could not write to file: %s: %s" % (fout, str(e)))
         return 1
 
     return 0
@@ -1063,7 +1063,7 @@ class IntelHexError(Exception):
             return self.msg
         try:
             return self._fmt % self.__dict__
-        except (NameError, ValueError, KeyError), e:
+        except (NameError, ValueError, KeyError) as e:
             return 'Unprintable exception %s: %s' \
                 % (self.__class__.__name__, str(e))
 
