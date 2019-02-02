@@ -127,7 +127,7 @@ if __name__ == '__main__':
     defs.update(parseLines(file('../includes/cc1111.h')))
     defs.update(parseLines(file('/usr/share/sdcc/include/mcs51/cc1110.h')))
 
-    skeys = defs.keys()
+    skeys = list(defs.keys())
     skeys.sort()
     out = ["%-30s = %s"%(key,defs[key]) for key in skeys]
 

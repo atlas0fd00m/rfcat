@@ -1,11 +1,16 @@
 from __future__ import print_function
+from __future__ import division
 
+from builtins import hex
+from builtins import chr
+from builtins import range
+from past.utils import old_div
 import struct
 
 fmtsLSB = [None, "B", "<H", "<I", "<I", "<Q", "<Q", "<Q", "<Q"]
 fmtsMSB = [None, "B", ">H", ">I", ">I", ">Q", ">Q", ">Q", ">Q"]
 sizes = [ 0, 1, 2, 4, 4, 8, 8, 8, 8]
-masks = [ (1<<(8*i))-1 for i in xrange(9) ]
+masks = [ (1<<(8*i))-1 for i in range(9) ]
 
 def wtfo(string):
     outstr = []
@@ -76,7 +81,7 @@ def bitReverse(num, bitcnt):
 def shiftString(string, bits):
     carry = 0
     news = []
-    for x in xrange(len(string)-1):
+    for x in range(len(string)-1):
         newc = ((ord(string[x]) << bits) + (ord(string[x+1]) >> (8-bits))) & 0xff
         news.append("%c"%newc)
     newc = (ord(string[-1])<<bits) & 0xff
@@ -125,7 +130,7 @@ def whitenData(data, seed=0xffff, getNextByte=getNextByte_feedbackRegister7bitsM
 
     carry = 0
     news = []
-    for x in xrange(len(data)-1):
+    for x in range(len(data)-1):
         newc = ((ord(data[x]) ^ getNextByte() ) & 0xff)
         news.append("%c"%newc)
     return "".join(news)
@@ -182,7 +187,7 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
                 #print "bits: %x" % (bits1)
                 
                 bitcount = min( 2 * sensitivity, 17 ) 
-                for frontbits in xrange( bitcount ):            # with so many bit-inverted systems, let's not assume we know anything about the bit-arrangement.  \x55\x55 could be a perfectly reasonable preamble.
+                for frontbits in range( bitcount ):            # with so many bit-inverted systems, let's not assume we know anything about the bit-arrangement.  \x55\x55 could be a perfectly reasonable preamble.
                     poss = (bits1 >> frontbits) & 0xffff
                     if not poss in possDwords:
                         possDwords.append(poss)
@@ -229,7 +234,7 @@ def findSyncWordDoubled(byts):
             
 
             frontbits = 0
-            for frontbits in xrange(16, 40, 2):    #FIXME: if this doesn't work, try 16, then 18+frontbits
+            for frontbits in range(16, 40, 2):    #FIXME: if this doesn't work, try 16, then 18+frontbits
                 dwb1 = (bits1 >> (frontbits)) & 3
                 dwb2 = (bits2 >> (frontbits)) & 3
                 print("\tfrontbits: %d \t\t dwb1: %s dwb2: %s" % (frontbits, bin(bits1 >> (frontbits)), bin(bits2 >> (frontbits))))
@@ -237,7 +242,7 @@ def findSyncWordDoubled(byts):
                     break
 
             # frontbits now represents our unknowns...  let's go from the other side now
-            for tailbits in xrange(16, -1, -2):
+            for tailbits in range(16, -1, -2):
                 dwb1 = (bits1 >> (tailbits)) & 3
                 dwb2 = (bits2 >> (tailbits)) & 3
                 print("\ttailbits: %d\t\t dwb1: %s dwb2: %s" % (tailbits, bin(bits1 >> (tailbits)), bin(bits2 >> (tailbits))))
@@ -270,7 +275,7 @@ def visBits(data):
 
 
 def getBit(data, bit):
-    idx = bit / 8
+    idx = old_div(bit, 8)
     bidx = bit % 8
     char = data[idx]
     return (ord(char)>>(7-bidx)) & 1
@@ -357,7 +362,7 @@ def bitSectString(string, startbit, endbit):
     s = ''
     bit = startbit
 
-    Bidx = bit / 8
+    Bidx = old_div(bit, 8)
     bidx = (bit % 8)
 
     while bit < endbit:
@@ -385,7 +390,7 @@ def bitSectString(string, startbit, endbit):
 
         s += chr(byte)
     
-    ent = (min(entropy)+1.0) / (max(entropy)+1)
+    ent = old_div((min(entropy)+1.0), (max(entropy)+1))
     #print "entropy: %f" % ent
     return (s, ent)
 
@@ -451,9 +456,9 @@ def reprBitArray(bitAry, width=194):
     # top line
     #FIXME: UGGGGLY and kinda broken.
     fraction = 1.0 * arylen/width
-    expand = [bitAry[int(x*fraction)] for x in xrange(width)]
+    expand = [bitAry[int(x*fraction)] for x in range(width)]
 
-    for bindex in xrange(width):
+    for bindex in range(width):
         bits = 0
         if bindex>0:
             bits += (expand[bindex-1]) << (2)
@@ -488,7 +493,7 @@ def invertBits(data):
     #    output.append( struct.pack( "<I", struct.unpack( "<I", data[idx:idx+4] )[0] & 0xffff) )
 
     #method2
-    count = ldata / 4
+    count = old_div(ldata, 4)
     #print ldata, count
     numlist = struct.unpack( "<%dI" % count, data[off:] )
     modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
@@ -658,7 +663,7 @@ def findManchester(data, minbytes=10):
             else:
                 # we're done, or not started
                 if lastCount >= minbits:
-                    lenbytes = (lastCount / 8)
+                    lenbytes = (old_div(lastCount, 8))
                     lenbits = lastCount % 8
                     startbyte = bidx - lenbytes
                     if lenbits > btidx:
