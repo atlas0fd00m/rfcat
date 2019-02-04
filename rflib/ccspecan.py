@@ -32,7 +32,11 @@ import time
 import numpy
 import threading
 import rflib
-import pickle as pickle
+# import cPickle in Python 2 instead of pickle in Python 3
+if sys.version_info < (3,):
+    import cPickle as pickle
+else:
+    import pickle as pickle
 
 from PySide2 import QtCore, QtGui, QtWidgets
 from PySide2.QtCore import Qt, QPointF, QLineF
