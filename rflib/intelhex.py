@@ -52,6 +52,14 @@ from array import array
 from binascii import hexlify, unhexlify
 from bisect import bisect_right
 import os
+import sys
+
+
+# the Python 2 integer types int and long have been unified in Python 3
+if sys.version_info < (3,):
+    integer_types = (int, long,)
+else:
+    integer_types = (int,)
 
 
 class IntelHex(object):
@@ -264,7 +272,7 @@ class IntelHex(object):
         if 'start_addr' in s:
             del s['start_addr']
         for k in list(s.keys()):
-            if type(k) not in (int, int) or k < 0:
+            if type(k) not in integer_types or k < 0:
                 raise ValueError('Source dictionary should have only int keys')
         self._buf.update(s)
         if start_addr is not None:
@@ -381,7 +389,7 @@ class IntelHex(object):
                         if no data found.
         '''
         t = type(addr)
-        if t in (int, int):
+        if t in integer_types:
             if addr < 0:
                 raise TypeError('Address should be >= 0.')
             return self._buf.get(addr, self.padding)
@@ -404,7 +412,7 @@ class IntelHex(object):
     def __setitem__(self, addr, byte):
         """Set byte at address."""
         t = type(addr)
-        if t in (int, int):
+        if t in integer_types:
             if addr < 0:
                 raise TypeError('Address should be >= 0.')
             self._buf[addr] = byte
@@ -440,7 +448,7 @@ class IntelHex(object):
     def __delitem__(self, addr):
         """Delete byte at address."""
         t = type(addr)
-        if t in (int, int):
+        if t in integer_types:
             if addr < 0:
                 raise TypeError('Address should be >= 0.')
             del self._buf[addr]
