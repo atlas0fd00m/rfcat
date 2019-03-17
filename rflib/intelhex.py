@@ -38,8 +38,8 @@
 '''
 from __future__ import division
 
+from builtins import bytes
 from builtins import str
-from builtins import chr
 from builtins import range
 from past.builtins import basestring
 from builtins import object
@@ -492,7 +492,7 @@ class IntelHex(object):
         # timeit shows that using hexstr.translate(table)
         # is faster than hexstr.upper():
         # 0.452ms vs. 0.652ms (translate vs. upper)
-        table = ''.join(chr(i).upper() for  i in range(256))
+        table = ''.join(bytes([i]).upper() for  i in range(256))
 
         # start address record if any
         if self.start_addr and write_start_addr:
@@ -710,7 +710,7 @@ class IntelHex(object):
                     if x is not None:
                         tofile.write(' %02X' % x)
                         if 32 <= x < 128:
-                            s.append(chr(x))
+                            s.append(bytes([x]))
                         else:
                             s.append('.')
                     else:
@@ -1012,7 +1012,7 @@ def _get_file_and_addr_range(s, _support_drive_letter=None):
         _support_drive_letter = (os.name == 'nt')
     drive = ''
     if _support_drive_letter:
-        if s[1:2] == ':' and s[0].upper() in ''.join([chr(i) for i in range(ord('A'), ord('Z')+1)]):
+        if s[1:2] == ':' and s[0].upper() in ''.join([bytes([i]) for i in range(ord('A'), ord('Z')+1)]):
             drive = s[:2]
             s = s[2:]
     parts = s.split(':')

@@ -24,7 +24,7 @@ from __future__ import division
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import chr
+from builtins import bytes
 from builtins import range
 from past.utils import old_div
 import sys
@@ -415,7 +415,7 @@ class Window(QtWidgets.QWidget):
 
         # anything else is alphanumeric
         try:
-            key= chr(event.key()).upper()
+            key= bytes([event.key()]).upper()
             event.accept()
         except:
             print('Unknown key pressed: 0x%x' % event.key())
