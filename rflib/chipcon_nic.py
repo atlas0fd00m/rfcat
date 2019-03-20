@@ -2,7 +2,13 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import bytes
+from builtins import hex
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import re
 import sys
 import usb
@@ -92,7 +98,7 @@ FHSS_LAST_STATE =               5       # used for testing
 
 
 FHSS_STATES = {}
-for key,val in globals().items():
+for key,val in list(globals().items()):
     if key.startswith("FHSS_STATE_"):
         FHSS_STATES[key] = val
         FHSS_STATES[val] = key
@@ -225,7 +231,7 @@ def makeFriendlyAscii(instring):
     last = -1
     instrlen = len(instring)
 
-    for cidx in xrange(instrlen):
+    for cidx in range(instrlen):
         if (0x20 < ord(instring[cidx]) < 0x7f):
             if last < cidx-1:
                 out.append( "." * (cidx-1-last))
@@ -247,13 +253,13 @@ def makeFriendlyAscii(instring):
 
 def calculateT2(tick_ms, mhz=24):
     # each tick, not each cycle
-    TICKSPD = [(mhz*1000000/pow(2,x)) for x in range(8)]
+    TICKSPD = [(old_div(mhz*1000000,pow(2,x))) for x in range(8)]
     
     tick_ms = 1.0*tick_ms/1000
     candidates = []
-    for tickidx in xrange(8):
+    for tickidx in range(8):
         for tipidx in range(4):
-            for PR in xrange(256):
+            for PR in range(256):
                 T = 1.0 * PR * TIP[tipidx] / TICKSPD[tickidx]
                 if abs(T-tick_ms) < .010:
                     candidates.append((T, tickidx, tipidx, PR))
@@ -267,7 +273,7 @@ def calculateT2(tick_ms, mhz=24):
     #return ms, candidates, best
             
 
-class EnDeCode:
+class EnDeCode(object):
     def encode(self, msg):
         raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
     def decode(self, msg):
@@ -283,7 +289,7 @@ def printSyncWords(syncworddict):
     print("SyncWords seen:")
 
     tmp = []
-    for x,y in syncworddict.items():
+    for x,y in list(syncworddict.items()):
         tmp.append((y,x))
     tmp.sort()
     for y,x in tmp:
@@ -437,14 +443,14 @@ class NICxx11(USBDongle):
             if 'suppress' the radio state (RX/TX/IDLE) is not modified
         '''
         if suppress:
-            self.poke(regaddr, chr(value))
+            self.poke(regaddr, bytes([value]))
             return
             
         marcstate = self.radiocfg.marcstate
         if marcstate != MARC_STATE_IDLE:
             self.strobeModeIDLE()
             
-        self.poke(regaddr, chr(value))
+        self.poke(regaddr, bytes([value]))
         
         self.strobeModeReturn(marcstate)
         #if (marcstate == MARC_STATE_RX):
@@ -497,7 +503,7 @@ class NICxx11(USBDongle):
         else:
             applyConfig = False
 
-        freqmult = (0x10000 / 1000000.0) / mhz
+        freqmult = old_div((0x10000 / 1000000.0), mhz)
         num = int(freq * freqmult)
         radiocfg.freq2 = num >> 16
         radiocfg.freq1 = (num>>8) & 0xff
@@ -524,13 +530,13 @@ class NICxx11(USBDongle):
                 #self.strobeModeTX()
 
     def getFreq(self, mhz=24, radiocfg=None):
-        freqmult = (0x10000 / 1000000.0) / mhz
+        freqmult = old_div((0x10000 / 1000000.0), mhz)
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
             
         num = (radiocfg.freq2<<16) + (radiocfg.freq1<<8) + radiocfg.freq0
-        freq = num / freqmult
+        freq = old_div(num, freqmult)
         return freq, hex(num)
 
     def getFreqEst(self, radiocfg=None):
@@ -656,7 +662,7 @@ class NICxx11(USBDongle):
 
         if (chanspc != None):
             for e in range(4):
-                m = int(((chanspc * pow(2,18) / (1000000.0 * mhz * pow(2,e)))-256) +.5)    # rounded evenly
+                m = int(((old_div(chanspc * pow(2,18), (1000000.0 * mhz * pow(2,e))))-256) +.5)    # rounded evenly
                 if m < 256:
                     chanspc_e = e
                     chanspc_m = m
@@ -858,7 +864,7 @@ class NICxx11(USBDongle):
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        ifBits = freq_if * pow(2,10) / (1000000.0 * mhz)
+        ifBits = old_div(freq_if * pow(2,10), (1000000.0 * mhz))
         ifBits = int(ifBits + .5)       # rounded evenly
 
         if ifBits >0x1f:
@@ -955,7 +961,7 @@ class NICxx11(USBDongle):
         chanbw_e = None
         chanbw_m = None
         for e in range(4):
-            m = int(((mhz*1000000.0 / (bw *pow(2,e) * 8.0 )) - 4) + .5)        # rounded evenly
+            m = int(((old_div(mhz*1000000.0, (bw *pow(2,e) * 8.0 ))) - 4) + .5)        # rounded evenly
             if m < 4:
                 chanbw_e = e
                 chanbw_m = m
@@ -1005,7 +1011,7 @@ class NICxx11(USBDongle):
         drate_e = None
         drate_m = None
         for e in range(16):
-            m = int((drate * pow(2,28) / (pow(2,e)* (mhz*1000000.0))-256) + .5)        # rounded evenly
+            m = int((old_div(drate * pow(2,28), (pow(2,e)* (mhz*1000000.0)))-256) + .5)        # rounded evenly
             if m < 256:
                 drate_e = e
                 drate_m = m
@@ -1049,7 +1055,7 @@ class NICxx11(USBDongle):
         dev_e = None
         dev_m = None
         for e in range(8):
-            m = int((deviatn * pow(2,17) / (pow(2,e)* (mhz*1000000.0))-8) + .5)        # rounded evenly
+            m = int((old_div(deviatn * pow(2,17), (pow(2,e)* (mhz*1000000.0)))-8) + .5)        # rounded evenly
             if m < 8:
                 dev_e = e
                 dev_m = m
@@ -1165,9 +1171,9 @@ class NICxx11(USBDongle):
         if baud <= 2400:
             deviatn = 5100
         elif baud <= 38400:
-            deviatn = 20000 * ((baud-2400)/36000)
+            deviatn = 20000 * (old_div((baud-2400),36000))
         else:
-            deviatn = 129000 * ((baud-38400)/211600)
+            deviatn = 129000 * (old_div((baud-38400),211600))
         self.setMdmDeviatn(deviatn)
 
     def calculatePktChanBW(self, mhz=24, radiocfg=None):
@@ -1297,7 +1303,7 @@ class NICxx11(USBDongle):
         return self.send(APP_NIC, NIC_GET_AMP_MODE, "")
 
     def setPktAddr(self, addr):
-        return self.poke(ADDR, chr(addr))
+        return self.poke(ADDR, bytes([addr]))
 
     def getPktAddr(self):
         return self.peek(ADDR)
@@ -1320,7 +1326,7 @@ class NICxx11(USBDongle):
         # calculate wait time
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
-        wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
+        wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
         self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
     def RFxmitLong(self, data, doencoding=True):
@@ -1335,17 +1341,17 @@ class NICxx11(USBDongle):
 
         # calculate wait time
         waitlen = len(data)
-        wait = USB_TX_WAIT * ((waitlen / RF_MAX_TX_BLOCK) + 1)
+        wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
 
 
         # load chunk buffers
         chunks = []
-        for x in range(datalen / RF_MAX_TX_CHUNK):
+        for x in range(old_div(datalen, RF_MAX_TX_CHUNK)):
             chunks.append(data[x * RF_MAX_TX_CHUNK:(x + 1) * RF_MAX_TX_CHUNK])
         if datalen % RF_MAX_TX_CHUNK:
             chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
-        preload = RF_MAX_TX_BLOCK / RF_MAX_TX_CHUNK
+        preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
         retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
         error = struct.unpack("<B", retval[0])[0]
@@ -2022,16 +2028,16 @@ class FHSSNIC(NICxx11):
         macdata = self.getMACdata()
         cycles_per_channel = macdata[1]
         ticks_per_cycle = 256
-        tick_ms = dwell_ms / (ticks_per_cycle * cycles_per_channel)
+        tick_ms = old_div(dwell_ms, (ticks_per_cycle * cycles_per_channel))
         val = calculateT2(tick_ms, mhz)
         T, tickidx, tipidx, PR = val
         print("Setting MAC period to %f secs (%x %x %x)" % (val))
         t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
         clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx<<3)
         
-        self.poke(X_T2PR, chr(PR))
-        self.poke(X_T2CTL, chr(t2ctl))
-        self.poke(X_CLKCON, chr(clkcon))
+        self.poke(X_T2PR, bytes([PR]))
+        self.poke(X_T2CTL, bytes([t2ctl]))
+        self.poke(X_CLKCON, bytes([clkcon]))
 
     def _setMACmode(self, _mode):
         '''
@@ -2284,7 +2290,7 @@ def getValueFromReprString(stringarray, line_text):
             return (string,val)
 
 def mkFreq(freq=902000000, mhz=24):
-    freqmult = (0x10000 / 1000000.0) / mhz
+    freqmult = old_div((0x10000 / 1000000.0), mhz)
     num = int(freq * freqmult)
     freq2 = num >> 16
     freq1 = (num>>8) & 0xff

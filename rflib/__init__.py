@@ -3,6 +3,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
+from builtins import str
+from builtins import range
 from .chipcon_nic import *
 import rflib.bits as rfbits
 
@@ -14,7 +16,7 @@ MAX_FREQ = 936e6
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
-            for x in xrange(maxnum):
+            for x in range(maxnum):
                 y, t = self.RFrecv(timeoutms)
                 print("(%5.3f) %s:  %s" % (t, msg, y.encode('hex')))
         except ChipconUsbTimeoutException:
@@ -31,7 +33,7 @@ class RfCat(FHSSNIC):
         while not keystop():
             try:
                 print("(press Enter to quit)")
-                for freq in xrange(int(basefreq), int(basefreq+(inc*count)), int(inc)):
+                for freq in range(int(basefreq), int(basefreq+(inc*count)), int(inc)):
                     print("Scanning for frequency %d..." % freq)
                     self.setFreq(freq)
                     self.RFdump(timeoutms=delaysec*1000)

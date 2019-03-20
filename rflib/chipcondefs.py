@@ -1464,7 +1464,7 @@ PKTCTRL1S = {}
 RFIFS = {}
 RFIMS = {}
 
-for key,val in globals().items():
+for key,val in list(globals().items()):
     if key.startswith("RFIF_"):
         RFIFS[val] = key
     elif key.startswith("RFIM_"):

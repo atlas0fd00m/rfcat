@@ -2,7 +2,14 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 
+from builtins import bytes
+from builtins import str
+from builtins import hex
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import os
 import sys
 import usb
@@ -117,7 +124,7 @@ RCS = {}
 LCS = {}
 LCES = {}
 lcls = locals()
-for lcl in lcls.keys():
+for lcl in list(lcls.keys()):
     if lcl.startswith("LCE_"):
         LCES[lcl] = lcls[lcl]
         LCES[lcls[lcl]] = lcl
@@ -166,7 +173,7 @@ class ChipconUsbTimeoutException(Exception):
 
 direct=False
 
-class USBDongle:
+class USBDongle(object):
     ######## INITIALIZATION ########
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         self.rsema = None
@@ -375,7 +382,7 @@ class USBDongle:
         if self._debug:
             print(("_clear_buffers()"), file=sys.stderr)
         if clear_recv_mbox:
-            for key in self.recv_mbox.keys():
+            for key in list(self.recv_mbox.keys()):
                 self.trash.extend(self.recvAll(key))
         elif self.recv_mbox.get(APP_SYSTEM) != None:
             self.trash.extend(self.recvAll(APP_SYSTEM))
@@ -432,7 +439,7 @@ class USBDongle:
                 q = None
                 b = self.recv_mbox.get(APP_DEBUG, None)
                 if (b != None):
-                    for cmd in b.keys():
+                    for cmd in list(b.keys()):
                         q = b[cmd]
                         if len(q):
                             buf,timestamp = q.pop(0)
@@ -629,9 +636,9 @@ class USBDongle:
                 if b:
                     if self._debug: print("Recv msg",app,b,cmd, file=sys.stderr)
                     if cmd is None:
-                        keys = b.keys()
+                        keys = list(b.keys())
                         if len(keys):
-                            cmd = b.keys()[-1] # just grab one.   no guarantees on the order
+                            cmd = list(b.keys())[-1] # just grab one.   no guarantees on the order
 
                 if b is not None and cmd is not None:
                     q = b.get(cmd)
@@ -657,7 +664,7 @@ class USBDongle:
 
                         self.rsema.release()
 
-                self.recv_event.wait((wait - (time.time() - startTime)*1000)/1000) # wait on recv event, with timeout of remaining time
+                self.recv_event.wait(old_div((wait - (time.time() - startTime)*1000),1000)) # wait on recv event, with timeout of remaining time
                 self.recv_event.clear() # clear event, if it's set
 
             except KeyboardInterrupt:
@@ -922,11 +929,11 @@ class USBDongle:
         output.append('     client errored cycles:     %d' % self._usberrorcnt)
         output.append('     recv_queue:                (%d bytes) %s'%(len(self.recv_queue),repr(self.recv_queue)[:width-42]))
         output.append('     trash:                     (%d blobs) "%s"'%(len(self.trash),repr(self.trash)[:width-44]))
-        output.append('     recv_mbox                  (%d keys)  "%s"'%(len(self.recv_mbox),repr([hex(x) for x in self.recv_mbox.keys()])[:width-44]))
-        for app in self.recv_mbox.keys():
+        output.append('     recv_mbox                  (%d keys)  "%s"'%(len(self.recv_mbox),repr([hex(x) for x in list(self.recv_mbox.keys())])[:width-44]))
+        for app in list(self.recv_mbox.keys()):
             appbox = self.recv_mbox[app]
             output.append('       app 0x%x (%d records)'%(app,len(appbox)))
-            for cmd in appbox.keys():
+            for cmd in list(appbox.keys()):
                 output.append('             [0x%x]    (%d frames)  "%s"'%(cmd, len(appbox[cmd]), repr(appbox[cmd])[:width-36]))
             output.append('')
         return "\n".join(output)
@@ -950,7 +957,7 @@ def unittest(self, mhz=24):
     print(repr(self.peek(0xf000, 400)))
 
     print("\nTesting USB poke/peek")
-    data = "".join([chr(c) for c in xrange(120)])
+    data = "".join([bytes([c]) for c in range(120)])
     where = 0xf300
     self.poke(where, data)
     ndata = self.peek(where, len(data))
