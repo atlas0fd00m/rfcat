@@ -36,7 +36,7 @@
 @author     Alexander Belchenko (bialix AT ukr net)
 @version    1.1
 '''
-from __future__ import division
+from __future__ import division, print_function
 
 from builtins import bytes
 from builtins import str
@@ -45,8 +45,6 @@ from past.builtins import basestring
 from builtins import object
 from past.utils import old_div
 __docformat__ = "javadoc"
-
-from __future__ import print_function
 
 from array import array
 from binascii import hexlify, unhexlify
