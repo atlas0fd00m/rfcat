@@ -3,7 +3,6 @@ from __future__ import division
 
 from builtins import hex
 from builtins import range
-from builtins import bytes
 from past.utils import old_div
 import struct
 
@@ -43,7 +42,7 @@ def strBitReverse(string):
     # convert back from MSB number to string
     out = []
     for x in range(len(string)):
-        out.append(bytes([rnum&0xff]))
+        out.append(chr(rnum&0xff))
         rnum >>= 8
     out.reverse()
     print(''.join(out).encode('hex'))
@@ -388,7 +387,7 @@ def bitSectString(string, startbit, endbit):
             mask = ~ ( (1<<diff) - 1 )
             byte &= mask
 
-        s += bytes([byte])
+        s += chr(byte)
     
     ent = old_div((min(entropy)+1.0), (max(entropy)+1))
     #print "entropy: %f" % ent
@@ -481,7 +480,7 @@ def invertBits(data):
     off = 0
 
     if ldata&1:
-        output.append( bytes([ ord( data[0] ) ^ 0xff]) )
+        output.append( chr( ord( data[0] ) ^ 0xff) )
         off = 1
 
     if ldata&2:
@@ -546,12 +545,12 @@ def diff_manchester_decode(data, align=False):
 
             last = (bit0 << 1) | bit1
         if (bidx & 1): 
-            out.append(bytes([obyte]))
+            out.append(chr(obyte))
             obyte = 0
 
     if not (bidx & 1):
         obyte << 4 # pad 0's on end
-        out.append(bytes([obyte]))
+        out.append(chr(obyte))
     return ''.join(out)
 
 
@@ -573,12 +572,12 @@ def biphase_mark_coding_encode(data):
             last = bit
         if bidx & 1:
             print("%d - write" % bidx)
-            out.append(bytes([obyte]))
+            out.append(chr(obyte))
         else:
             print("%d - skip" % bidx)
     if not (bidx & 1):
         print("%d - write" % bidx)
-        out.append(bytes([obyte]))
+        out.append(chr(obyte))
 
     return ''.join(out)
 
@@ -602,12 +601,12 @@ def manchester_decode(data, hilo=1):
 
             last = bit
         if (bidx & 1): 
-            out.append(bytes([obyte]))
+            out.append(chr(obyte))
             obyte = 0
 
     if not (bidx & 1):
         obyte << 4 # pad 0's on end
-        out.append(bytes([obyte]))
+        out.append(chr(obyte))
     return ''.join(out)
 
 def manchester_encode(data, hilo=1):

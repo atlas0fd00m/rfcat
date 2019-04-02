@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from builtins import bytes
 from builtins import str
 from builtins import hex
 from builtins import range
@@ -957,7 +956,7 @@ def unittest(self, mhz=24):
     print(repr(self.peek(0xf000, 400)))
 
     print("\nTesting USB poke/peek")
-    data = "".join([bytes([c]) for c in range(120)])
+    data = "".join([chr(c) for c in range(120)])
     where = 0xf300
     self.poke(where, data)
     ndata = self.peek(where, len(data))
