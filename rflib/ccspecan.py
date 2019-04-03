@@ -32,6 +32,7 @@ import time
 import numpy
 import threading
 import rflib
+from .bits import correctbytes
 # import cPickle in Python 2 instead of pickle in Python 3
 if sys.version_info < (3,):
     import cPickle as pickle
@@ -415,7 +416,7 @@ class Window(QtWidgets.QWidget):
 
         # anything else is alphanumeric
         try:
-            key= bytes([event.key()]).upper()
+            key= correctbytes(event.key()).upper()
             event.accept()
         except:
             print('Unknown key pressed: 0x%x' % event.key())

@@ -22,6 +22,7 @@ from . import bits
 from .chipcondefs import *
 from .rflib_defs import *
 from .rflib_version import *
+from .bits import correctbytes
 
 if os.name == 'nt':
     import msvcrt
@@ -957,7 +958,7 @@ def unittest(self, mhz=24):
     print(repr(self.peek(0xf000, 400)))
 
     print("\nTesting USB poke/peek")
-    data = "".join([bytes([c]) for c in range(120)])
+    data = "".join([correctbytes(c) for c in range(120)])
     where = 0xf300
     self.poke(where, data)
     ndata = self.peek(where, len(data))

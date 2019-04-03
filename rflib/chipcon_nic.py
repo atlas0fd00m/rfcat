@@ -19,6 +19,7 @@ import pickle
 import threading
 #from .chipcondefs import *
 from .chipcon_usb import *
+from .bits import correctbytes
 
 # band limits in Hz
 FREQ_MIN_300  = 281000000
@@ -443,14 +444,14 @@ class NICxx11(USBDongle):
             if 'suppress' the radio state (RX/TX/IDLE) is not modified
         '''
         if suppress:
-            self.poke(regaddr, bytes([value]))
+            self.poke(regaddr, correctbytes(value))
             return
             
         marcstate = self.radiocfg.marcstate
         if marcstate != MARC_STATE_IDLE:
             self.strobeModeIDLE()
             
-        self.poke(regaddr, bytes([value]))
+        self.poke(regaddr, correctbytes(value))
         
         self.strobeModeReturn(marcstate)
         #if (marcstate == MARC_STATE_RX):
@@ -1303,7 +1304,7 @@ class NICxx11(USBDongle):
         return self.send(APP_NIC, NIC_GET_AMP_MODE, "")
 
     def setPktAddr(self, addr):
-        return self.poke(ADDR, bytes([addr]))
+        return self.poke(ADDR, correctbytes(addr))
 
     def getPktAddr(self):
         return self.peek(ADDR)
@@ -2035,9 +2036,9 @@ class FHSSNIC(NICxx11):
         t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
         clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx<<3)
         
-        self.poke(X_T2PR, bytes([PR]))
-        self.poke(X_T2CTL, bytes([t2ctl]))
-        self.poke(X_CLKCON, bytes([clkcon]))
+        self.poke(X_T2PR, correctbytes(PR))
+        self.poke(X_T2CTL, correctbytes(t2ctl))
+        self.poke(X_CLKCON, correctbytes(clkcon))
 
     def _setMACmode(self, _mode):
         '''
