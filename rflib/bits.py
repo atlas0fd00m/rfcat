@@ -53,7 +53,7 @@ def strBitReverse(string):
     # convert back from MSB number to string
     out = []
     for x in range(len(string)):
-        out.append(correctbytes([rnum&0xff]))
+        out.append(correctbytes(rnum&0xff))
         rnum >>= 8
     out.reverse()
     print(''.join(out).encode('hex'))
@@ -398,7 +398,7 @@ def bitSectString(string, startbit, endbit):
             mask = ~ ( (1<<diff) - 1 )
             byte &= mask
 
-        s += correctbytes([byte])
+        s += correctbytes(byte)
     
     ent = old_div((min(entropy)+1.0), (max(entropy)+1))
     #print "entropy: %f" % ent
