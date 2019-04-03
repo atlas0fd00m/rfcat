@@ -1,0 +1,16 @@
+import os
+import unittest
+
+import PE
+import vivisect.tests.helpers as helpers
+
+class RfCatBasicTests(unittest.TestCase):
+
+    def test_export_by_name(self):
+        file_path = helpers.getTestPath('windows', 'i386', 'export_by_name.dll')
+        pe = PE.peFromFileName(file_path)
+        export_list = pe.getExports()
+        self.assertEquals(len(export_list), 2, "expecting 2 exported functions")
+        self.assertEquals(export_list[0][1], 0, "exported function with ordinal 0 not found")
+        self.assertEquals(export_list[0][2], "Func1", "exported function with name 'Func1' not found")
+
