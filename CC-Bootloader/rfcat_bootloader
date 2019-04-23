@@ -211,7 +211,7 @@ if __name__ == '__main__':
           break
 
       except SerialException,e:
-          print "\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient."
+          print "\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient.  (error: %r)" % e
           time.sleep(6)
       except KeyboardInterrupt:
           print "Caught <CTRL-C>, exitting..."
