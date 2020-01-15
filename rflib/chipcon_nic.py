@@ -314,7 +314,11 @@ class NICxx11(USBDongle):
         USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
         self.max_packet_size = RF_MAX_RX_BLOCK
         self.endec = None
-        self.mhz = CHIPmhz.get(self.chipnum)
+        if hasattr(self, "chipnum"):
+            self.mhz = CHIPmhz.get(self.chipnum)
+        else:
+            self.mhz = 24   # default CC1111
+
         self.freq_offset_accumulator = 0
 
     ######## RADIO METHODS #########
