@@ -177,6 +177,8 @@ direct=False
 class USBDongle(object):
     ######## INITIALIZATION ########
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
+        self.chipnum = None
+        self.chipstr = "uninitialized"
         self.rsema = None
         self.xsema = None
         self._bootloader = False
@@ -237,6 +239,8 @@ class USBDongle(object):
 
         if copyDongle is not None:
             self.devnum = copyDongle.devnum
+            self.chipnum = copyDongle.chipnum
+            self.chipstr = copyDongle.chipstr
             self._d = copyDongle._d
             self._do = copyDongle._do
             self._usbmaxi = copyDongle._usbmaxi
