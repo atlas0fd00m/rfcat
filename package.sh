@@ -1,5 +1,12 @@
 echo  "=== set revision: `./revision.sh` ==="
 
+if ( which sdcc )
+then
+    echo "'sdcc' found"
+else
+    echo "'sdcc' not found"
+    exit 1;
+fi
 echo  "=== build firmwares ==="
 cd firmware
 ./buildall.sh
@@ -10,7 +17,12 @@ TARGETDIR="rfcat_$DATESTAMP"
 TARGETPATH="../$TARGETDIR"
 echo "=== make archive ==="
 rm -rf $TARGETPATH
-hg archive -r tip $TARGETPATH
+if ( which hg )
+then
+    hg archive -r tip $TARGETPATH
+else
+    echo "'hg' not found"
+fi
 
 echo "=== touch up archive ==="
 cp .revision $TARGETPATH
