@@ -266,7 +266,7 @@ Install rfcat onto your system.  on most linux systems, this will place `rfcat` 
 
 #### Installation with pip
 * cd into the rfcat directory (created by unpacking the tarball or by hg clone)
-* ```pip install -e .```  (installs in editable mode and runs from the uppacked or checked out location)
+* ```pip install -e .```  (installs in editable mode and runs from the unpacked or checked out location)
 
 ## Using rfcat
 
