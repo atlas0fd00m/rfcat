@@ -259,13 +259,13 @@ Install rfcat onto your system.  on most linux systems, this will place `rfcat` 
 
 ### Installation
 
-* cd into the rfcat directory (created by unpacking the tarball or by hg clone)
+* cd into the rfcat directory (created by unpacking the tarball or by git clone)
 * sudo python setup.py install
 * I highly recommend installing `ipython`
   * For deb/ubuntu folk: `apt-get install ipython`
 
 #### Installation with pip
-* cd into the rfcat directory (created by unpacking the tarball or by hg clone)
+* cd into the rfcat directory (created by unpacking the tarball or by git clone)
 * ```pip install -e .```  (installs in editable mode and runs from the unpacked or checked out location)
 
 ## Using rfcat
