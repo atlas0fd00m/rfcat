@@ -3,12 +3,15 @@
 from __future__ import print_function
 
 import sys
+import logging
 import readline
 import rlcompleter
 readline.parse_and_bind("tab: complete")
 
 from rflib import *
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+logger = logging.getLogger(__name__)
 
 
 intro = """'RfCat, the greatest thing since Frequency Hopping!'

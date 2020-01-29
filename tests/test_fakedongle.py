@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 EP0BUFSIZE = 512
 
+
 class fakeMemory:
     def __init__(self, size=64*1024):
         self.memory = [0 for x in range(size)]
@@ -24,8 +25,10 @@ class fakeMemory:
     def writeMemory(self, addr, data):
         self.memory = self.memory[:addr] + data + self.memory[addr+len(data):]
 
+
 class fakeDon:
     pass
+
 
 class fakeDongle:
     def __init__(self):
