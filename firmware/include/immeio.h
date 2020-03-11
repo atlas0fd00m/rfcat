@@ -26,6 +26,7 @@ void immeLCDInitialState(void);
 #define IMME_STATE_SNIFF 0
 
 #define MOD_2FSK    0
+#define MOD_4FSK    4
 #define MOD_GFSK    1
 #define MOD_ASKOOK  3
 #define MOD_MSK     7

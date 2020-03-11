@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
+
+from __future__ import print_function
 
 import sys
 from rflib.intelhex import IntelHex
@@ -13,7 +15,7 @@ else:
     except IOError:
         ser = 0
 
-print >>sys.stderr,("[--- new serial number: %.4x ---]" % ser)
+print(("[--- new serial number: %.4x ---]" % ser), file=sys.stderr)
 
 if WRITEBACK:
     file(".serial", 'wb').write("%.13x" % ser)

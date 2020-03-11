@@ -464,6 +464,8 @@ IRCON                          = 0xC0
 IRCON2                         = 0xE8
 IT0                            = 1
 IT1                            = 4
+LED_MODE_OFF                   = 0x00
+LED_MODE_ON                    = 0x01
 LQI                            = 0xDF39
 MARCSTATE                      = 0xDF3B
 MARCSTATE_MARC_STATE           = 0x1F
@@ -1462,7 +1464,7 @@ PKTCTRL1S = {}
 RFIFS = {}
 RFIMS = {}
 
-for key,val in globals().items():
+for key,val in list(globals().items()):
     if key.startswith("RFIF_"):
         RFIFS[val] = key
     elif key.startswith("RFIM_"):

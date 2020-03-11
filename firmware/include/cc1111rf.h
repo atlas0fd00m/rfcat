@@ -9,7 +9,7 @@
 //                  switch buffers mid-stream
 
 #define DMA_CFG_SIZE 8
-// BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/cc1111client.py 
+// BUFFER size must match RF_MAX_RX_BLOCK defined in rflib/chipcon_nic.py
 #define BUFFER_SIZE 512
 #define BUFFER_AMOUNT 2
 

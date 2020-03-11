@@ -63,6 +63,8 @@ __code u8 buildname[] = {
     'Y','A','R','D','S','T','I','C','K','O','N','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #elif defined CHRONOSDONGLE
     'C','H','R','O','N','O','S',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
+#elif defined SRFSTICK
+    'S','R','F','S','T','I','C','K',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #else
     'I','M','M','E',' ','r',ASCII_LONG(BUILD_VERSION),'\x00',
 #endif
@@ -90,6 +92,13 @@ __code u8 buildname[] = {
     #define MANUFACTURER   'R',0,'f',0,'C',0,'a',0,'t',0
     #define PROD_LEN       30
     #define PRODUCT_NAME   'C',0,'h',0,'r',0,'o',0,'n',0,'o',0,'s',0,' ',0,'D',0,'o',0,'n',0,'g',0,'l',0,'e',0
+#elif defined SRFSTICK
+    #define ID_VENDOR      0x1D50
+    #define ID_PRODUCT     0xECC1
+    #define MANU_LEN       12
+    #define MANUFACTURER   'R',0,'f',0,'C',0,'a',0,'t',0
+    #define PROD_LEN       20
+    #define PRODUCT_NAME   'S',0,'R',0,'F',0,'-',0,'S',0,'t',0,'i',0,'c',0,'k',0
 #else
     #define ID_VENDOR      0x0451
     #define ID_PRODUCT     0x4715
@@ -1170,6 +1179,22 @@ void processOUTEP5(void)
             case CMD_DEVICE_SERIAL_NUMBER:
                 ep5.OUTbytesleft = 0;
                 txdata(ep5.OUTapp, ep5.OUTcmd, 16, (__xdata u8*)LC_DEVICE_SERIAL_NUMBER);
+                break;
+
+            case CMD_LEDMODE:
+                switch(*ptr++)
+                {
+                    case LEDST_ON:
+                        ledMode = 1;
+                        break;
+                    case LEDST_OFF:
+                        ledMode = 0;
+                        break;
+                    default:
+                        ledMode = 0;
+                        break;
+                }
+                txdata(ep5.OUTapp,ep5.OUTcmd,ep5.OUTlen,ptr);
                 break;
 
             default:

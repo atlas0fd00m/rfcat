@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import print_function
+
 import re
 import os
 import sys
@@ -112,16 +114,16 @@ class CC1111NIC_Server(cmd.Cmd):
                 while True:
                     # implement pipe between the usb RF NIC and the TCP socket
                     try:
-                        print >>sys.stderr,("Listening for NIC connection on port %d" % self._nicport)
+                        print(("Listening for NIC connection on port %d" % self._nicport), file=sys.stderr)
                         self._nicsock = s.accept()
                         rs, addr = self._nicsock
                         rs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                        print "== received DATA connection from %s:%d ==" % (addr)
+                        print("== received DATA connection from %s:%d ==" % (addr))
 
                         # handing off the socket for rf_redirection, socket-style
                         self.nic.rf_redirection( (rs,) )
 
-                        print >>sys.stderr,("NIC connection on port %d terminated" % self._nicport)
+                        print(("NIC connection on port %d terminated" % self._nicport), file=sys.stderr)
 
                     except KeyboardInterrupt:
                         self._go = False
@@ -152,7 +154,7 @@ class CC1111NIC_Server(cmd.Cmd):
                 self._cfgsock = s.accept()
                 rs,addr = self._cfgsock
                 rs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                print "== received CONFIG connection from %s:%d ==" % (addr)
+                print("== received CONFIG connection from %s:%d ==" % (addr))
 
                 self.stdin = FileSocket(rs)
                 self.stdout = self.stdin
@@ -173,7 +175,7 @@ class CC1111NIC_Server(cmd.Cmd):
         #ok so just kill the connection :)
 
     def Print(self, info):
-        print >>self.stdout,(info)
+        print((info), file=self.stdout)
 
 
     def do_stop(self, line):
@@ -279,10 +281,10 @@ class CC1111NIC_Server(cmd.Cmd):
 
     def do_modulation(self, line):
         '''
-        * MODULATION - set the RF modulation scheme.  values include "2FSK", "GFSK", "MSK", "ASK_OOK".  note: GFSK/OOK/ASK only up to 250kbaud, MSK only above 26kbaud and no manchester encoding.
+        * MODULATION - set the RF modulation scheme.  values include "2FSK", "GFSK", "4FSK", "MSK", "ASK_OOK".  note: GFSK/OOK/ASK only up to 250kbaud, MSK only above 26kbaud and no manchester encoding.
         '''
-        if not len(line) or line not in ("2FSK", "GFSK", "MSK", "ASK_OOK"):
-            self.Print('need to give me one of the values "2FSK", "GFSK", "MSK", "ASK_OOK"  got: "%s"' % line)
+        if not len(line) or line not in ("2FSK", "GFSK", "4FSK", "MSK", "ASK_OOK"):
+            self.Print('need to give me one of the values "2FSK", "GFSK", "4FSK" (experimental), "MSK", "ASK_OOK"  got: "%s"' % line)
             return
 
         mod = eval("MOD_"+line.strip())
@@ -674,7 +676,7 @@ class CC1111NIC_Server(cmd.Cmd):
         (be very cautious!  the firmware expects certain things like return-to-RX, and no RX-timeout, etc..)
         '''
         self.nic.setModeIDLE()
-        print "loading config from bytes: %s" % repr(line)
+        print("loading config from bytes: %s" % repr(line))
         self.setRadioConfig(line)
         self.nic.setModeRX()
 
@@ -698,7 +700,7 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         config = file(line, "rb").read()
         self.nic.setModeIDLE()
-        print "loading config from bytes: %s" % repr(config)
+        print("loading config from bytes: %s" % repr(config))
         self.setRadioConfig(config)
         self.nic.setModeRX()
 

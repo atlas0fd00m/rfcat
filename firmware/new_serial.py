@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+from __future__ import print_function
 import sys
 
 sn_header = """// Serial number
@@ -7,13 +8,18 @@ sn_header = """// Serial number
 """
 
 try:
-    ser = int(file(".serial", 'rb').read(), 16) + 1
+    f = open('.serial', 'r')
+    ser = int(f.read(), 16) #+ 1
+    f.close()
 except IOError:
     ser = 0
 
-print >>sys.stderr,("[--- new serial number: %.4x ---]" % ser)
+print("[--- new serial number: %.4x ---]" % ser, file=sys.stderr)
 
-file(".serial", 'wb').write("%.4x" % ser)
+f = open('.serial', 'w')
+f.write("%.4x" % ser)
+f.close()
+
 sertxt = "%.4x" % ser
 
 for c in sertxt:

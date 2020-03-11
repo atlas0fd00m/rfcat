@@ -24,13 +24,15 @@ The goals of the project are to reduce the time for security researchers to crea
 
 ## REQUIREMENTS
 
-RfCat currently requires Python 2.x.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
+RfCat currently requires Python 2.7.  the only suspected incompatabilities with Python 3.x are minimal, mostly print("stuff") versus print "stuff" and other str/bytes issues.
 
 ### Other requirements
 
 * python usb
 * libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
 * pyreadline (especially for Windows)
+* PySide2 (for Spectrum Analyzer GUI):  (Ubuntu 18.10+: python-pyside2)
+    $ sudo pip install PySide2
 
 ### Build requirements
 
@@ -257,12 +259,14 @@ Install rfcat onto your system.  on most linux systems, this will place `rfcat` 
 
 ### Installation
 
-* cd into the rfcat directory (created by unpacking the tarball or by hg clone)
+* cd into the rfcat directory (created by unpacking the tarball or by git clone)
 * sudo python setup.py install
 * I highly recommend installing `ipython`
   * For deb/ubuntu folk: `apt-get install ipython`
 
-
+#### Installation with pip
+* cd into the rfcat directory (created by unpacking the tarball or by git clone)
+* ```pip install -e .```  (installs in editable mode and runs from the unpacked or checked out location)
 
 ## Using rfcat
 
@@ -278,7 +282,7 @@ If you have configured your system to allow non-root use:
     * d.debug()
     * d.RFxmit('blahblahblah')
     * d.RFrecv()
-    * print d.reprRadioConfig()
+    * print(d.reprRadioConfig())
     * d.setMdmDRate(19200)      # this sets the modem baud rate (or DataRate)
     * d.setPktPQT(0)            # this sets the preamble quality threshold to 0
     * d.setEnableMdmFEC(True)   # enables the convolutional Forward Error Correction built into the radio

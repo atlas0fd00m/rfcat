@@ -13,11 +13,12 @@ __xdata u8 imme_state;
 __xdata u16 imme_state_counter;
 
 char __xdata rxbuf[30];
-u8 modulations[] = {MOD_2FSK, MOD_GFSK, MOD_ASKOOK, MOD_MSK};
+u8 modulations[] = {MOD_2FSK, MOD_GFSK, MOD_4FSK, MOD_ASKOOK, MOD_MSK};
 
 u8 current_modulation;
 char __code fsk2[] = "2FSK";
 char __code gfsk[] = "GFSK";
+char __code fsk4[] = "4FSK";
 char __code ask[] = "ASK ";
 char __code msk[] = "MSK ";
 char* __code modstrings[] = {fsk2, gfsk, ask, msk};

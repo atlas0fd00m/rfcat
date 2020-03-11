@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # Modified rfcat_server to support Metasploit HWBridge
 
+from __future__ import print_function
+
 import re
 import os
 import sys
@@ -75,7 +77,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         return { "success": True }
 
     def get_modulations(self):
-        mods = [ "2FSK", "GFSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester", "MSK/Manchester" ]
+        mods = [ "2FSK", "GFSK", "4FSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester", "MSK/Manchester" ]
         return mods
 
     def set_modulation(self, args):

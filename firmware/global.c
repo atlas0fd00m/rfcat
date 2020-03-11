@@ -4,7 +4,8 @@
 __xdata u8 lastCode[2];
 __xdata u32 clock;
 
-
+// ENABLE/DISABLE LED(s)
+__xdata u8 ledMode = 1;
 
 void sleepMillis(int ms) 
 {
@@ -184,6 +185,16 @@ void io_init(void)
     TX_AMP_EN = 0;
     RX_AMP_EN = 0;
     AMP_BYPASS_EN = 1;
+
+ #elif defined SRFSTICK
+    // LEDs
+    P1DIR |= (1<<7)|(1<<6)|(1<<5);
+    LED1 = 0;
+    LED2 = 0;
+    LED3 = 0;
+    // USB enable
+    P2DIR |= (1<<0);
+    P2SEL &= ~(1<<0);
 
  #else
     // CC1111 USB (ala Chronos watch dongle), we just need LED
