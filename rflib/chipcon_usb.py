@@ -19,131 +19,11 @@ import select
 import threading
 
 from . import bits
-from .chipcondefs import *
-from .rflib_defs import *
-from .rflib_version import *
 from .bits import correctbytes
+from .const import *
 
 if os.name == 'nt':
     import msvcrt
-
-DEFAULT_USB_TIMEOUT = 1000
-
-EP_TIMEOUT_IDLE     = 400
-EP_TIMEOUT_ACTIVE   = 10
-
-USB_MAX_BLOCK_SIZE  = 512
-USB_RX_WAIT         = 1000
-USB_TX_WAIT         = 10000
-
-USB_BM_REQTYPE_TGTMASK          =0x1f
-USB_BM_REQTYPE_TGT_DEV          =0x00
-USB_BM_REQTYPE_TGT_INTF         =0x01
-USB_BM_REQTYPE_TGT_EP           =0x02
-
-USB_BM_REQTYPE_TYPEMASK         =0x60
-USB_BM_REQTYPE_TYPE_STD         =0x00
-USB_BM_REQTYPE_TYPE_CLASS       =0x20
-USB_BM_REQTYPE_TYPE_VENDOR      =0x40
-USB_BM_REQTYPE_TYPE_RESERVED    =0x60
-
-USB_BM_REQTYPE_DIRMASK          =0x80
-USB_BM_REQTYPE_DIR_OUT          =0x00
-USB_BM_REQTYPE_DIR_IN           =0x80
-
-USB_GET_STATUS                  =0x00
-USB_CLEAR_FEATURE               =0x01
-USB_SET_FEATURE                 =0x03
-USB_SET_ADDRESS                 =0x05
-USB_GET_DESCRIPTOR              =0x06
-USB_SET_DESCRIPTOR              =0x07
-USB_GET_CONFIGURATION           =0x08
-USB_SET_CONFIGURATION           =0x09
-USB_GET_INTERFACE               =0x0a
-USB_SET_INTERFACE               =0x11
-USB_SYNCH_FRAME                 =0x12
-
-APP_GENERIC                     = 0x01
-APP_DEBUG                       = 0xfe
-APP_SYSTEM                      = 0xff
-
-
-SYS_CMD_PEEK                    = 0x80
-SYS_CMD_POKE                    = 0x81
-SYS_CMD_PING                    = 0x82
-SYS_CMD_STATUS                  = 0x83
-SYS_CMD_POKE_REG                = 0x84
-SYS_CMD_GET_CLOCK               = 0x85
-SYS_CMD_BUILDTYPE               = 0x86
-SYS_CMD_BOOTLOADER              = 0x87
-SYS_CMD_RFMODE                  = 0x88
-SYS_CMD_COMPILER                = 0x89
-SYS_CMD_PARTNUM                 = 0x8e
-SYS_CMD_RESET                   = 0x8f
-SYS_CMD_CLEAR_CODES             = 0x90
-SYS_CMD_DEVICE_SERIAL_NUMBER    = 0x91
-SYS_CMD_LED_MODE                = 0x93
-
-EP0_CMD_GET_DEBUG_CODES         = 0x00
-EP0_CMD_GET_ADDRESS             = 0x01
-EP0_CMD_POKEX                   = 0x01
-EP0_CMD_PEEKX                   = 0x02
-EP0_CMD_PING0                   = 0x03
-EP0_CMD_PING1                   = 0x04
-EP0_CMD_RESET                   = 0xfe
-
-
-DEBUG_CMD_STRING                = 0xf0
-DEBUG_CMD_HEX                   = 0xf1
-DEBUG_CMD_HEX16                 = 0xf2
-DEBUG_CMD_HEX32                 = 0xf3
-DEBUG_CMD_INT                   = 0xf4
-
-EP5OUT_MAX_PACKET_SIZE          = 64
-EP5IN_MAX_PACKET_SIZE           = 64
-# EP5OUT_BUFFER_SIZE must match firmware/include/chipcon_usb.h definition
-EP5OUT_BUFFER_SIZE              = 516
-
-LC_USB_INITUSB                = 0x2
-LC_MAIN_RFIF                  = 0xd
-LC_USB_DATA_RESET_RESUME      = 0xa
-LC_USB_RESET                  = 0xb
-LC_USB_EP5OUT                 = 0xc
-LC_RF_VECTOR                  = 0x10
-LC_RFTXRX_VECTOR              = 0x11
-
-LCE_USB_EP5_TX_WHILE_INBUF_WRITTEN    = 0x1
-LCE_USB_EP0_SENT_STALL                = 0x4
-LCE_USB_EP5_OUT_WHILE_OUTBUF_WRITTEN  = 0x5
-LCE_USB_EP5_LEN_TOO_BIG               = 0x6
-LCE_USB_EP5_GOT_CRAP                  = 0x7
-LCE_USB_EP5_STALL                     = 0x8
-LCE_USB_DATA_LEFTOVER_FLAGS           = 0x9
-LCE_RF_RXOVF                          = 0x10
-LCE_RF_TXUNF                          = 0x11
-
-RCS = {}
-LCS = {}
-LCES = {}
-lcls = locals()
-for lcl in list(lcls.keys()):
-    if lcl.startswith("LCE_"):
-        LCES[lcl] = lcls[lcl]
-        LCES[lcls[lcl]] = lcl
-    if lcl.startswith("LC_"):
-        LCS[lcl] = lcls[lcl]
-        LCS[lcls[lcl]] = lcl
-    if lcl.startswith("RC_"):
-        RCS[lcl] = lcls[lcl]
-        RCS[lcls[lcl]] = lcl
-
-CHIPS = {
-    0x91: "CC2511",
-    0x81: "CC2510",
-    0x11: "CC1111",
-    0x01: "CC1110",
-    }
-
 
 def keystop(delay=0):
     if os.name == 'posix':
@@ -256,9 +136,17 @@ class USBDongle(object):
             self.xsema = copyDongle.xsema
             return
 
-        dongles = []
+        self._internal_select_dongle()
+        self.finish_setup()
+
+    def _internal_select_dongle(self):
+        '''
+        strap in USB interface.  this has to insert a ._d and ._do widget with 
+        the correct USB-like interface
+        '''
         self.ep5timeout = EP_TIMEOUT_ACTIVE
 
+        dongles = []
         for dev in getRfCatDevices():
             if self._debug: print((dev), file=sys.stderr)
             do = dev.open()
@@ -269,9 +157,6 @@ class USBDongle(object):
         dongles.sort()
         if len(dongles) == 0:
             raise Exception("No Dongle Found.  Please insert a RFCAT dongle.")
-
-        self.rsema = threading.Lock()
-        self.xsema = threading.Lock()
 
         # claim that interface!
         do = dongles[self.idx][2]
@@ -284,7 +169,7 @@ class USBDongle(object):
 
 
         self.devnum, self._d, self._do = dongles[self.idx]
-        self._usbmaxi, self._usbmaxo = (EP5IN_MAX_PACKET_SIZE, EP5OUT_MAX_PACKET_SIZE)
+
         self._usbcfg = self._d.configurations[0]
         self._usbintf = self._usbcfg.interfaces[0][0]
         self._usbeps = self._usbintf.endpoints
@@ -294,6 +179,14 @@ class USBDongle(object):
             else:
                 self._usbmaxo = ep.maxPacketSize
 
+    def finish_setup(self):
+        '''
+        we've finished selecting and strapping in the usb dongle interface... continue
+        '''
+        self.rsema = threading.Lock()
+        self.xsema = threading.Lock()
+
+        self._usbmaxi, self._usbmaxo = (EP5IN_MAX_PACKET_SIZE, EP5OUT_MAX_PACKET_SIZE)
         self._threadGo.set()
 
         self.getRadioConfig()
