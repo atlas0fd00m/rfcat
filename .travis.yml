@@ -11,6 +11,6 @@ python:
 
 install:
     - "travis_retry sudo apt-get update"
-    - "travis_retry sudo apt-get -qq install python-usb"
+    - "travis_retry sudo apt-get -qq install python-usb python-future"
 
 script: python -m unittest discover
