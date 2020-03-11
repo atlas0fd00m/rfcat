@@ -3,7 +3,6 @@
 #include "chipcon_dma.h"
 #include "bootloader.h"
 
-
 /*************************************************************************************************
  * welcome to the chipcon_usb library.
  * this lib was designed to be the basis for your usb-app on the cc1111 radio.  hack fun!
@@ -1177,6 +1176,11 @@ void processOUTEP5(void)
                 appReturn(2, ptr);
                 break;
 
+            case CMD_DEVICE_SERIAL_NUMBER:
+                ep5.OUTbytesleft = 0;
+                txdata(ep5.OUTapp, ep5.OUTcmd, 16, (__xdata u8*)LC_DEVICE_SERIAL_NUMBER);
+                break;
+
             case CMD_LEDMODE:
                 switch(*ptr++)
                 {
@@ -1412,9 +1416,6 @@ void debugEP0Req(u8 * __xdata pReq)
 #endif
 
 }
-
-
-
 
 /*************************************************************************************************
  * setup Config Descriptor  (see cc1111.h for defaults and fields to change)                     *

@@ -57,6 +57,7 @@ SYS_CMD_COMPILER                = 0x89
 SYS_CMD_PARTNUM                 = 0x8e
 SYS_CMD_RESET                   = 0x8f
 SYS_CMD_CLEAR_CODES             = 0x90
+SYS_CMD_DEVICE_SERIAL_NUMBER    = 0x91
 SYS_CMD_LED_MODE                = 0x93
 
 EP0_CMD_GET_DEBUG_CODES         = 0x00

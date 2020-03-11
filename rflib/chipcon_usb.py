@@ -764,6 +764,10 @@ class USBDongle(object):
     def getCompilerInfo(self):
         r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, '')
         return r
+
+    def getDeviceSerialNumber(self):
+        r, t = self.send(APP_SYSTEM, SYS_CMD_DEVICE_SERIAL_NUMBER, '')
+        return r
             
     def getInterruptRegisters(self):
         regs = {}
