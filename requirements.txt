@@ -1,0 +1,4 @@
+PySide2
+pyusb
+future
+ipython
