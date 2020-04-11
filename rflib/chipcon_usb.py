@@ -102,7 +102,7 @@ class USBDongle(object):
         self.reset_event.clear()
         self.trash = []
    
-    def setRFparameters(self):
+    def setRFparameters(self, *args, **kwargs):  # Fixed, rfconfigure  would call this function w/o req'd args
         pass
 
     def run_ctrl(self):

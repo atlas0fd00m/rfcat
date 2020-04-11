@@ -3,8 +3,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-from builtins import str
-from builtins import range
 from .chipcon_nic import *
 import rflib.bits as rfbits
 
@@ -13,12 +11,13 @@ RFCAT_STOP_SPECAN   = 0x41
 
 MAX_FREQ = 936e6
 
+
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
             for x in range(maxnum):
                 y, t = self.RFrecv(timeoutms)
-                print("(%5.3f) %s:  %s" % (t, msg, y.encode('hex')))
+                print("({:5.3f}) {}:  {}".format(t, msg, y.encode('hex')))
         except ChipconUsbTimeoutException:
             pass
 
@@ -34,7 +33,7 @@ class RfCat(FHSSNIC):
             try:
                 print("(press Enter to quit)")
                 for freq in range(int(basefreq), int(basefreq+(inc*count)), int(inc)):
-                    print("Scanning for frequency %d..." % freq)
+                    print("Scanning for frequency {:d}...".format(freq))
                     self.setFreq(freq)
                     self.RFdump(timeoutms=delaysec*1000)
                     if keystop():
@@ -76,8 +75,8 @@ class RfCat(FHSSNIC):
         halfspec = spectrum / 2.0
         basefreq = centfreq - halfspec
         if (count * inc) + basefreq > MAX_FREQ:
-            raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" %
-                    (basefreq, count, inc))
+            raise Exception("Sorry, {:1.3f} + ({:1.3f} * (:1.3f}) is "
+                            "higher than {:1.3f}".format(basefreq, count, inc))
         self.getRadioConfig()
         self._specan_backup_radiocfg = self.radiocfg
 
@@ -87,7 +86,7 @@ class RfCat(FHSSNIC):
         freq, fbytes = self.getFreq()
         delta = self.getMdmChanSpc()
 
-        self.send(APP_NIC, RFCAT_START_SPECAN, "%c" % (count) )
+        self.send(APP_NIC, RFCAT_START_SPECAN, "{:c}".format(count))
         return freq, delta
 
     def _stopSpecAn(self):
@@ -98,14 +97,13 @@ class RfCat(FHSSNIC):
         self.radiocfg = self._specan_backup_radiocfg
         self.setRadioConfig()
 
-
-    def rf_configure(*args, **kwargs):
+    def rf_configure(self, *args, **kwargs):
         self.setRFparameters(*args, **kwargs)
 
     def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
         buf = ''
 
-        if len(fdtup)>1:
+        if len(fdtup) > 1:
             fd0i, fd0o = fdtup 
         else:
             fd0i, = fdtup 
@@ -117,11 +115,11 @@ class RfCat(FHSSNIC):
 
         try:
             while True:
-                #if self._pause:
+                # if self._pause:
                 #    continue
 
                 try:
-                    x,y,z = select.select([fd0i ], [], [], .1)
+                    x, y, z = select.select([fd0i], [], [], .1)
                     if fd0i in x:
                         # FIXME: make this aware of VLEN/FLEN and the proper length
                         if fdsock:
@@ -137,10 +135,10 @@ class RfCat(FHSSNIC):
                         if vlen:
                             pktlen = ord(buf[0])
 
-                        #FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
+                        # FIXME: probably want to take in a length struct here and then only send when we have that many bytes...
                         data = buf[:pktlen]
                         if use_rawinput:
-                            data = eval('"%s"'%data)
+                            data = eval('"{}"'.format(data))
 
                         if len(buf) >= pktlen:
                             self.RFxmit(data)
@@ -164,7 +162,7 @@ class RfCat(FHSSNIC):
                 except ChipconUsbTimeoutException:
                     pass
 
-                #special handling of specan dumps...  somewhat set in solid jello
+                # special handling of specan dumps...  somewhat set in solid jello
                 try:
                     data, time = self.recv(APP_SPECAN, 1, 1)
                     data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
@@ -174,11 +172,12 @@ class RfCat(FHSSNIC):
                         fd0o.write(data)
 
                 except ChipconUsbTimeoutException:
-                    #print "this is a valid exception, run along... %x"% APP_SPECAN
+                    # print "this is a valid exception, run along... %x"% APP_SPECAN
                     pass
 
         except KeyboardInterrupt:
             self.setModeIDLE()
+
 
 class InverseCat(RfCat):
     def setMdmSyncWord(self, word, radiocfg=None):
@@ -186,11 +185,12 @@ class InverseCat(RfCat):
 
     def RFrecv(self, timeout=1000):
         global data
-        data,timestamp = RfCat.RFrecv(self, timeout)
-        return rfbits.invertBits(data),timestamp
+        data, timestamp = RfCat.RFrecv(self, timeout)
+        return rfbits.invertBits(data), timestamp
 
     def RFxmit(self, data):
-        return RfCat.RFxmit(self, rfbits.invertBits(data) )
+        return RfCat.RFxmit(self, rfbits.invertBits(data))
+
 
 def cleanupInteractiveAtExit():
     try:
@@ -199,6 +199,7 @@ def cleanupInteractiveAtExit():
         pass
     except:
         pass
+
 
 def interactive(idx=0, DongleClass=RfCat, intro=''):
     global d
@@ -237,7 +238,7 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
 
                 print(intro)
                 ipsh.mainloop()
-            except ImportError, e:
+            except ImportError as e:
                 print(e)
                 shell = code.InteractiveConsole(gbls)
                 print(intro)

@@ -1,7 +1,7 @@
 import sys
 import os
 import codecs
-from distutils.core import setup, Extension
+from setuptools import setup
 
 packages = ['rflib', 'vstruct', 'vstruct.defs']
 mods = []
@@ -16,7 +16,7 @@ scripts = ['rfcat',
 try:
     REV = os.popen('./revision.sh').readline()
     if len(REV):
-        file('rflib/rflib_version.py', 'wb').write("RFLIB_VERSION=%s" % REV)
+        open('rflib/rflib_version.py', 'wb').write("RFLIB_VERSION={}".format(REV).encode())
 except:
     sys.excepthook(*sys.exc_info())
 
@@ -68,7 +68,8 @@ setup  (name             = 'rfcat',
                             'pyusb>=1.0.0',
                             'libusb>=1.0.21b2',
                             'PySide2==5.12.0',
-                            'future>=0.17.1'
+                            'future>=0.17.1',
+                            'pyserial>=3.4'
                            ],
         python_requires  = '>=2.7,<3.0.0'
         )

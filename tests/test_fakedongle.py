@@ -5,25 +5,24 @@ import time
 import queue
 import logging
 import unittest
-import threading
 
 from rflib.const import *
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='{asctime:!s}:{levelname:!s}:{name:!s}: {message:!s}')
 logger = logging.getLogger(__name__)
 
 EP0BUFSIZE = 512
 
 
 class fakeMemory:
-    def __init__(self, size=64*1024):
+    def __init__(self, size=64 * 1024):
         self.memory = [0 for x in range(size)]
 
     def readMemory(self, addr, size):
-        return ''.join([chr(x) for x in self.memory[addr:addr+size]])
+        return ''.join([chr(x) for x in self.memory[addr:addr + size]])
 
     def writeMemory(self, addr, data):
-        self.memory = self.memory[:addr] + data + self.memory[addr+len(data):]
+        self.memory = self.memory[:addr] + data + self.memory[addr + len(data):]
 
 
 class fakeDon:
@@ -39,13 +38,15 @@ class fakeDongle:
 
     def controlMsg(self, flags, request, buf, value, index, timeout):
         if flags & USB_BM_REQTYPE_DIR_OUT:
-            logger.warn("=> fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
+            logger.warn("=> fakeDoer.controlMsg(flags={:#h}, request={:!s}, buf={:!r}, value={:!r}, index={:h}, "
+                        "timeout={:!r)", flags, request, buf, value, index, timeout)
         elif flags & USB_BM_REQTYPE_DIR_IN:
-            logger.warn("<= fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
+            logger.warn("<= fakeDoer.controlMsg(flags={:#h}, request={:!r}, buf={:!r}, value={:!r}, index={:h}, "
+                        "timeout={:!r})", flags, request, buf, value, index, timeout)
 
-    def bulkWrite(self, chan, buf, timeout=1):
+    def bulkWrite(self, chan, buf, timeout=1):  # FIXME chan and timeout aren't used, remove?
         self._initrcvd = buf
-        logger.debug("=> fakeDoer.bulkWrite(5, %r)", buf)
+        logger.debug("=> fakeDoer.bulkWrite(5, {:!r})", buf)
 
         app, cmd, mlen = struct.unpack("<BBH", buf[:4])
         data = buf[4:]
@@ -70,7 +71,7 @@ class fakeDongle:
                 self.bulk5.put(buf)
 
             else:
-                self.log('WTFO!  no APP_SYSTEM::0x%x', cmd)
+                self.log('WTFO!  no APP_SYSTEM::{:#h}', cmd)
                 self.bulk5.put(buf)
 
         elif app == APP_NIC:
@@ -80,7 +81,7 @@ class fakeDongle:
                 self.bulk5.put(retmsg)
 
             else:
-                self.log('WTFO!  no APP_NIC::0x%x', cmd)
+                self.log('WTFO!  no APP_NIC::{:#h}', cmd)
                 self.bulk5.put(buf)
         else:
             # everything else...  just echo
@@ -88,25 +89,26 @@ class fakeDongle:
 
         return len(buf)
 
-    def bulkRead(self, chan, length, timeout=1):
+    def bulkRead(self, chan, length, timeout=1):  # FIXME chan isn't used, remove?
         starttime = time.time()
 
         while time.time() - starttime < timeout:
             try:
                 out = self.bulk5.get_nowait()
-                logger.debug('<= fakeDoer.bulkRead(5, %r) == %r', length, out)
+                logger.debug('<= fakeDoer.bulkRead(5, {:!r}) == {:!r}', length, out)
                 return "@" + out
             except queue.Empty:
                 time.sleep(.05)
 
-            logger.debug('<= fakeDoer.bulkRead(5, %r) == <EmptyQueue>', length)
+            logger.debug('<= fakeDoer.bulkRead(5, {:!r}) == <EmptyQueue>', length)
             raise usb.USBError('Operation timed out (FakeDongle)')
 
     def log(self, msg, *args):
         if len(args):
             msg = msg % args
         self.bulk5.put(struct.pack('<BBH', APP_DEBUG, DEBUG_CMD_STRING, len(msg)) + msg)
-            
+
+
 class FakeRfCat(rflib.RfCat):
     def __init__(self, idx=0, debug=True, copyDongle=None, RfMode=RFST_SRX):
         # instantiate ourself as an official RfCat dongle
@@ -120,12 +122,13 @@ class FakeRfCat(rflib.RfCat):
     def getPartNum(self):
         return 0x40
 
+
 class RfCatFakeDongle(unittest.TestCase):
 
     def test_importing(self):
         import rflib
         devs = rflib.getRfCatDevices()
-        self.assertEquals(type(devs), list, "rflib.getRfCatDevices() doesn't return a list!: %r" % devs)
+        self.assertEquals(type(devs), list, "rflib.getRfCatDevices() doesn't return a list!: {:!r}".format(devs))
         import rflib.chipcon_nic
         import rflib.chipcon_usb
         import rflib.chipcondefs
@@ -133,4 +136,3 @@ class RfCatFakeDongle(unittest.TestCase):
         import rflib.ccspecan
         import rflib.intelhex
         import rflib.rflib_defs
-

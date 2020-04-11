@@ -13,8 +13,8 @@ import base64
 import socket
 import threading
 
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-from urlparse import parse_qs,urlparse
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from urlparse import parse_qs, urlparse
 from rflib import *
 
 # Global Nic used for MSFHandler
@@ -25,6 +25,7 @@ packets_sent = 0
 last_sent = 0
 username = None
 password = None
+
 
 class MSFHandler(BaseHTTPRequestHandler):
     def status(self):
@@ -37,7 +38,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         except:
             hw_version = "not supported"
         status["operational"] = 1 # Possibly connect this to ping?
-        status["hw_specialty"] = { "rftransceiver": True }
+        status["hw_specialty"] = { "rftransceiver": True}
         status["hw_capabilities"] = { "cc11xx": True}
         status["last_10_errors"] = last_errors
         status["api_version"] = "0.0.2"
@@ -55,33 +56,34 @@ class MSFHandler(BaseHTTPRequestHandler):
         return stats
 
     def datetime(self):
-        return { "sytem_datetime": int(time.time()) }
+        return {"sytem_datetime": int(time.time())}
 
     def timezone(self):
-        return { "system_timezone": time.strftime("%Z") }
+        return {"system_timezone": time.strftime("%Z")}
 
     def supported_idx(self):
-        return { "indexes": [ nic.idx ] }
+        return {"indexes": [nic.idx]}
 
     def reset(self):
         nic.resetup()
-        return { "status": "Resetting" }
+        return {"status": "Resetting"}
 
     def set_freq(self, args):
         mhz = 24
-        if not "freq" in args:
+        if "freq" not in args:
             return self.not_supported()
         if "mhz" in args:
             mhz = int(args["mhz"])
         nic.setFreq(int(args["freq"][0]), mhz)
-        return { "success": True }
+        return {"success": True}
 
     def get_modulations(self):
-        mods = [ "2FSK", "GFSK", "4FSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester", "MSK/Manchester" ]
+        mods = ["2FSK", "GFSK", "4FSK", "ASK/OOK", "MSK", "2FSK/Manchester", "GFSK/Manchester", "ASK/OOK/Manchester",
+                "MSK/Manchester"]
         return mods
 
     def set_modulation(self, args):
-        if not "mod" in args:
+        if "mod" not in args:
             return self.not_supported()
         modvalue = -1
         for modv, modstr in MODULATIONS.items():
@@ -92,31 +94,31 @@ class MSFHandler(BaseHTTPRequestHandler):
         try:
             nic.setMdmModulation(modvalue)
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     # Fixed Len
     def make_packet_flen(self, args):
-        if not "len" in args:
+        if "len" not in args:
             return self.not_supported()
         try:
             nic.makePktFLEN(int(args["len"][0]))
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     # Variable Len
     def make_packet_vlen(self, args):
-        if not "len" in args:
+        if "len" not in args:
             return self.not_supported()
         try:
             nic.makePktVLEN(int(args["len"][0]))
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     def set_mode(self, args):
-        if not "mode" in args:
+        if "mode" not in args:
             return self.not_supported()
         mode = args["mode"][0]
         if mode == "TX" or mode == "tx":
@@ -127,21 +129,21 @@ class MSFHandler(BaseHTTPRequestHandler):
             nic.setModeIDLE()
         else:
             return self.not_supported()
-        return { "success": True }
+        return {"success": True}
 
     def enablePktCRC(self):
         nic.setEnablePktCRC()
-        return { "success": True }
+        return {"success": True}
 
     def enableManchester(self):
         nic.setEnableMdmManchester()
-        return { "success": True}
+        return {"success": True}
 
     def set_channel(self, args):
-        if not "channel" in args:
+        if "channel" not in args:
             return self.not_supported()
         nic.setChannel(int(args["channel"]))
-        return { "success": True }
+        return {"success": True}
 
     def set_channel_bandwidth(self, args):
         mhz = 24
@@ -150,7 +152,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         if "mhz" in args:
             mhz = int(args["mhz"][0])
         nic.setMdmChanBW(int(args["bw"]), mhz)
-        return { "success": True }
+        return {"success": True}
 
     def set_channel_spc(self, args):
         chanspc = None
@@ -166,69 +168,69 @@ class MSFHandler(BaseHTTPRequestHandler):
         try:
             nic.setMdmChanSpc(chanspc, chanspc_m, chanspc_e, mhz)
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     def set_baud_rate(self, args):
         mhz = 24
-        if not "rate" in args:
+        if "rate" not in args:
             return self.not_supported()
         if "mhz" in args:
             mhz = int(args["mhz"][0])
         try:
             nic.setMdmDRate(int(args["rate"][0]), mhz)
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     def set_deviation(self, args):
         mhz = 24
-        if not "deviat" in args:
+        if "deviat" not in args:
             return self.not_supported()
         if "mhz" in args:
             mhz = int(args["mhz"][0])
         try:
             nic.setMdmDeviatn(int(args["deviat"][0]), mhz)
         except:
-            return { "success": False }
-        return { "success": True }
+            return {"success": False}
+        return {"success": True}
 
     def set_sync_word(self, args):
-        if not "word" in args:
+        if "word" not in args:
             return self.not_supported()
         nic.setMdmSyncWord(int(args["word"][0]))
-        return { "success": True}
+        return {"success": True}
 
     def set_sync_mode(self, args):
-        if not "mode" in args:
+        if "mode" not in args:
             return self.not_supported()
         nic.setMdmSyncMode(int(args["mode"][0]))
-        return { "success": True }
+        return {"success": True}
 
     def set_number_preamble(self, args):
-        if not "num" in args:
+        if "num" not in args:
             return self.not_supported()
         nic.setMdmNumPreamble(int(args["num"][0]))
-        return { "success": True }
+        return {"success": True}
 
     def set_lowball(self):
         nic.lowball(1)
-        return { "success": True }
+        return {"success": True}
 
     def set_maxpower(self):
         nic.setMaxPower()
-        return { "success": True }
+        return {"success": True}
 
     def set_power(self, args):
-        if not "power" in args:
+        if "power" not in args:
             return self.not_supported()
         nic.setPower(int(args["power"][0]))
-        return { "success": True }
+        return {"success": True}
 
     def rfxmit(self, args):
         repeat = 0
         offset = 0
-        if not "data" in args:
+        if "data" not in args:
             return self.not_supported()
         if "repeat" in args:
             repeat = int(args["repeat"][0])
@@ -236,11 +238,11 @@ class MSFHandler(BaseHTTPRequestHandler):
             offset = int(args["offset"][0])
         data = base64.urlsafe_b64decode(args["data"][0])
         nic.RFxmit(data, repeat, offset)
-        return { "success": True } # Should do some checks here eventually
+        return {"success": True} # Should do some checks here eventually
 
     def rfrecv(self, args):
-        timeout=USB_RX_WAIT
-        blocksize=None
+        timeout = USB_RX_WAIT
+        blocksize =None
         if "timeout" in args:
             timeout = int(args["timeout"][0])
         if "blocksize" in args:
@@ -250,15 +252,14 @@ class MSFHandler(BaseHTTPRequestHandler):
         except:
             return {}
         msg, ts = data
-        return { "data": base64.urlsafe_b64encode(msg), "timestamp": ts }
-        
+        return {"data": base64.urlsafe_b64encode(msg), "timestamp": ts}
 
     def not_supported(self):
-        return { "status": "not supported" }
+        return {"status": "not supported"}
 
     def send(self, data, resp=200):
         self.send_response(resp)
-        self.send_header('Content-type','application/json')
+        self.send_header('Content-type', 'application/json')
         self.end_headers()
         self.wfile.write(json.dumps(data))
         return
@@ -271,8 +272,8 @@ class MSFHandler(BaseHTTPRequestHandler):
         self.wfile.write("Please Authenticate")
 
     def do_GET(self):
-        if not password == None:
-            if self.headers.getheader('Authorization') == None:
+        if not password is None:
+            if self.headers.getheader('Authorization') is None:
                 print("Did not authenticate")
                 self.do_AUTHHEAD()
                 return
@@ -282,23 +283,23 @@ class MSFHandler(BaseHTTPRequestHandler):
                 return
         url = urlparse(self.path)
         args = parse_qs(url.query)
-        if self.path=="/status":
+        if self.path == "/status":
             self.send(self.status())
-        elif self.path=="/statistics":
+        elif self.path == "/statistics":
             self.send(self.statistics())
-        elif self.path=="/settings/datetime":
+        elif self.path == "/settings/datetime":
             self.send(self.datetime())
-        elif self.path=="/settings/timezone":
+        elif self.path == "/settings/timezone":
             self.send(self.timezone())
-        elif self.path=="/control/factory_reset":
+        elif self.path == "/control/factory_reset":
             self.send(self.reset())
-        elif self.path=="/rftransceiver/supported_idx":
+        elif self.path == "/rftransceiver/supported_idx":
             self.send(self.supported_idx())
         elif self.path.startswith("/rftransceiver/"):
             re_idx = re.compile("/rftransceiver/(\d+)/")
             m = re_idx.match(self.path)
             if m:
-                idx = m.group(1)
+                idx = m.group(1)  # FIXME idx isn't used, remove?
                 if self.path.find("/set_freq?") > -1:
                     self.send(self.set_freq(args))
                 elif self.path.find("/get_modulations") > -1:
@@ -349,6 +350,7 @@ class MSFHandler(BaseHTTPRequestHandler):
             self.send(self.not_supported(), 404)
         return
 
+
 class CC1111NIC_MSFRelay(cmd.Cmd):
     intro = """
        cc1111usb Metasploit Relay
@@ -375,7 +377,7 @@ class CC1111NIC_MSFRelay(cmd.Cmd):
             try:
                 buf = ''
                 self._nicsock = HTTPServer((self._ip, self._nicport), MSFHandler)
-                starttime = int(time.time())
+                starttime = int(time.time())  # FIXME starttime isn't used, remove?
                 print("RfCat MSFRelay running.")
                 self._nicsock.serve_forever()
             except KeyboardInterrupt:
@@ -384,7 +386,6 @@ class CC1111NIC_MSFRelay(cmd.Cmd):
                 self._go = False
             except:
                 sys.excepthook(*sys.exc_info())
-
 
 
 if __name__ == "__main__":

@@ -257,7 +257,7 @@ AESMODES = {
         ENCCS_MODE_OFB: "OFB - Output Feedback",
         }
 
-NUM_PREAMBLE = [2, 3, 4, 6, 8, 12, 16, 24 ]
+NUM_PREAMBLE = [2, 3, 4, 6, 8, 12, 16, 24]
 
 ADR_CHK_TYPES = [
         "No address check",
@@ -334,4 +334,3 @@ CHIPmhz = {
     0x11: 24,
     0x01: 26,
 }
-

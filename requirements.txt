@@ -1,3 +1,4 @@
+pyserial
 PySide2
 pyusb
 future

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo  "=== set revision: `./revision.sh` ==="
 
 if ( which sdcc )

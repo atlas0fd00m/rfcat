@@ -52,26 +52,26 @@ def parseLines(lines):
     for line in lines:
         # find single-line comments
         slc = line.find("//")
-        if (slc > -1):
-            line = line[:slc]         + "#" + line[slc+2:]
+        if slc > -1:
+            line = line[:slc] + "#" + line[slc+2:]
         # find /* */ comments
         mlcs = line.find("/*")
         mlce = line.find("*/")
-        if (mlcs>-1):
-            if (mlce>-1):           # both are in this line
-                if (mlce>mlcs):     # they are "together"
-                    if (mlce >= len(line.strip())-3):
-                        line = line[:mlcs] + '#' + line[mlcs+2:mlce]
+        if mlcs > -1:
+            if mlce > -1:           # both are in this line
+                if mlce > mlcs:     # they are "together"
+                    if mlce >= len(line.strip())-3:
+                        line = line[:mlcs] + '#' + line[mlcs + 2:mlce]
                     else:
-                        line = line[:mlcs] + '"""' + line[mlcs+2:mlce] + '"""' + line[mlce+2:]
+                        line = line[:mlcs] + '"""' + line[mlcs + 2:mlce] + '"""' + line[mlce + 2:]
                 else:               # they are *not* together
-                    line = line[mlce+2:mlcs]
+                    line = line[mlce + 2:mlcs]
             else:                   # only the beginning is in this line, treat like a single-line comment for now
                 line = line[:mlcs]
                 incomment = True
         elif incomment:              # no mlc-starter found... are we incomment?  then ignore until the end of comment
-            if (mlce>-1):
-                line = line[mlce+2:]
+            if mlce > -1:
+                line = line[mlce + 2:]
                 incomment = False
             else:
                 line = ''
@@ -82,37 +82,37 @@ def parseLines(lines):
         line = line.strip()
 
         # now we can actually parse the line
-        if (line.startswith("#define ")):
+        if line.startswith("#define "):
             line = line[8:].strip()     # peel off any additional spaces after the #define
             pieces = line.split(" ", 1)
-            if len(pieces)<2:
+            if len(pieces) < 2:
                 continue
             name, value = pieces
             if "(" in name:
-                print(("SKIPPING: %s"%(line)), file=sys.stderr)
+                print(("SKIPPING: {}".format(line)), file=sys.stderr)
                 continue                # skip adding "function" defines
             defs[name.strip()] = value.strip()
             
-        elif (line.startswith("SFR(")):
+        elif line.startswith("SFR("):
             endparen = line.find(")")
-            if (endparen == -1):
-                print(("ERROR: SFR without end parens: '%s'"%(line)), file=sys.stderr)
+            if endparen == -1:
+                print(("ERROR: SFR without end parens: '{}'".format(line)), file=sys.stderr)
                 continue
             line = line[4:endparen].strip()
             name, value = line.split(",", 1)
             defs[name.strip()] = value.strip()
-        elif (line.startswith("SFRX(")):
+        elif line.startswith("SFRX("):
             endparen = line.find(")")
-            if (endparen == -1):
-                print(("ERROR: SFRX without end parens: '%s'"%(line)), file=sys.stderr)
+            if endparen == -1:
+                print(("ERROR: SFRX without end parens: '{}'".format(line)), file=sys.stderr)
                 continue
             line = line[5:endparen].strip()
             name, value = line.split(",", 1)
             defs[name.strip()] = value.strip()
-        elif (line.startswith("SBIT")):
+        elif line.startswith("SBIT"):
             endparen = line.find(")")
-            if (endparen == -1):
-                print(("ERROR: SBIT without end parens: '%s'"%(line)), file=sys.stderr)
+            if endparen == -1:
+                print(("ERROR: SBIT without end parens: '{}'".format(line)), file=sys.stderr)
                 continue
             line = line[5:endparen].strip()
             name, val1, val2 = line.split(",", 2)
@@ -123,28 +123,19 @@ def parseLines(lines):
 
 if __name__ == '__main__':
     defs = {}
-    defs.update(parseLines(file('../includes/cc1110-ext.h')))
-    defs.update(parseLines(file('../includes/cc1111.h')))
-    defs.update(parseLines(file('/usr/share/sdcc/include/mcs51/cc1110.h')))
+    defs.update(parseLines(open('../includes/cc1110-ext.h', 'r')))
+    defs.update(parseLines(open('../includes/cc1111.h', 'r')))
+    defs.update(parseLines(open('/usr/share/sdcc/include/mcs51/cc1110.h', 'r')))
 
     skeys = list(defs.keys())
     skeys.sort()
-    out = ["%-30s = %s"%(key,defs[key]) for key in skeys]
+    out = ["%-30s = %s" % (key, defs[key]) for key in skeys]
 
     trueout = []
     for x in out: 
         try:
-            compile(x,'stdin','exec')
+            compile(x, 'stdin', 'exec')
             trueout.append(x)
             print(x)
         except:
             sys.excepthook(*sys.exc_info())
-
-
-            
-
-
-
-
-
-

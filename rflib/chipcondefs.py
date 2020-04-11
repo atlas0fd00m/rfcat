@@ -1,6 +1,7 @@
 import vstruct
 from vstruct.primitives import *
 
+
 class RadioConfig(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -1513,6 +1514,3 @@ for key,val in list(globals().items()):
         PKTCTRL0S[val] = key
     elif key.startswith("PKTCTRL1_"):
         PKTCTRL1S[val] = key
-
-
-

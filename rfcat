@@ -10,7 +10,7 @@ readline.parse_and_bind("tab: complete")
 
 from rflib import *
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='{asctime:!s}:{levelname:!s}:{name:!s}: {message:!s}')
 logger = logging.getLogger(__name__)
 
 
@@ -34,20 +34,26 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" instance to talk to your dongle.  melikey longtime.')
+    parser.add_argument('-r', '--research', default=False, action="store_true", help='Interactive Python and the "d" '
+                                                                                     'instance to talk to your dongle. '
+                                                                                     ' melikey longtime.')
     parser.add_argument('-i', '--index', default=0, type=int) 
     parser.add_argument('-s', '--specan', default=False, action="store_true", help='start spectrum analyzer')
     parser.add_argument('-f', '--centfreq', default=902e6, type=float) 
     parser.add_argument('-c', '--inc', default=250e3, type=float) 
     parser.add_argument('-n', '--specchans', default=104, type=int) 
-    parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order to flash the dongle)')
-    parser.add_argument('--force', default=False, action="store_true", help='use this to make sure you want to set bootloader mode (you *must* flash after setting --bootloader)')
+    parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order '
+                                                                                 'to flash the dongle)')
+    parser.add_argument('--force', default=False, action="store_true", help='use this to make sure you want to set '
+                                                                            'bootloader mode (you *must* flash after '
+                                                                            'setting --bootloader)')
 
     ifo = parser.parse_args()
 
     if ifo.bootloader:
         if not ifo.force:
-            print("Protecting you from yourself.  If you want to trigger Bootloader mode (you will then *have* to flash a new RfCat image on it) use the --force argument as well")
+            print("Protecting you from yourself.  If you want to trigger Bootloader mode (you will then *have* to "
+                  "flash a new RfCat image on it) use the --force argument as well")
             exit(-1)
 
         print("Entering RfCat Bootloader mode, ready for new image...")
@@ -55,7 +61,7 @@ if __name__ == "__main__":
         exit(0)
 
     elif ifo.specan:
-        RfCat(ifo.index).specan(ifo.centfreq,ifo.inc,ifo.specchans)
+        RfCat(ifo.index).specan(ifo.centfreq, ifo.inc, ifo.specchans)
 
     elif ifo.research:
         interactive(ifo.index, DongleClass=RfCat, intro=intro)
@@ -64,4 +70,3 @@ if __name__ == "__main__":
         # do the full-rfcat thing
         d = RfCat(ifo.index, debug=False)
         d.rf_redirection((sys.stdin, sys.stdout))
-

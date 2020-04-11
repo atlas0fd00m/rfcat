@@ -4,10 +4,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-from builtins import bytes
-from builtins import hex
-from builtins import range
-from builtins import object
 from past.utils import old_div
 import re
 import sys
@@ -21,6 +17,7 @@ from .chipcon_usb import *
 from .bits import correctbytes
 from .const import *
 
+
 def makeFriendlyAscii(instring):
     out = []
     start = 0
@@ -28,36 +25,34 @@ def makeFriendlyAscii(instring):
     instrlen = len(instring)
 
     for cidx in range(instrlen):
-        if (0x20 < ord(instring[cidx]) < 0x7f):
-            if last < cidx-1:
-                out.append( "." * (cidx-1-last))
+        if 0x20 < ord(instring[cidx]) < 0x7f:
+            if last < cidx - 1:
+                out.append("." * (cidx - 1 - last))
                 start = cidx
             last = cidx
         else:
             if last == cidx-1:
-                out.append( instring[ start:last+1 ] )
+                out.append(instring[start:last + 1])
 
     if last != cidx:
         out.append( "." * (cidx-last) )
-    else: # if start == 0:
-        out.append( instring[ start: ] )
+    else:  # if start == 0:
+        out.append(instring[start:])
 
     return ''.join(out)
 
 
-
-
 def calculateT2(tick_ms, mhz=24):
     # each tick, not each cycle
-    TICKSPD = [(old_div(mhz*1000000,pow(2,x))) for x in range(8)]
+    TICKSPD = [(old_div(mhz * 1000000, pow(2, x))) for x in range(8)]
     
-    tick_ms = 1.0*tick_ms/1000
+    tick_ms = 1.0 * tick_ms / 1000
     candidates = []
     for tickidx in range(8):
         for tipidx in range(4):
             for PR in range(256):
                 T = 1.0 * PR * TIP[tipidx] / TICKSPD[tickidx]
-                if abs(T-tick_ms) < .010:
+                if abs(T - tick_ms) < .010:
                     candidates.append((T, tickidx, tipidx, PR))
     diff = 1024
     best = None
@@ -66,30 +61,35 @@ def calculateT2(tick_ms, mhz=24):
             best = c
             diff = abs(c[0] - tick_ms)
     return best
-    #return ms, candidates, best
+    # return ms, candidates, best
             
 
 class EnDeCode(object):
     def encode(self, msg):
         raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
+
     def decode(self, msg):
         raise Exception("EnDeCode.encode() not implemented.  Each subclass must implement their own")
 
 
 def savePkts(pkts, filename):
-    pickle.dump(pkts, file(filename, 'a'))
+    pickle.dump(pkts, open(filename, 'a'))
+
+
 def loadPkts(filename):
-    return pickle.load( file(filename, 'r'))
+    return pickle.load(open(filename, 'r'))
+
 
 def printSyncWords(syncworddict):
     print("SyncWords seen:")
 
     tmp = []
-    for x,y in list(syncworddict.items()):
-        tmp.append((y,x))
+    for x, y in list(syncworddict.items()):
+        tmp.append((y, x))
     tmp.sort()
-    for y,x in tmp:
-        print("0x%.4x: %d" % (x,y))
+    for y, x in tmp:
+        print("{:#x}: {:d}".format(x[0:3], y))
+
 
 class NICxx11(USBDongle):
     '''
@@ -115,7 +115,7 @@ class NICxx11(USBDongle):
         sets the radio state to "rfmode", and makes 
         '''
         self._rfmode = rfmode
-        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "%c" % (self._rfmode) + parms)
+        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "{:c}".format(self._rfmode) + parms)
 
     ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
@@ -138,38 +138,37 @@ class NICxx11(USBDongle):
         AND:  set radio to return to IDLE state when done with other states
         '''
         self.setRfMode(RFST_SIDLE)
-        
 
     ### send raw state change to radio (doesn't update the return state for after RX/TX occurs)
     def strobeModeTX(self):
         '''
         set radio to TX state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_STX)
+        self.poke(X_RFST, "{:c}".format(RFST_STX))
 
     def strobeModeRX(self):
         '''
         set radio to RX state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SRX)
+        self.poke(X_RFST, "{:c}".format(RFST_SRX))
 
     def strobeModeIDLE(self):
         '''
         set radio to IDLE state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SIDLE)
+        self.poke(X_RFST, "{:c}".format(RFST_SIDLE))
 
     def strobeModeFSTXON(self):
         '''
         set radio to FSTXON state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SFSTXON)
+        self.poke(X_RFST, "{:c}".format(RFST_SFSTXON))
 
     def strobeModeCAL(self):
         '''
         set radio to CAL state (will return to whichever state is configured (via setMode* functions)
         '''
-        self.poke(X_RFST, "%c"%RFST_SCAL)
+        self.poke(X_RFST, "{:c}".format(RFST_SCAL))
         
     def strobeModeReturn(self, marcstate=None):
         """
@@ -180,10 +179,7 @@ class NICxx11(USBDongle):
             #marcstate = self.radiocfg.marcstate
         #if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
         #self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
-        self.poke(X_RFST, "%c" % self._rfmode)
-
-        
-        
+        self.poke(X_RFST, "{:c}".format(self._rfmode))
     
     #### radio config #####
     def getRadioConfig(self):
@@ -191,7 +187,7 @@ class NICxx11(USBDongle):
         self.radiocfg.vsParse(bytedef)
         return bytedef
 
-    def setRadioConfig(self, bytedef = None):
+    def setRadioConfig(self, bytedef=None):
         if bytedef is None:
             bytedef = self.radiocfg.vsEmit()
 
@@ -211,7 +207,6 @@ class NICxx11(USBDongle):
 
         return bytedef
 
-
     ##### GETTER/SETTERS for Radio Config/Status #####
     ### radio state
     def setLedMode(self, ledmode):
@@ -219,7 +214,7 @@ class NICxx11(USBDongle):
         sets the led state to "ledmode"
         '''
         self._ledmode = ledmode
-        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, "%c" % (self._ledmode))
+        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, "{:c}".format(self._ledmode))
 
     def getMARCSTATE(self, radiocfg=None):
         if radiocfg is None:
@@ -254,7 +249,7 @@ class NICxx11(USBDongle):
 
     def setRFbits(self, addr, bitnum, bitsz, val, suppress=False):
         ''' sets individual bits of a register '''
-        mask = ((1<<bitsz) - 1) << bitnum
+        mask = ((1 << bitsz) - 1) << bitnum
         rmask = ~mask
 
         temp = ord(self.peek(addr)) & rmask
@@ -273,7 +268,7 @@ class NICxx11(USBDongle):
         if radiocfg is None:
             radiocfg = self.radiocfg
         else:
-            applyConfig = False
+            applyConfig = False  # FIXME applyConfig is never used. Remove it and the else clause?
 
         mcsm1 = radiocfg.mcsm1 & 0xf
         mcsm1 |= (mode << 4)
@@ -299,13 +294,13 @@ class NICxx11(USBDongle):
         freqmult = old_div((0x10000 / 1000000.0), mhz)
         num = int(freq * freqmult)
         radiocfg.freq2 = num >> 16
-        radiocfg.freq1 = (num>>8) & 0xff
+        radiocfg.freq1 = (num >> 8) & 0xff
         radiocfg.freq0 = num & 0xff
 
-        if (freq > FREQ_EDGE_900 and freq < FREQ_MID_900) or (freq > FREQ_EDGE_400 and freq < FREQ_MID_400) or (freq < FREQ_MID_300):
+        if (FREQ_EDGE_900 < freq < FREQ_MID_900) or (FREQ_EDGE_400 < freq < FREQ_MID_400) or (freq < FREQ_MID_300):
             # select low VCO
             radiocfg.fscal2 = 0x0A
-        elif freq <1e9 and ((freq > FREQ_MID_900) or (freq > FREQ_MID_400) or (freq > FREQ_MID_300)):
+        elif freq < 1e9 and ((freq > FREQ_MID_900) or (freq > FREQ_MID_400) or (freq > FREQ_MID_300)):
             # select high VCO
             radiocfg.fscal2 = 0x2A
 
@@ -324,16 +319,16 @@ class NICxx11(USBDongle):
 
     def getFreq(self, mhz=24, radiocfg=None):
         freqmult = old_div((0x10000 / 1000000.0), mhz)
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
             
-        num = (radiocfg.freq2<<16) + (radiocfg.freq1<<8) + radiocfg.freq0
+        num = (radiocfg.freq2 << 16) + (radiocfg.freq1 << 8) + radiocfg.freq0
         freq = old_div(num, freqmult)
         return freq, hex(num)
 
     def getFreqEst(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -344,7 +339,7 @@ class NICxx11(USBDongle):
     # the TI design note for this is missing from TI's main website but can be found here:
     # http://e2e.ti.com/cfs-file/__key/telligent-evolution-components-attachments/00-155-01-00-00-73-46-38/DN015_5F00_Permanent_5F00_Frequency_5F00_Offset_5F00_Compensation.pdf
     def adjustFreqOffset(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -354,7 +349,7 @@ class NICxx11(USBDongle):
 
     # set 'standard' power - for more complex power shaping this will need to be done manually
     def setPower(self, power=None, radiocfg=None, invert=False):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -379,63 +374,63 @@ class NICxx11(USBDongle):
 
     # max power settings are frequency dependent, so set frequency before calling
     def setMaxPower(self, radiocfg=None, invert=False):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         freq= self.getFreq(radiocfg=radiocfg)[0]
 
         if freq <= 400000000:
-            power= 0xC2
+            power = 0xC2
         elif freq <= 464000000:
-            power= 0xC0
+            power = 0xC0
         elif freq <= 900000000:
-            power= 0xC2
+            power = 0xC2
         else:
-            power= 0xC0
+            power = 0xC0
 
         self.setPower(power, radiocfg=radiocfg, invert=invert)
 
     def setMdmModulation(self, mod, radiocfg=None, invert=False):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        if (mod) & ~MDMCFG2_MOD_FORMAT:
+        if mod & ~MDMCFG2_MOD_FORMAT:
             raise Exception("Please use constants MOD_FORMAT_* to specify modulation and ")
 
         radiocfg.mdmcfg2 &= ~MDMCFG2_MOD_FORMAT
-        radiocfg.mdmcfg2 |= (mod)
+        radiocfg.mdmcfg2 |= mod
 
-        power= None
+        power = None
         # ASK_OOK needs to flip power table
         if mod == MOD_ASK_OOK and not invert:
             if radiocfg.pa_table1 == 0x00 and radiocfg.pa_table0 != 0x00:
-                power= radiocfg.pa_table0
+                power = radiocfg.pa_table0
         else:
             if radiocfg.pa_table0 == 0x00 and radiocfg.pa_table1 != 0x00:
-                power= radiocfg.pa_table1
+                power = radiocfg.pa_table1
 
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
         self.setPower(power, radiocfg=radiocfg, invert=invert)
 
     def getMdmModulation(self, radiocfg=None):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         mdmcfg2 = radiocfg.mdmcfg2
-        mod = (mdmcfg2) & MDMCFG2_MOD_FORMAT
+        mod = mdmcfg2 & MDMCFG2_MOD_FORMAT
         return mod
 
     def getMdmChanSpc(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         chanspc_m = radiocfg.mdmcfg0
         chanspc_e = radiocfg.mdmcfg1 & 3
-        chanspc = 1000000.0 * mhz/pow(2,18) * (256 + chanspc_m) * pow(2, chanspc_e)
+        chanspc = 1000000.0 * mhz/pow(2, 18) * (256 + chanspc_m) * pow(2, chanspc_e)
         #print "chanspc_e: %x   chanspc_m: %x   chanspc: %f hz" % (chanspc_e, chanspc_m, chanspc)
         return (chanspc)
 
@@ -449,11 +444,11 @@ class NICxx11(USBDongle):
         * chanspc
         * chanspc_m and chanspc_e
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        if (chanspc != None):
+        if chanspc is not None:
             for e in range(4):
                 m = int(((old_div(chanspc * pow(2,18), (1000000.0 * mhz * pow(2,e))))-256) +.5)    # rounded evenly
                 if m < 256:
@@ -469,11 +464,11 @@ class NICxx11(USBDongle):
         radiocfg.mdmcfg1 &= ~MDMCFG1_CHANSPC_E            # clear out old exponent value
         radiocfg.mdmcfg1 |= chanspc_e
         radiocfg.mdmcfg0 = chanspc_m
-        self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
-        self.setRFRegister(MDMCFG0, (radiocfg.mdmcfg0))
+        self.setRFRegister(MDMCFG1, radiocfg.mdmcfg1)
+        self.setRFRegister(MDMCFG0, radiocfg.mdmcfg0)
 
     def makePktVLEN(self, maxlen=RF_MAX_TX_BLOCK, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -488,12 +483,12 @@ class NICxx11(USBDongle):
 
 
     def makePktFLEN(self, flen=RF_MAX_TX_BLOCK, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         if flen > EP5OUT_BUFFER_SIZE - 4:
-            raise Exception("Packet too large (%d bytes). Maximum fixed length packet is %d bytes." % (flen, EP5OUT_BUFFER_SIZE - 6))
+            raise Exception("Packet too large ({:d} bytes). Maximum fixed length packet is {:d} bytes.".format(flen, EP5OUT_BUFFER_SIZE - 6))
 
         radiocfg.pktctrl0 &= ~PKTCTRL0_LENGTH_CONFIG
         # if we're sending a large block, pktlen is dealt with by the firmware
@@ -502,8 +497,8 @@ class NICxx11(USBDongle):
             radiocfg.pktlen = 0x00
         else:
             radiocfg.pktlen = flen
-        self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
-        self.setRFRegister(PKTLEN, (radiocfg.pktlen))
+        self.setRFRegister(PKTCTRL0, radiocfg.pktctrl0)
+        self.setRFRegister(PKTLEN, radiocfg.pktlen)
 
     def getPktLEN(self):
         '''
@@ -512,54 +507,54 @@ class NICxx11(USBDongle):
         return (self.radiocfg.pktlen, self.radiocfg.pktctrl0 & PKTCTRL0_LENGTH_CONFIG)
         
     def setEnablePktCRC(self, enable=True, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        crcE = (0,1)[enable]<<2
-        crcM = ~(1<<2)
+        crcE = (0,1)[enable] << 2
+        crcM = ~(1 << 2)
         radiocfg.pktctrl0 &= crcM
         radiocfg.pktctrl0 |= crcE
-        self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
+        self.setRFRegister(PKTCTRL0, radiocfg.pktctrl0)
 
     def getEnablePktCRC(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        return (radiocfg.pktctrl0 >>2) & 0x1
+        return (radiocfg.pktctrl0 >> 2) & 0x1
 
     def setEnablePktDataWhitening(self, enable=True, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        dwEnable = (0,1)[enable]<<6
+        dwEnable = (0, 1)[enable] << 6
         radiocfg.pktctrl0 &= ~PKTCTRL0_WHITE_DATA
         radiocfg.pktctrl0 |= dwEnable
-        self.setRFRegister(PKTCTRL0, (radiocfg.pktctrl0))
+        self.setRFRegister(PKTCTRL0, radiocfg.pktctrl0)
 
     def getEnablePktDataWhitening(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        return (radiocfg.pktctrl0 >>6) & 0x1
+        return (radiocfg.pktctrl0 >> 6) & 0x1
 
     def setPktPQT(self, num=3, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         num &=  7
         num <<= 5
-        numM = ~(7<<5)
+        numM = ~(7 << 5)
         radiocfg.pktctrl1 &= numM
         radiocfg.pktctrl1 |= num
-        self.setRFRegister(PKTCTRL1, (radiocfg.pktctrl1))
+        self.setRFRegister(PKTCTRL1, radiocfg.pktctrl1)
 
     def getPktPQT(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -570,81 +565,80 @@ class NICxx11(USBDongle):
         enable append status bytes. two bytes will be appended to the payload of the packet, containing
         RSSI and LQI values as well as CRC OK.
         '''
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.pktctrl1 &= ~PKTCTRL1_APPEND_STATUS
-        radiocfg.pktctrl1 |= (enable<<2)
+        radiocfg.pktctrl1 |= (enable << 2)
         self.setRFRegister(PKTCTRL1, radiocfg.pktctrl1)
 
     def getEnablePktAppendStatus(self, radiocfg=None):
         '''
         return append status bytes setting.
         '''
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         pktctrl1 = radiocfg.pktctrl1
-        append = (pktctrl1>>2) & 0x01
+        append = (pktctrl1 >> 2) & 0x01
         return append
 
     def setEnableMdmManchester(self, enable=True, radiocfg=None):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.mdmcfg2 &= ~MDMCFG2_MANCHESTER_EN
-        radiocfg.mdmcfg2 |= (enable<<3)
+        radiocfg.mdmcfg2 |= (enable << 3)
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
 
     def getEnableMdmManchester(self, radiocfg=None):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         mdmcfg2 = radiocfg.mdmcfg2
-        mchstr = (mdmcfg2>>3) & 0x01
+        mchstr = (mdmcfg2 >> 3) & 0x01
         return mchstr
 
     def setEnableMdmFEC(self, enable=True, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        fecEnable = (0,1)[enable]<<7
+        fecEnable = (0, 1)[enable] << 7
         radiocfg.mdmcfg1 &= ~MFMCFG1_FEC_EN
         radiocfg.mdmcfg1 |= fecEnable
-        self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
+        self.setRFRegister(MDMCFG1, radiocfg.mdmcfg1)
 
     def getEnableMdmFEC(self, radiocfg=None):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         mdmcfg1 = radiocfg.mdmcfg1
-        fecEnable = (mdmcfg1>>7) & 0x01
+        fecEnable = (mdmcfg1 >> 7) & 0x01
         return fecEnable
 
     def setEnableMdmDCFilter(self, enable=True, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        dcfEnable = (0,1)[enable]<<7
+        dcfEnable = (0, 1)[enable] << 7
         radiocfg.mdmcfg2 &= ~MDMCFG2_DEM_DCFILT_OFF
         radiocfg.mdmcfg2 |= dcfEnable
         self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
 
     def getEnableMdmDCFilter(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        dcfEnable = (radiocfg.mdmcfg2>>7) & 0x1
+        dcfEnable = (radiocfg.mdmcfg2 >> 7) & 0x1
         return dcfEnable
-
 
     def setFsIF(self, freq_if, mhz=24, radiocfg=None):
         '''
@@ -653,43 +647,42 @@ class NICxx11(USBDongle):
         setting based on channel spacing and channel
         filter bandwidth. (from cc1110f32.pdf)
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         ifBits = old_div(freq_if * pow(2,10), (1000000.0 * mhz))
         ifBits = int(ifBits + .5)       # rounded evenly
 
-        if ifBits >0x1f:
-            raise Exception("FAIL:  freq_if is too high?  freqbits: %x (must be <0x1f)" % ifBits)
-        radiocfg.fsctrl1 &= ~(0x1f)
+        if ifBits > 0x1f:
+            raise Exception("FAIL:  freq_if is too high?  freqbits: {:x} (must be <0x1f)".format(ifBits))
+        radiocfg.fsctrl1 &= ~0x1f
         radiocfg.fsctrl1 |= int(ifBits)
-        self.setRFRegister(FSCTRL1, (radiocfg.fsctrl1))
+        self.setRFRegister(FSCTRL1, radiocfg.fsctrl1)
 
     def getFsIF(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
-        freq_if = (radiocfg.fsctrl1&0x1f) * (1000000.0 * mhz / pow(2,10))
+        freq_if = (radiocfg.fsctrl1 & 0x1f) * (1000000.0 * mhz / pow(2, 10))
         return freq_if
 
-
-    def setFsOffset(self, if_off, mhz=24, radiocfg=None):
+    def setFsOffset(self, if_off, mhz=24, radiocfg=None):  # FIXME mhz is never used, remove?
         '''
         Note that the SmartRF Studio software
         automatically calculates the optimum register
         setting based on channel spacing and channel
         filter bandwidth. (from cc1110f32.pdf)
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.fsctrl0 = if_off
-        self.setRFRegister(FSCTRL0, (radiocfg.fsctrl0))
+        self.setRFRegister(FSCTRL0, radiocfg.fsctrl0)
 
-    def getFsOffset(self, mhz=24, radiocfg=None):
+    def getFsOffset(self, mhz=24, radiocfg=None):  # FIXME mhz is never used, remove?
         if radiocfg==None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
@@ -711,7 +704,7 @@ class NICxx11(USBDongle):
             radiocfg = self.radiocfg
 
         radiocfg.channr = channr
-        self.setRFRegister(CHANNR, (radiocfg.channr))
+        self.setRFRegister(CHANNR, radiocfg.channr)
 
     def setMdmChanBW(self, bw, mhz=24, radiocfg=None):
         '''
@@ -747,14 +740,14 @@ class NICxx11(USBDongle):
 
         DR:500kb            Mod:MSK  RXBW:750kHz sensitive    fsctrl1:0e mdmcfg:0e 55 73 43 11 dev:00 foc/bscfg:1d/1c agctrl:c7 00 b0 frend:b6 10    (IF_changes, Modulation of course, Deviation has different meaning with MSK)
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         chanbw_e = None
         chanbw_m = None
         for e in range(4):
-            m = int(((old_div(mhz*1000000.0, (bw *pow(2,e) * 8.0 ))) - 4) + .5)        # rounded evenly
+            m = int(((old_div(mhz*1000000.0, (bw *pow(2, e) * 8.0))) - 4) + .5)        # rounded evenly
             if m < 4:
                 chanbw_e = e
                 chanbw_m = m
@@ -762,12 +755,12 @@ class NICxx11(USBDongle):
         if chanbw_e is None:
             raise Exception("ChanBW does not translate into acceptable parameters.  Should you be changing this?")
 
-        bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
+        bw = 1000.0* mhz / (8.0 * (4 + chanbw_m) * pow(2, chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
 
         radiocfg.mdmcfg4 &= ~(MDMCFG4_CHANBW_E | MDMCFG4_CHANBW_M)
-        radiocfg.mdmcfg4 |= ((chanbw_e<<6) | (chanbw_m<<4))
-        self.setRFRegister(MDMCFG4, (radiocfg.mdmcfg4))
+        radiocfg.mdmcfg4 |= ((chanbw_e << 6) | (chanbw_m << 4))
+        self.setRFRegister(MDMCFG4, radiocfg.mdmcfg4)
 
         # from http://www.cs.jhu.edu/~carlson/download/datasheets/ask_ook_settings.pdf
         if bw > 102e3:
@@ -783,13 +776,13 @@ class NICxx11(USBDongle):
             self.setRFRegister(TEST1, 0x35)
 
     def getMdmChanBW(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         chanbw_e = (radiocfg.mdmcfg4 >> 6) & 0x3
         chanbw_m = (radiocfg.mdmcfg4 >> 4) & 0x3
-        bw = 1000000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
+        bw = 1000000.0*mhz / (8.0 * (4 + chanbw_m) * pow(2, chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f hz" % (chanbw_e, chanbw_m, bw)
         return bw
 
@@ -797,14 +790,14 @@ class NICxx11(USBDongle):
         ''' 
         set the baud of data being modulated through the radio
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         drate_e = None
         drate_m = None
         for e in range(16):
-            m = int((old_div(drate * pow(2,28), (pow(2,e)* (mhz*1000000.0)))-256) + .5)        # rounded evenly
+            m = int((old_div(drate * pow(2, 28), (pow(2, e) * (mhz * 1000000.0))) - 256) + .5)        # rounded evenly
             if m < 256:
                 drate_e = e
                 drate_m = m
@@ -812,43 +805,43 @@ class NICxx11(USBDongle):
         if drate_e is None:
             raise Exception("DRate does not translate into acceptable parameters.  Should you be changing this?")
 
-        drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
-        if self._debug: print("drate_e: %x   drate_m: %x   drate: %f Hz" % (drate_e, drate_m, drate))
+        drate = 1000000.0 * mhz * (256 + drate_m) * pow(2, drate_e) / pow(2, 28)
+        if self._debug:
+            print("drate_e: {:x}   drate_m: {:x}   drate: {:f} Hz".format(drate_e, drate_m, drate))
         
         radiocfg.mdmcfg3 = drate_m
         radiocfg.mdmcfg4 &= ~MDMCFG4_DRATE_E
         radiocfg.mdmcfg4 |= drate_e
-        self.setRFRegister(MDMCFG3, (radiocfg.mdmcfg3))
-        self.setRFRegister(MDMCFG4, (radiocfg.mdmcfg4))
+        self.setRFRegister(MDMCFG3, radiocfg.mdmcfg3)
+        self.setRFRegister(MDMCFG4, radiocfg.mdmcfg4)
 
     def getMdmDRate(self, mhz=24, radiocfg=None):
         ''' 
         get the baud of data being modulated through the radio
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         drate_e = radiocfg.mdmcfg4 & 0xf
         drate_m = radiocfg.mdmcfg3
 
-        drate = 1000000.0 * mhz * (256+drate_m) * pow(2,drate_e) / pow(2,28)
+        drate = 1000000.0 * mhz * (256 + drate_m) * pow(2, drate_e) / pow(2, 28)
         #print "drate_e: %x   drate_m: %x   drate: %f hz" % (drate_e, drate_m, drate)
         return drate
-        
-        
+
     def setMdmDeviatn(self, deviatn, mhz=24, radiocfg=None):
         ''' 
         configure the deviation settings for the given modulation scheme
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         dev_e = None
         dev_m = None
         for e in range(8):
-            m = int((old_div(deviatn * pow(2,17), (pow(2,e)* (mhz*1000000.0)))-8) + .5)        # rounded evenly
+            m = int((old_div(deviatn * pow(2, 17), (pow(2, e) * (mhz * 1000000.0))) - 8) + .5)        # rounded evenly
             if m < 8:
                 dev_e = e
                 dev_m = m
@@ -856,61 +849,61 @@ class NICxx11(USBDongle):
         if dev_e is None:
             raise Exception("Deviation does not translate into acceptable parameters.  Should you be changing this?")
 
-        dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
+        dev = 1000000.0 * mhz * (8 + dev_m) * pow(2, dev_e) / pow(2, 17)
         #print "dev_e: %x   dev_m: %x   deviatn: %f Hz" % (e, m, dev)
         
         radiocfg.deviatn = (dev_e << 4) | dev_m
         self.setRFRegister(DEVIATN, radiocfg.deviatn)
 
     def getMdmDeviatn(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         dev_e = radiocfg.deviatn >> 4
         dev_m = radiocfg.deviatn & DEVIATN_DEVIATION_M
-        dev = 1000000.0 * mhz * (8+dev_m) * pow(2,dev_e) / pow(2,17)
+        dev = 1000000.0 * mhz * (8 + dev_m) * pow(2, dev_e) / pow(2, 17)
         return dev
 
     def getMdmSyncWord(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         return (radiocfg.sync1 << 8) + radiocfg.sync0
 
     def setMdmSyncWord(self, word, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         radiocfg.sync1 = word >> 8
         radiocfg.sync0 = word & 0xff
-        self.setRFRegister(SYNC1, (radiocfg.sync1))
-        self.setRFRegister(SYNC0, (radiocfg.sync0))
+        self.setRFRegister(SYNC1, radiocfg.sync1)
+        self.setRFRegister(SYNC0, radiocfg.sync0)
 
     def getMdmSyncMode(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
         return radiocfg.mdmcfg2 & MDMCFG2_SYNC_MODE
 
     def setMdmSyncMode(self, syncmode=SYNCM_15_of_16, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.mdmcfg2 &= ~MDMCFG2_SYNC_MODE
         radiocfg.mdmcfg2 |= syncmode
-        self.setRFRegister(MDMCFG2, (radiocfg.mdmcfg2))
+        self.setRFRegister(MDMCFG2, radiocfg.mdmcfg2)
 
     def getMdmNumPreamble(self, radiocfg=None):
         '''
         get the minimum number of preamble bits to be transmitted. note this is a flag, not a count
         so the return value must be interpeted - e.g. 0x30 == 0x03 << 4 == MFMCFG1_NUM_PREAMBLE_6 == 6 bytes
         '''
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         
@@ -921,19 +914,19 @@ class NICxx11(USBDongle):
         '''
         set the minimum number of preamble bits to be transmitted (default: MFMCFG1_NUM_PREAMBLE_4)
         '''
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.mdmcfg1 &= ~MFMCFG1_NUM_PREAMBLE
         radiocfg.mdmcfg1 |= preamble
-        self.setRFRegister(MDMCFG1, (radiocfg.mdmcfg1))
+        self.setRFRegister(MDMCFG1, radiocfg.mdmcfg1)
 
     def getBSLimit(self, radiocfg=None):
         '''
         get the saturation point for the data rate offset compensation algorithm
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -943,13 +936,13 @@ class NICxx11(USBDongle):
         '''
         set the saturation point for the data rate offset compensation algorithm
         '''
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         radiocfg.bscfg &= ~BSCFG_BS_LIMIT
         radiocfg.bscfg |= bslimit
-        self.setRFRegister(BSCFG, (radiocfg.bscfg))
+        self.setRFRegister(BSCFG, radiocfg.bscfg)
 
     def calculateMdmDeviatn(self, mhz=24, radiocfg=None):
         ''' calculates the optimal DEVIATN setting for the current freq/baud
@@ -964,9 +957,9 @@ class NICxx11(USBDongle):
         if baud <= 2400:
             deviatn = 5100
         elif baud <= 38400:
-            deviatn = 20000 * (old_div((baud-2400),36000))
+            deviatn = 20000 * (old_div((baud - 2400), 36000))
         else:
-            deviatn = 129000 * (old_div((baud-38400),211600))
+            deviatn = 129000 * (old_div((baud - 38400), 211600))
         self.setMdmDeviatn(deviatn)
 
     def calculatePktChanBW(self, mhz=24, radiocfg=None):
@@ -979,13 +972,14 @@ class NICxx11(USBDongle):
         250 kbaud BW: 600khz
         '''
         freq, freqhex = self.getFreq()
-        center_freq = freq + 14000000
+        center_freq = freq + 14000000  # FIXME center_freq isn't used. Remove?
         freq_uncertainty =  20e-6 * freq  # +-20ppm
         freq_uncertainty *= 2          # both xmitter and receiver
         #minbw = (2 * freq_uncertainty) + self.getMdmDRate() # uncertainty for both sender/receiver
         minbw = (self.getMdmDRate() + freq_uncertainty) 
 
-        possibles = [ 53e3,63e3,75e3,93e3,107e3,125e3,150e3,188e3,214e3,250e3,300e3,375e3,428e3,500e3,600e3,750e3, ]
+        possibles = [53e3, 63e3, 75e3, 93e3, 107e3, 125e3, 150e3, 188e3, 214e3, 250e3, 300e3, 375e3, 428e3, 500e3,
+                     600e3, 750e3,]
         for bw in possibles:
             #if (.8 * bw)  > minbw:      # can't occupy more the 80% of BW
             if (bw)  > minbw:
@@ -1002,6 +996,7 @@ class NICxx11(USBDongle):
         500 kbaud IF: 328khz
         '''
         pass
+
     def calculateFsOffset(self, mhz=24, radiocfg=None):
         ''' calculates the optimal FreqOffset setting for the current freq/baud
         * totally experimental *
@@ -1017,7 +1012,6 @@ class NICxx11(USBDongle):
         lqi = self.peek(LQI)
         return lqi
 
-       
     def setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
         '''
         set AES crypto co-processor mode.
@@ -1062,7 +1056,7 @@ class NICxx11(USBDongle):
           (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT)
 
         '''
-        return self.send(APP_NIC, NIC_SET_AES_MODE, "%c"%aesmode)
+        return self.send(APP_NIC, NIC_SET_AES_MODE, "{:c}".format(aesmode))
 
     def getAESmode(self):
         '''
@@ -1070,7 +1064,7 @@ class NICxx11(USBDongle):
         '''
         return self.send(APP_NIC, NIC_GET_AES_MODE, "")
 
-    def setAESiv(self, iv= '\0'*16):
+    def setAESiv(self, iv='\0'*16):
         '''
         set the AES IV. this will persist until the next reboot, but it should be noted that some modes
         update the IV automatically with each operation, so care must be taken with the higher level 
@@ -1078,7 +1072,7 @@ class NICxx11(USBDongle):
         '''
         return self.send(APP_NIC, NIC_SET_AES_IV, iv)
 
-    def setAESkey(self, key= '\0'*16):
+    def setAESkey(self, key='\0'*16):
         '''
         set the AES key. this will persist until the next reboot. key must be 128 bits.
         '''
@@ -1088,7 +1082,8 @@ class NICxx11(USBDongle):
         '''
         set the amplifier mode (RF amp external to CC1111)
         '''
-        return self.send(APP_NIC, NIC_SET_AMP_MODE, "%c"%ampmode)
+        return self.send(APP_NIC, NIC_SET_AMP_MODE, "{:c}".format(ampmode))
+
     def getAmpMode(self):
         '''
         get the amplifier mode (RF amp external to CC1111)
@@ -1120,7 +1115,7 @@ class NICxx11(USBDongle):
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
-        self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+        self.send(APP_NIC, NIC_XMIT, "{}".format(struct.pack("<HHH", len(data), repeat, offset) + data), wait=wait)
 
     def RFxmitLong(self, data, doencoding=True):
         # encode, if necessary
@@ -1145,7 +1140,7 @@ class NICxx11(USBDongle):
             chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
         preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "{}".format(struct.pack("<HB", datalen, preload) + data[:RF_MAX_TX_CHUNK * preload]), wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
         error = struct.unpack("<B", retval[0])[0]
         if error:
@@ -1156,7 +1151,7 @@ class NICxx11(USBDongle):
             chunk = chunks[chidx]
             error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
             while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
-                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                retval, ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "{}".format(struct.pack("B", len(chunk))+chunk), wait=wait)
                 error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
@@ -1164,7 +1159,7 @@ class NICxx11(USBDongle):
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
-        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "{}".format(struct.pack("B", 0)), wait=wait)
         return struct.unpack("<b", retval[0])[0]
 
     def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
@@ -1175,16 +1170,15 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "{}".format(struct.pack("<H", datalen)+chunks[0]), wait=1000)
         sys.stderr.write('=' + repr(retval))
-
 
     # set blocksize to larger than 255 to receive large blocks or 0 to revert to normal
     def RFrecv(self, timeout=USB_RX_WAIT, blocksize=None):
-        if not blocksize == None:
+        if not blocksize is None:
             if blocksize > EP5OUT_BUFFER_SIZE: 
-                raise Exception("Blocksize too large. Maximum %d" % EP5OUT_BUFFER_SIZE)
-            self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
+                raise Exception("Blocksize too large. Maximum {:d}".format(EP5OUT_BUFFER_SIZE))
+            self.send(APP_NIC, NIC_SET_RECV_LARGE, "{}".format(struct.pack("<H", blocksize)))
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
         if self.endec is not None:
@@ -1204,7 +1198,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                print("(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y)))
+                print("({:5.3f}) Received:  {}  | {}".format(t, y.encode('hex'), makeFriendlyAscii(y)))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -1224,8 +1218,8 @@ class NICxx11(USBDongle):
             try:
                 y, t = self.RFrecv()
                 #print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-                print("(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y)))
-                capture.append((y,t))
+                print("({:5.3f}) Received:  {}  | {}".format(t, y.encode('hex'), makeFriendlyAscii(y)))
+                capture.append((y, t))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -1253,14 +1247,14 @@ class NICxx11(USBDongle):
         retval = {}
         oldebug = self._debug
         
-        if SyncWordMatchList != None:
+        if SyncWordMatchList is not None:
             IdentSyncWord = True
 
         if IdentSyncWord:
             if lowball <= 1:
                 print("Entering Discover mode and searching for possible SyncWords...")
-                if SyncWordMatchList != None:
-                    print("  seeking one of: %s" % repr([hex(x) for x in SyncWordMatchList]))
+                if SyncWordMatchList is not None:
+                    print("  seeking one of: {}".format(repr([hex(x) for x in SyncWordMatchList])))
 
             else:
                 print("-- lowball too high -- ignoring request to IdentSyncWord")
@@ -1272,10 +1266,10 @@ class NICxx11(USBDongle):
             self._debug = debug
 
         if Search is not None:
-            print("Search:",repr(Search))
+            print("Search:", repr(Search))
 
         if RegExpSearch is not None:
-            print("RegExpSearch:",repr(RegExpSearch))
+            print("RegExpSearch:", repr(RegExpSearch))
 
         print("(press Enter to quit)")
         while not keystop():
@@ -1284,19 +1278,19 @@ class NICxx11(USBDongle):
                 y, t = self.RFrecv()
                 yhex = y.encode('hex')
 
-                print("(%5.3f) Received:  %s" % (t, yhex))
+                print("({:5.3f}) Received:  {}".format(t, yhex))
                 if RegExpSearch is not None:
                     ynext = y
                     for loop in range(8):
                         if (re.search(RegExpSearch, ynext) is not None):
-                            print("    REG EXP SEARCH SUCCESS:",RegExpSearch)
+                            print("    REG EXP SEARCH SUCCESS:", RegExpSearch)
                         ynext = bits.shiftString(ynext, 1)
 
                 if Search is not None:
                     ynext = y
                     for loop in range(8):
-                        if (Search in ynext):
-                            print("    SEARCH SUCCESS:",Search)
+                        if Search in ynext:
+                            print("    SEARCH SUCCESS:", Search)
                         ynext = bits.shiftString(ynext, 1)
 
                 if IdentSyncWord:
@@ -1305,7 +1299,7 @@ class NICxx11(USBDongle):
 
                     poss = bits.findSyncWord(y, ISWsensitivity, ISWminpreamble)
                     if len(poss):
-                        print("  possible Sync Dwords: %s" % repr([hex(x) for x in poss]))
+                        print("  possible Sync Dwords: {}".format(repr([hex(x) for x in poss])))
                         for dw in poss:
                             lst = retval.get(dw, 0)
                             lst += 1
@@ -1342,7 +1336,8 @@ class NICxx11(USBDongle):
         level == 3 sets the Sync Mode to SYNCM_CARRIER_16_of_16 (requires a valid carrier detection and 16 of 16 bits of SYNC WORD match for the data to be considered a packet)
         '''
         if hasattr(self, '_last_radiocfg') and len(self._last_radiocfg):
-            print('not saving radio state.  already have one saved.  use lowballRestore() to restore the saved config and the next time you run lowball() the radio config will be saved.')
+            print('not saving radio state.  already have one saved.  use lowballRestore() to restore the saved config '
+                  'and the next time you run lowball() the radio config will be saved.')
         else:
             self._last_radiocfg = self.getRadioConfig()
 
@@ -1353,19 +1348,19 @@ class NICxx11(USBDongle):
         self.setMdmSyncWord(sync)
         self.setPktPQT(pqt)
         
-        if (level == 3):
+        if level == 3:
             self.setMdmSyncMode(SYNCM_CARRIER_16_of_16)
-        elif (level == 2):
+        elif level == 2:
             self.setMdmSyncMode(SYNCM_15_of_16)
-        elif (level == 1):
+        elif level == 1:
             self.setMdmSyncMode(SYNCM_CARRIER)
         else:
             self.setMdmSyncMode(SYNCM_NONE)
 
-
     def lowballRestore(self):
         if not hasattr(self, '_last_radiocfg'):
-            raise Exception("lowballRestore requires that lowball have been executed first (it saves radio config state!)")
+            raise Exception("lowballRestore requires that lowball have been executed first (it saves radio config "
+                            "state!)")
         self.setRadioConfig(self._last_radiocfg)
         self._last_radiocfg = ''
 
@@ -1374,7 +1369,7 @@ class NICxx11(USBDongle):
         print(self.reprRadioConfig(mhz, radiocfg))
 
     def reprRadioConfig(self, mhz=24, radiocfg=None):
-        if radiocfg == None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
         output = []
@@ -1401,10 +1396,10 @@ class NICxx11(USBDongle):
 
     def reprMdmModulation(self, radiocfg=None):
         mod = self.getMdmModulation(radiocfg)
-        return ("Modulation:          %s" % MODULATIONS[mod])
+        return ("Modulation:          {}".format(MODULATIONS[mod]))
 
     def reprRadioTestSignalConfig(self, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -1422,26 +1417,24 @@ class NICxx11(USBDongle):
         output.append("VCO_SEL_CAL_EN:      0x%x"%((radiocfg.test2>>1)&1))
         return "\n".join(output)
 
-
     def reprFreqConfig(self, mhz=24, radiocfg=None):
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
         output = []
         freq,num = self.getFreq(mhz, radiocfg)
-        output.append("Frequency:           %f hz (%s)" % (freq,num))
+        output.append("Frequency:           {:f} hz ({})".format(freq, num))
 
-        output.append("Channel:             %d" % radiocfg.channr)
-
+        output.append("Channel:             {:d}".format(radiocfg.channr))
 
         freq_if = self.getFsIF(mhz, radiocfg)
         freqoff = self.getFsOffset(mhz, radiocfg)
         freqest = self.getFreqEst(radiocfg)
         
-        output.append("Intermediate freq:   %d hz" % freq_if)
-        output.append("Frequency Offset:    %d +/-" % freqoff)
-        output.append("Est. Freq Offset:    %d" % freqest)
+        output.append("Intermediate freq:   {:d} hz".format(freq_if))
+        output.append("Frequency Offset:    {:d} +/-".format(freqoff))
+        output.append("Est. Freq Offset:    {:d}".format(freqest))
 
         return "\n".join(output)
 
@@ -1449,13 +1442,13 @@ class NICxx11(USBDongle):
         output = []
         aesmode= ord(self.getAESmode()[0])
 
-        output.append("AES Mode:            %s" % AESMODES[(aesmode & AES_CRYPTO_MODE)])
+        output.append("AES Mode:            {}".format(AESMODES[(aesmode & AES_CRYPTO_MODE)]))
         if aesmode & AES_CRYPTO_IN_ENABLE:
-            output.append("Crypt RF Input:      %s" % ("Decrypt", "Encrypt")[(aesmode & AES_CRYPTO_IN_TYPE)])
+            output.append("Crypt RF Input:      {}".format(("Decrypt", "Encrypt")[(aesmode & AES_CRYPTO_IN_TYPE)]))
         else:
             output.append("Crypt RF Input:      off")
         if aesmode & AES_CRYPTO_OUT_ENABLE:
-            output.append("Crypt RF Output:     %s" % ("Decrypt", "Encrypt")[(aesmode & AES_CRYPTO_OUT_TYPE) >> 2])
+            output.append("Crypt RF Output:     {}".format(("Decrypt", "Encrypt")[(aesmode & AES_CRYPTO_OUT_TYPE) >> 2]))
         else:
             output.append("Crypt RF Output:     off")
 
@@ -1467,30 +1460,30 @@ class NICxx11(USBDongle):
             radiocfg = self.radiocfg
 
         output = []
-        output.append("Sync Word:           0x%.2X%.2X" % (radiocfg.sync1, radiocfg.sync0))
-        output.append("Packet Length:       %d" % radiocfg.pktlen)
-        length_config = radiocfg.pktctrl0&3
-        output.append("Length Config:       %s" % LENGTH_CONFIGS[length_config])
+        output.append("Sync Word:           {:#X}{:X}".format(radiocfg.sync1[0:1], radiocfg.sync0[0:1]))
+        output.append("Packet Length:       {:d}".format(radiocfg.pktlen))
+        length_config = radiocfg.pktctrl0 & 3
+        output.append("Length Config:       {}".format(LENGTH_CONFIGS[length_config]))
 
-        output.append("Configured Address:  0x%x" % radiocfg.addr)
+        output.append("Configured Address:  {:#x}".format(radiocfg.addr))
 
         pqt = self.getPktPQT(radiocfg)
-        output.append("Preamble Quality Threshold: 4 * %d" % pqt)
+        output.append("Preamble Quality Threshold: 4 * {:d}".format(pqt))
 
-        append = (radiocfg.pktctrl1>>2) & 1
-        output.append("Append Status:       %s" % ("No","Yes")[append])
+        append = (radiocfg.pktctrl1 >> 2) & 1
+        output.append("Append Status:       {}".format(("No", "Yes")[append]))
 
-        adr_chk = radiocfg.pktctrl1&3
-        output.append("Rcvd Packet Check:   %s" % ADR_CHK_TYPES[adr_chk])
+        adr_chk = radiocfg.pktctrl1 & 3
+        output.append("Rcvd Packet Check:   {}".format(ADR_CHK_TYPES[adr_chk]))
 
         whitedata = self.getEnablePktDataWhitening(radiocfg)
-        output.append("Data Whitening:      %s" % ("off", "ON (but only with cc2400_en==0)")[whitedata])
+        output.append("Data Whitening:      {}".format(("off", "ON (but only with cc2400_en==0)")[whitedata]))
 
-        pkt_format = (radiocfg.pktctrl0>>5)&3
-        output.append("Packet Format:       %s" % PKT_FORMATS[pkt_format])
+        pkt_format = (radiocfg.pktctrl0 >> 5) & 3
+        output.append("Packet Format:       {}".format(PKT_FORMATS[pkt_format]))
 
         crc = self.getEnablePktCRC(radiocfg)
-        output.append("CRC:                 %s" % ("disabled", "ENABLED")[crc])
+        output.append("CRC:                 {}".format(("disabled", "ENABLED")[crc]))
 
         return "\n".join(output)
 
@@ -1500,12 +1493,12 @@ class NICxx11(USBDongle):
     def reprRadioState(self, radiocfg=None):
         output = []
         try:
-            if radiocfg==None:
+            if radiocfg is None:
                 self.getRadioConfig()
                 radiocfg = self.radiocfg
 
-            output.append("     MARCSTATE:      %s (%x)" % (self.getMARCSTATE(radiocfg)))
-            output.append("     DONGLE RESPONDING:  mode :%x, last error# %d"%(self.getDebugCodes()))
+            output.append("     MARCSTATE:      %s (%x)" % self.getMARCSTATE(radiocfg))
+            output.append("     DONGLE RESPONDING:  mode :%x, last error# %d" % (self.getDebugCodes()))
         except:
             output.append(repr(sys.exc_info()))
             output.append("     DONGLE *not* RESPONDING")
@@ -1514,7 +1507,7 @@ class NICxx11(USBDongle):
 
     def reprModemConfig(self, mhz=24, radiocfg=None):
         output = []
-        if radiocfg==None:
+        if radiocfg is None:
             self.getRadioConfig()
             radiocfg = self.radiocfg
 
@@ -1524,59 +1517,57 @@ class NICxx11(USBDongle):
         output.append(reprMdmModulation)
 
         drate = self.getMdmDRate(mhz, radiocfg)
-        output.append("DRate:               %f hz"%drate)
+        output.append("DRate:               {:f} hz".format(drate))
 
         bw = self.getMdmChanBW(mhz, radiocfg)
-        output.append("ChanBW:              %f hz"%bw)
+        output.append("ChanBW:              {:f} hz".format(bw))
 
-        output.append("DEVIATION:           %f hz" % self.getMdmDeviatn(mhz, radiocfg))
+        output.append("DEVIATION:           {:f} hz".format(self.getMdmDeviatn(mhz, radiocfg)))
 
-        output.append("Sync Mode:           %s" % SYNCMODES[syncmode])
+        output.append("Sync Mode:           {}".format(SYNCMODES[syncmode]))
 
-        num_preamble = (radiocfg.mdmcfg1>>4)&7
-        output.append("Min TX Preamble:     %d bytes" % (NUM_PREAMBLE[num_preamble]) )
+        num_preamble = (radiocfg.mdmcfg1 >> 4) & 7
+        output.append("Min TX Preamble:     {:d} bytes".format(NUM_PREAMBLE[num_preamble]))
 
         chanspc = self.getMdmChanSpc(mhz, radiocfg)
-        output.append("Chan Spacing:        %f hz" % chanspc)
+        output.append("Chan Spacing:        {:f} hz".format(chanspc))
 
         bslimit = radiocfg.bscfg & BSCFG_BS_LIMIT
-        output.append("BSLimit:             %s"%BSLIMITS[bslimit])
+        output.append("BSLimit:             {}".format(BSLIMITS[bslimit]))
 
-        output.append("DC Filter:           %s" % (("enabled", "disabled")[self.getEnableMdmDCFilter(radiocfg)]))
+        output.append("DC Filter:           {}".format(("enabled", "disabled")[self.getEnableMdmDCFilter(radiocfg)]))
 
         mchstr = self.getEnableMdmManchester(radiocfg)
-        output.append("Manchester Encoding: %s" %  (("disabled","enabled")[mchstr]))
+        output.append("Manchester Encoding: {}".format(("disabled","enabled")[mchstr]))
 
         fec = self.getEnableMdmFEC(radiocfg)
-        output.append("Fwd Err Correct:     %s" % (("disabled","enabled")[fec]))
-        
+        output.append("Fwd Err Correct:     {}".format(("disabled","enabled")[fec]))
 
         return "\n".join(output)
 
-   
     def checkRepr(self, matchstr, checkval, maxdiff=0):
         starry = self.reprRadioConfig().split('\n')
-        line,val = getValueFromReprString(starry, matchstr)
+        line, val = getValueFromReprString(starry, matchstr)
         try:
             f = checkval.__class__(val.split(" ")[0])
             if abs(f-checkval) <= maxdiff:
-                print("  passed: reprRadioConfig test: %s %s" % (repr(val), checkval))
+                print("  passed: reprRadioConfig test: {} {}".format(repr(val), checkval))
             else:
-                print(" *FAILED* reprRadioConfig test: %s %s %s" % (repr(line), repr(val), checkval))
+                print(" *FAILED* reprRadioConfig test: {} {} {}".format(repr(line), repr(val), checkval))
 
         except ValueError as e:
-            print("  ERROR checking repr: %s" % e)
+            print("  ERROR checking repr: {}".format(e))
 
     def testTX(self, data="XYZABCDEFGHIJKL"):
-        while (sys.stdin not in select.select([sys.stdin],[],[],0)[0]):
+        while sys.stdin not in select.select([sys.stdin], [], [], 0)[0]:
             time.sleep(.4)
-            print("transmitting %s" % repr(data))
+            print("transmitting {}".format(repr(data)))
             self.RFxmit(data)
         sys.stdin.read(1)
 
     ######## APPLICATION METHODS - more for demonstration than anything ########
     def setup24330MHz(self):
-        #self.setRadioConfig('0c4eff000800000b0065600068b583231145073f14166c4340915610a90a0011593f3f8831090000000000000000c02e0006000000000000000000000000'.decode('hex'))
+        # self.setRadioConfig('0c4eff000800000b0065600068b583231145073f14166c4340915610a90a0011593f3f8831090000000000000000c02e0006000000000000000000000000'.decode('hex'))
         self.getRadioConfig()
         rc = self.radiocfg
         rc.iocfg0     = 0x06
@@ -1789,17 +1780,18 @@ class NICxx11(USBDongle):
         rc.pa_table0  = 0xc0
         self.setRadioConfig()
 
+
 class FHSSNIC(NICxx11):
     '''
     advanced NIC implementation for CCxx11 chips, including Frequency Hopping
     '''
     def FHSSxmit(self, data):
-        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
+        return self.send(APP_NIC, FHSS_XMIT, "{:c}{}".format(len(data), data))
 
     def changeChannel(self, chan):
-        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
+        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "{:c}".format(chan))
 
-    def getChannels(self, channels=[]):
+    def getChannels(self, channels=[]):  # FIXME channels isn't used, remove?
         return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
 
     def setChannels(self, channels=[]):
@@ -1809,7 +1801,7 @@ class FHSSNIC(NICxx11):
         return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
 
     def nextChannel(self):
-        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '' )
+        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '')
 
     def startHopping(self):
         return self.send(APP_NIC, FHSS_START_HOPPING, '')
@@ -1826,7 +1818,7 @@ class FHSSNIC(NICxx11):
         T, tickidx, tipidx, PR = val
         print("Setting MAC period to %f secs (%x %x %x)" % (val))
         t2ctl = (ord(self.peek(X_T2CTL)) & 0xfc)   | (tipidx)
-        clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx<<3)
+        clkcon = (ord(self.peek(X_CLKCON)) & 0xc7) | (tickidx << 3)
         
         self.poke(X_T2PR, correctbytes(PR))
         self.poke(X_T2CTL, correctbytes(t2ctl))
@@ -1838,7 +1830,7 @@ class FHSSNIC(NICxx11):
         '''
         macdata = self.getMACdata()
         print(repr(macdata))
-        macdata = (_mode,) +  macdata[1:]
+        macdata = (_mode,) + macdata[1:]
         print(repr(macdata))
         self.setMACdata(macdata)
 
@@ -1884,24 +1876,25 @@ u16 synched_chans           %x
     u8  g_txMsgIdx;
     """
     
-    def getMACthreshold(self):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+    def getMACthreshold(self, value):
+        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I", value))
 
     def setMACthreshold(self, value):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I", value))
 
     def setFHSSstate(self, state):
-        return self.send(APP_NIC, FHSS_SET_STATE, struct.pack("<I",state))
+        return self.send(APP_NIC, FHSS_SET_STATE, struct.pack("<I", state))
         
     def getFHSSstate(self):
         state = self.send(APP_NIC, FHSS_GET_STATE, '')
-        #print repr(state)
+        # print repr(state)
         state = ord(state[0])
         return FHSS_STATES[state], state
                                 
     def mac_SyncCell(self, CellID=0x0000):
-        return self.send(APP_NIC, FHSS_START_SYNC, struct.pack("<H",CellID))
-                
+        return self.send(APP_NIC, FHSS_START_SYNC, struct.pack("<H", CellID))
+
+
 def unittest(dongle):
     from . import chipcon_usb
     chipcon_usb.unittest(dongle)
@@ -1921,25 +1914,25 @@ def unittest(dongle):
     dongle.setFreq(testfreq)
     freq,freqstr = dongle.getFreq()
     if abs(testfreq - freq) < 1024:
-        print("  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print("  passed: {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
     else:
-        print(" *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print(" *FAILED* {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
 
     testfreq = 868000000
     dongle.setFreq(testfreq)
     freq,freqstr = dongle.getFreq()
     if abs(testfreq - freq) < 1024:
-        print("  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print("  passed: {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
     else:
-        print(" *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print(" *FAILED* {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
 
     testfreq = 433000000
     dongle.setFreq(testfreq)
     freq,freqstr = dongle.getFreq()
     if abs(testfreq - freq) < 1024:
-        print("  passed: %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print("  passed: {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
     else:
-        print(" *FAILED* %d : %f  (diff: %f)" % (testfreq, freq, testfreq-freq))
+        print(" *FAILED* {:d} : {:f}  (diff: {:f})".format(testfreq, freq, testfreq-freq))
    
     dongle.checkRepr("Frequency:", float(testfreq), 1024)
     dongle.setFreq(freq0)
@@ -1950,29 +1943,29 @@ def unittest(dongle):
         dongle.setChannel(x)
         channr = dongle.getChannel()
         if channr != x:
-            print(" *FAILED* get/setChannel():  %d : %d" % (x, channr))
+            print(" *FAILED* get/setChannel():  {:d} : {:d}".format(x, channr))
         else:
-            print("  passed: get/setChannel():  %d : %d" % (x, channr))
+            print("  passed: get/setChannel():  {:d} : {:d}".format(x, channr))
     dongle.checkRepr("Channel:", channr)
     dongle.setChannel(channr0)
 
     # IF and FREQ_OFF
     freq_if = dongle.getFsIF()
     freqoff = dongle.getFsOffset()
-    for fif, foff in ((164062,1),(140625,2),(187500,3)):
+    for fif, foff in ((164062, 1), (140625, 2), (187500, 3)):
         dongle.setFsIF(fif)
         dongle.setFsOffset(foff)
         nfif  = dongle.getFsIF()
         nfoff = dongle.getFsOffset()
         if abs(nfif - fif) > 5:
-            print(" *FAILED* get/setFsIFandOffset():  %d : %f (diff: %f)" % (fif,nfif,nfif-fif))
+            print(" *FAILED* get/setFsIFandOffset():  {:d} : {:f} (diff: {:f})".format(fif, nfif, nfif - fif))
         else:
-            print("  passed: get/setFsIFandOffset():  %d : %f (diff: %f)" % (fif,nfif,nfif-fif))
+            print("  passed: get/setFsIFandOffset():  {:d} : {:f} (diff: {:f})".format(fif, nfif, nfif - fif))
 
         if foff != nfoff:
-            print(" *FAILED* get/setFsIFandOffset():  %d : %d (diff: %d)" % (foff,nfoff,nfoff-foff))
+            print(" *FAILED* get/setFsIFandOffset():  {:d} : {:d} (diff: {:d})".format(foff,nfoff,nfoff-foff))
         else:
-            print("  passed: get/setFsIFandOffset():  %d : %d (diff: %d)" % (foff,nfoff,nfoff-foff))
+            print("  passed: get/setFsIFandOffset():  {:d} : {:d} (diff: {:d})".format(foff,nfoff,nfoff-foff))
     dongle.checkRepr("Intermediate freq:", fif, 11720)
     dongle.checkRepr("Frequency Offset:", foff)
     
@@ -1986,73 +1979,73 @@ def unittest(dongle):
     dongle.setMdmModulation(mod, dongle.radiocfg)
     modcheck = dongle.getMdmModulation(dongle.radiocfg)
     if mod != modcheck:
-        print(" *FAILED* get/setMdmModulation():  %d : %d " % (mod, modcheck))
+        print(" *FAILED* get/setMdmModulation():  {:d} : {:d} ".format(mod, modcheck))
     else:
-        print("  passed: get/setMdmModulation():  %d : %d " % (mod, modcheck))
+        print("  passed: get/setMdmModulation():  {:d} : {:d} ".format(mod, modcheck))
 
     chanspc = dongle.getMdmChanSpc(dongle.mhz, dongle.radiocfg)
     dongle.setMdmChanSpc(chanspc, dongle.mhz, dongle.radiocfg)
     chanspc_check = dongle.getMdmChanSpc(dongle.mhz, dongle.radiocfg)
     if chanspc != chanspc_check:
-        print(" *FAILED* get/setMdmChanSpc():  %d : %d" % (chanspc, chanspc_check))
+        print(" *FAILED* get/setMdmChanSpc():  {:d} : {:d}".format(chanspc, chanspc_check))
     else:
-        print("  passed: get/setMdmChanSpc():  %d : %d" % (chanspc, chanspc_check))
+        print("  passed: get/setMdmChanSpc():  {:d} : {:d}".format(chanspc, chanspc_check))
 
     chanbw = dongle.getMdmChanBW(dongle.mhz, dongle.radiocfg)
     dongle.setMdmChanBW(chanbw, dongle.mhz, dongle.radiocfg)
     chanbw_check = dongle.getMdmChanBW(dongle.mhz, dongle.radiocfg)
     if chanbw != chanbw_check:
-        print(" *FAILED* get/setMdmChanBW():  %d : %d" % (chanbw, chanbw_check))
+        print(" *FAILED* get/setMdmChanBW():  {:d} : {:d}".format(chanbw, chanbw_check))
     else:
-        print("  passed: get/setMdmChanBW():  %d : %d" % (chanbw, chanbw_check))
+        print("  passed: get/setMdmChanBW():  {:d} : {:d}".format(chanbw, chanbw_check))
 
     drate = dongle.getMdmDRate(dongle.mhz, dongle.radiocfg)
     dongle.setMdmDRate(drate, dongle.mhz, dongle.radiocfg)
     drate_check = dongle.getMdmDRate(dongle.mhz, dongle.radiocfg)
     if drate != drate_check:
-        print(" *FAILED* get/setMdmDRate():  %d : %d" % (drate, drate_check))
+        print(" *FAILED* get/setMdmDRate():  {:d} : {:d}".format(drate, drate_check))
     else:
-        print("  passed: get/setMdmDRate():  %d : %d" % (drate, drate_check))
+        print("  passed: get/setMdmDRate():  {:d} : {:d}".format(drate, drate_check))
 
     deviatn = dongle.getMdmDeviatn(dongle.mhz, dongle.radiocfg)
     dongle.setMdmDeviatn(deviatn, dongle.mhz, dongle.radiocfg)
     deviatn_check = dongle.getMdmDeviatn(dongle.mhz, dongle.radiocfg)
     if deviatn != deviatn_check:
-        print(" *FAILED* get/setMdmdeviatn():  %d : %d" % (deviatn, deviatn_check))
+        print(" *FAILED* get/setMdmdeviatn():  {:d} : {:d}".format(deviatn, deviatn_check))
     else:
-        print("  passed: get/setMdmdeviatn():  %d : %d" % (deviatn, deviatn_check))
+        print("  passed: get/setMdmdeviatn():  {:d} : {:d}".format(deviatn, deviatn_check))
 
     syncm = dongle.getMdmSyncMode(dongle.radiocfg)
     dongle.setMdmSyncMode(syncm, dongle.radiocfg)
     syncm_check = dongle.getMdmSyncMode(dongle.radiocfg)
     if syncm != syncm_check:
-        print(" *FAILED* get/setMdmSyncMode():  %d : %d" % (syncm, syncm_check))
+        print(" *FAILED* get/setMdmSyncMode():  {:d} : {:d}".format(syncm, syncm_check))
     else:
-        print("  passed: get/setMdmSyncMode():  %d : %d" % (syncm, syncm_check))
+        print("  passed: get/setMdmSyncMode():  {:d} : {:d}".format(syncm, syncm_check))
 
     mchstr = dongle.getEnableMdmManchester(dongle.radiocfg)
     dongle.setEnableMdmManchester(mchstr, dongle.radiocfg)
     mchstr_check = dongle.getEnableMdmManchester(dongle.radiocfg)
     if mchstr != mchstr_check:
-        print(" *FAILED* get/setMdmManchester():  %d : %d" % (mchstr, mchstr_check))
+        print(" *FAILED* get/setMdmManchester():  {:d} : {:d}".format(mchstr, mchstr_check))
     else:
-        print("  passed: get/setMdmManchester():  %d : %d" % (mchstr, mchstr_check))
+        print("  passed: get/setMdmManchester():  {:d} : {:d}".format(mchstr, mchstr_check))
 
     fec = dongle.getEnableMdmFEC(dongle.radiocfg)
     dongle.setEnableMdmFEC(fec, dongle.radiocfg)
     fec_check = dongle.getEnableMdmFEC(dongle.radiocfg)
     if fec != fec_check:
-        print(" *FAILED* get/setEnableMdmFEC():  %d : %d" % (fec, fec_check))
+        print(" *FAILED* get/setEnableMdmFEC():  {:d} : {:d}".format(fec, fec_check))
     else:
-        print("  passed: get/setEnableMdmFEC():  %d : %d" % (fec, fec_check))
+        print("  passed: get/setEnableMdmFEC():  {:d} : {:d}".format(fec, fec_check))
 
     dcf = dongle.getEnableMdmDCFilter(dongle.radiocfg)
     dongle.setEnableMdmDCFilter(dcf, dongle.radiocfg)
     dcf_check = dongle.getEnableMdmDCFilter(dongle.radiocfg)
     if dcf != dcf_check:
-        print(" *FAILED* get/setEnableMdmDCFilter():  %d : %d" % (dcf, dcf_check))
+        print(" *FAILED* get/setEnableMdmDCFilter():  {:d} : {:d}".format(dcf, dcf_check))
     else:
-        print("  passed: get/setEnableMdmDCFilter():  %d : %d" % (dcf, dcf_check))
+        print("  passed: get/setEnableMdmDCFilter():  {:d} : {:d}".format(dcf, dcf_check))
 
 
     # Pkt tests
@@ -2060,9 +2053,9 @@ def unittest(dongle):
     dongle.setPktPQT(pqt, dongle.radiocfg)
     pqt_check = dongle.getPktPQT(dongle.radiocfg)
     if pqt != pqt_check:
-        print(" *FAILED* get/setEnableMdmFEC():  %d : %d" % (pqt, pqt_check))
+        print(" *FAILED* get/setEnableMdmFEC():  {:d} : {:d}".format(pqt, pqt_check))
     else:
-        print("  passed: get/setEnableMdmFEC():  %d : %d" % (pqt, pqt_check))
+        print("  passed: get/setEnableMdmFEC():  {:d} : {:d}".format(pqt, pqt_check))
 
     # FHSS tests
     print("\nTesting FHSS State set/get")
@@ -2075,12 +2068,14 @@ def unittest(dongle):
     print(repr(dongle.setFHSSstate(fhssstate[1] )))
     print(repr(dongle.getFHSSstate()))
 
+
 def getValueFromReprString(stringarray, line_text):
     for string in stringarray:
         if line_text in string:
             idx = string.find(":")
             val = string[idx+1:].strip()
             return (string,val)
+
 
 def mkFreq(freq=902000000, mhz=24):
     freqmult = old_div((0x10000 / 1000000.0), mhz)
@@ -2089,7 +2084,6 @@ def mkFreq(freq=902000000, mhz=24):
     freq1 = (num>>8) & 0xff
     freq0 = num & 0xff
     return (num, freq2,freq1,freq0)
-
 
 
 if __name__ == "__main__":
