@@ -16,9 +16,9 @@ CONTROL_PACKET_LEADER_BYTE          = 0x69
 PACKET_TRAILING_BYTE                = 0xAA
 
 pkt_magic_names = {
-    BREAKIN_PACKET:"Break Packet",
-    PACKET_LEADER:"Packet",
-    CONTROL_PACKET_LEADER:"Control Packet",
+    BREAKIN_PACKET: "Break Packet",
+    PACKET_LEADER: "Packet",
+    CONTROL_PACKET_LEADER: "Control Packet",
 } 
 
 # Primary "packet types"
@@ -184,6 +184,7 @@ ULONG = v_uint32
 ULONG64 = v_uint64
 BOOLEAN = v_uint32
 
+
 class DBGKD_LOAD_SYMBOLS64(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -193,8 +194,9 @@ class DBGKD_LOAD_SYMBOLS64(vstruct.VStruct):
         self.ProcessId = v_uint64()
         self.CheckSum = v_uint32()
         self.SizeOfImage = v_uint32()
-        #self.UnloadSymbols = v_uint8()
+        # self.UnloadSymbols = v_uint8()
         self.UnloadSymbols = v_uint32() # HACK must be 32 bit aligned
+
 
 class DBGKD_WAIT_STATE_CHANGE64(vstruct.VStruct):
     def __init__(self):

@@ -1,6 +1,13 @@
 
 import struct
 
+try:
+    blah = long(42)
+except NameError:
+    long = int
+    pass
+
+
 class v_enum: pass
 
 class v_base(object):
@@ -177,7 +184,7 @@ class v_number(v_prim):
     def __coerce__(self, other):
         try:
             return long(self),long(other)
-        except Exception, e:
+        except Exception as e:
             return NotImplemented
 
     # Print helpers
@@ -330,14 +337,14 @@ class GUID(v_prim):
         self._vs_length = 16
         self._vs_value = "\x00" * 16
         self._vs_fmt = "16s"
-        self._guid_fields = (0,0,0,0,0,0,0,0,0,0,0)
-        if guidstr != None:
+        self._guid_fields = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        if guidstr is not None:
             self._parseGuidStr(guidstr)
 
     def _parseGuidStr(self, gstr):
-        gstr = gstr.replace("{","")
-        gstr = gstr.replace("}","")
-        gstr = gstr.replace("-","")
+        gstr = gstr.replace("{", "")
+        gstr = gstr.replace("}", "")
+        gstr = gstr.replace("-", "")
         bytes = gstr.decode("hex")
         # Totally cheating... ;)
         self._guid_fields = struct.unpack(">LHH8B", bytes)
@@ -346,9 +353,9 @@ class GUID(v_prim):
         self._guid_fields = struct.unpack("<LHH8B", bytes)
 
     def vsGetValue(self):
-        return struck.pack("<LHH8B", *self._guid_fields)
+        return struct.pack("<LHH8B", *self._guid_fields)
 
     def __repr__(self):
         base = "{%.8x-%.4x-%.4x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x}"
-        return base  % self._guid_fields
+        return base  % (self._guid_fields)
 

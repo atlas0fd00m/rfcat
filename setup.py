@@ -71,5 +71,5 @@ setup  (name             = 'rfcat',
                             'future>=0.17.1',
                             'pyserial>=3.4'
                            ],
-        python_requires  = '>=2.7,<3.0.0'
+        python_requires  = '>=2.7,>=3.0.0'
         )

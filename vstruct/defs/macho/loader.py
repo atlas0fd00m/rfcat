@@ -40,6 +40,7 @@ class load_command(vstruct.VStruct):
         self.cmd     = vs_prim.v_uint32() # type of load command
         self.cmdsize = vs_prim.v_uint32() # total size of command in bytes
 
+
 class segment_command(vstruct.VStruct):
 
     def __init__(self):

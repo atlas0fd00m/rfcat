@@ -4,6 +4,7 @@ from vstruct.primitives import *
 EI_NIDENT = 4
 EI_PADLEN = 7
 
+
 class Elf32(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)

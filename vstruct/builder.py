@@ -9,7 +9,7 @@ import inspect
 import vstruct
 import vstruct.primitives as vs_prim
 
-prim_types = [ None, 
+prim_types = [None,
                vs_prim.v_uint8,
                vs_prim.v_uint16,
                None,
@@ -22,6 +22,7 @@ prim_types = [ None,
 VSFF_ARRAY   = 1
 VSFF_POINTER = 2
 
+
 class VStructConstructor:
     def __init__(self, builder, vsname):
         self.builder = builder
@@ -29,6 +30,7 @@ class VStructConstructor:
 
     def __call__(self, *args, **kwargs):
         return self.builder.buildVStruct(self.vsname)
+
 
 class VStructBuilder:
 
@@ -43,14 +45,14 @@ class VStructBuilder:
 
     def __getattr__(self, name):
         ns = self._vs_namespaces.get(name)
-        if ns != None:
+        if ns is not None:
             return ns
 
         vsdef = self._vs_defs.get(name)
-        if vsdef != None:
+        if vsdef is not None:
             return VStructConstructor(self, name)
 
-        raise AttributeError, name
+        raise AttributeError(name)
 
     def addVStructEnumeration(self, enum):
         self._vs_enums[enum[0]] = enum
@@ -65,10 +67,10 @@ class VStructBuilder:
         return self._vs_namespaces.keys()
 
     def hasVStructNamespace(self, namespace):
-        return self._vs_namespaces.get(namespace, None) != None
+        return self._vs_namespaces.get(namespace, None) is not None
 
     def getVStructNames(self, namespace=None):
-        if namespace == None:
+        if namespace is None:
             return self._vs_defs.keys()
         nsmod = self._vs_namespaces.get(namespace)
         ret = []
@@ -89,20 +91,20 @@ class VStructBuilder:
         parts = vsname.split('.', 1)
         if len(parts) == 2:
             ns = self._vs_namespaces.get(parts[0])
-            if ns == None:
+            if ns is None:
                 raise Exception('Namespace %s is not present! (need symbols?)' % parts[0])
 
             # If a module gets added as a namespace, assume it has a class def...
             if isinstance(ns, types.ModuleType):
                 cls = getattr(ns, parts[1])
-                if cls == None:
+                if cls is None:
                     raise Exception('Unknown VStruct Definition: %s' % vsname)
                 return cls()
 
             return ns.buildVStruct(parts[1])
 
         vsdef = self._vs_defs.get(vsname)
-        if vsdef == None:
+        if vsdef is None:
             raise Exception('Unknown VStruct Definition: %s' % vsname)
 
         vsname, vssize, vskids = vsdef
@@ -124,19 +126,19 @@ class VStructBuilder:
                     raise Exception('Invalid Pointer Width: %d' % fsize)
 
             elif fflags & VSFF_ARRAY:
-                if ftypename != None:
+                if ftypename is not None:
                     fieldval = vstruct.VArray()
                     while len(fieldval) < fsize:
-                        fieldval.vsAddElement( self.buildVStruct(ftypename) )
+                        fieldval.vsAddElement(self.buildVStruct(ftypename))
                 else:
-                # FIXME actually handle arrays!
+                    # FIXME actually handle arrays!
                     fieldval = vs_prim.v_bytes(size=fsize)
 
-            elif ftypename == None:
+            elif ftypename is None:
 
-                if fsize not in [1,2,4,8]:
-                    #print 'Primitive Field Size: %d' % fsize
-                    fieldval = v_bytes(size=fsize)
+                if fsize not in [1, 2, 4, 8]:
+                    # print 'Primitive Field Size: %d' % fsize
+                    fieldval = vs_prim.v_bytes(size=fsize)
 
                 else:
                     fieldval = prim_types[fsize]()
@@ -146,7 +148,7 @@ class VStructBuilder:
 
             cursize = len(vs)
             if foffset < cursize:
-                #print 'FIXME handle unions, overlaps, etc...'
+                # print 'FIXME handle unions, overlaps, etc...'
                 continue
 
             if foffset > cursize:
@@ -164,9 +166,8 @@ class VStructBuilder:
         for ename, esize, ekids in self._vs_enums.values():
             ret += '%s = v_enum()\n' % ename
             for kname, kval in ekids:
-                ret += '%s.%s = %d\n' % (ename,kname,kval)
+                ret += '%s.%s = %d\n' % (ename, kname, kval)
             ret += '\n\n'
-
 
         for vsname, vsize, vskids in self._vs_defs.values():
             ret += 'class %s(vstruct.VStruct):\n' % vsname
@@ -191,12 +192,12 @@ class VStructBuilder:
                         fconst = 'v_bytes(size=%d) # FIXME should be pointer!' % fsize
 
                 elif fflags & VSFF_ARRAY:
-                    if ftypename != None:
-                        '[ %s() for i in xrange( %d / len(%s())) ]' % (ftypename, fsize, ftypename)
+                    if ftypename is not None:
+                        '[ %s() for i in xrange( %d / len(%s())) ]' % (ftypename, fsize, ftypename)  # FIXME noop?
                     else:
                         fconst = 'v_bytes(size=%d) # FIXME Unknown Array Type' % fsize
 
-                elif ftypename == None:
+                elif ftypename is None:
                     if fsize == 1:
                         fconst = 'v_uint8()'
                     elif fsize == 2:
@@ -210,25 +211,25 @@ class VStructBuilder:
                 else:
                     fconst = '%s()' % ftypename
 
-
                 ret += '        self.%s = %s\n' % (fname, fconst)
                 offset += fsize
             ret += '\n\n'
 
         return ret
 
+
 if __name__ == '__main__':
     # Parse windows structures from dll symbols...
-    import os
+    import os  # FIXME unused
     import sys
-    import platform
+    import platform  # FIXME unused
 
-    from pprint import pprint
+    from pprint import pprint  # FIXME unused
 
     import PE
     import vtrace.platforms.win32 as vt_win32
 
-    p = PE.PE(file(sys.argv[1], 'rb'))
+    p = PE.PE(open(sys.argv[1], 'rb'))
     baseaddr = p.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
     osmajor = p.IMAGE_NT_HEADERS.OptionalHeader.MajorOperatingSystemVersion
     osminor = p.IMAGE_NT_HEADERS.OptionalHeader.MinorOperatingSystemVersion
@@ -243,7 +244,7 @@ if __name__ == '__main__':
     e = parser._sym_enums.values()
     builder = VStructBuilder(defs=t, enums=e)
 
-    print '# Version: %d.%d' % (osmajor, osminor)
-    print '# Architecture: %s' % archname
-    print builder.genVStructPyCode()
+    print('# Version: {:d}.(:d}'.format(osmajor, osminor))
+    print('# Architecture: {}'.format(archname))
+    print(builder.genVStructPyCode())
 

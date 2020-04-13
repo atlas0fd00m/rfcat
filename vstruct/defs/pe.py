@@ -2,17 +2,20 @@
 import vstruct
 from vstruct.primitives import *
 
+
 class IMAGE_BASE_RELOCATION(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.VirtualAddress = v_uint32()
         self.SizeOfBlock    = v_uint32()
 
+
 class IMAGE_DATA_DIRECTORY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.VirtualAddress = v_uint32()
         self.Size           = v_uint32()
+
 
 class IMAGE_DOS_HEADER(vstruct.VStruct):
     def __init__(self):
@@ -37,6 +40,7 @@ class IMAGE_DOS_HEADER(vstruct.VStruct):
         self.e_res2     = vstruct.VArray([v_uint16() for i in range(10)])
         self.e_lfanew   = v_uint32()
 
+
 class IMAGE_EXPORT_DIRECTORY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -52,6 +56,7 @@ class IMAGE_EXPORT_DIRECTORY(vstruct.VStruct):
         self.AddressOfNames     = v_uint32()
         self.AddressOfOrdinals  = v_uint32()
 
+
 class IMAGE_FILE_HEADER(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -63,6 +68,7 @@ class IMAGE_FILE_HEADER(vstruct.VStruct):
         self.SizeOfOptionalHeader = v_uint16()
         self.Ccharacteristics     = v_uint16()
 
+
 class IMAGE_IMPORT_DIRECTORY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -71,6 +77,7 @@ class IMAGE_IMPORT_DIRECTORY(vstruct.VStruct):
         self.ForwarderChain     = v_uint32()
         self.Name               = v_uint32()
         self.FirstThunk         = v_uint32()
+
 
 class IMAGE_LOAD_CONFIG_DIRECTORY(vstruct.VStruct):
     def __init__(self):
@@ -96,6 +103,7 @@ class IMAGE_LOAD_CONFIG_DIRECTORY(vstruct.VStruct):
         self.SEHandlerTable                = v_uint32()
         self.SEHandlerCount                = v_uint32()
 
+
 class IMAGE_NT_HEADERS(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -103,12 +111,14 @@ class IMAGE_NT_HEADERS(vstruct.VStruct):
         self.FileHeader     = IMAGE_FILE_HEADER()
         self.OptionalHeader = IMAGE_OPTIONAL_HEADER()
 
+
 class IMAGE_NT_HEADERS64(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.Signature      = v_bytes(4)
         self.FileHeader     = IMAGE_FILE_HEADER()
         self.OptionalHeader = IMAGE_OPTIONAL_HEADER64()
+
 
 class IMAGE_OPTIONAL_HEADER(vstruct.VStruct):
     def __init__(self):
@@ -145,6 +155,7 @@ class IMAGE_OPTIONAL_HEADER(vstruct.VStruct):
         self.NumberOfRvaAndSizes         = v_uint32()
         self.DataDirectory               = vstruct.VArray([IMAGE_DATA_DIRECTORY() for i in range(16)])
 
+
 class IMAGE_OPTIONAL_HEADER64(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -179,6 +190,7 @@ class IMAGE_OPTIONAL_HEADER64(vstruct.VStruct):
         self.NumberOfRvaAndSizes         = v_uint32()
         self.DataDirectory               = vstruct.VArray([IMAGE_DATA_DIRECTORY() for i in range(16)])
 
+
 class IMAGE_RESOURCE_DIRECTORY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -188,6 +200,7 @@ class IMAGE_RESOURCE_DIRECTORY(vstruct.VStruct):
         self.MinorVersion         = v_uint16()
         self.NumberOfNamedEntries = v_uint16()
         self.NumberOfIdEntries    = v_uint16()
+
 
 class IMAGE_SECTION_HEADER(vstruct.VStruct):
 

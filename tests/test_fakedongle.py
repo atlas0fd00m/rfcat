@@ -8,7 +8,7 @@ import unittest
 
 from rflib.const import *
 
-logging.basicConfig(level=logging.INFO, format='{asctime:!s}:{levelname:!s}:{name:!s}: {message:!s}')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name)s: %(message)s')
 logger = logging.getLogger(__name__)
 
 EP0BUFSIZE = 512
@@ -128,7 +128,7 @@ class RfCatFakeDongle(unittest.TestCase):
     def test_importing(self):
         import rflib
         devs = rflib.getRfCatDevices()
-        self.assertEquals(type(devs), list, "rflib.getRfCatDevices() doesn't return a list!: {:!r}".format(devs))
+        self.assertEquals(type(devs), list, "rflib.getRfCatDevices() doesn't return a list!: {!r}".format(devs))
         import rflib.chipcon_nic
         import rflib.chipcon_usb
         import rflib.chipcondefs

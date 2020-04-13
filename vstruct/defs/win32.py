@@ -4,11 +4,13 @@
 import vstruct
 from vstruct.primitives import *
 
+
 class CLIENT_ID(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.UniqueProcess = v_ptr()
         self.UniqueThread = v_ptr()
+
 
 class EXCEPTION_RECORD(vstruct.VStruct):
     def __init__(self):

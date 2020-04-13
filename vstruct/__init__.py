@@ -1,11 +1,16 @@
 
 import struct
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 import vstruct.primitives as vs_prims
 
+
 def isVstructType(x):
     return isinstance(x, vs_prims.v_base)
+
 
 class VStruct(vs_prims.v_base):
 
@@ -15,7 +20,7 @@ class VStruct(vs_prims.v_base):
         vs_prims.v_base.__init__(self)
         self._vs_name = self.__class__.__name__
         self._vs_fields = []
-        self._vs_field_align = False # To toggle visual studio style packing
+        self._vs_field_align = False  # To toggle visual studio style packing
         self._vs_padnum = 0
         self._vs_fmtbase = '<'
         if bigend:
@@ -27,7 +32,7 @@ class VStruct(vs_prims.v_base):
         '''
         return '%s.%s' % (self.__module__, self._vs_name)
 
-    def vsParse(self, bytes, offset=0):
+    def vsParse(self, bytes_parse, offset=0):
         """
         For all the primitives contained within, allow them
         an opportunity to parse the given data and return the
@@ -36,7 +41,7 @@ class VStruct(vs_prims.v_base):
         plist = self.vsGetPrims()
         fmt = self.vsGetFormat()
         size = struct.calcsize(fmt)
-        vals = struct.unpack(fmt, bytes[offset:offset+size])
+        vals = struct.unpack(fmt, bytes_parse[offset:offset + size])
         for i in range(len(plist)):
             plist[i].vsSetParsedValue(vals[i])
 
@@ -67,17 +72,17 @@ class VStruct(vs_prims.v_base):
         ret = []
         for fname in self._vs_fields:
             fobj = self._vs_values.get(fname)
-            ret.append((fname,fobj))
+            ret.append((fname, fobj))
         return ret
 
     def vsGetField(self, name):
         x = self._vs_values.get(name)
-        if x == None:
-            raise Exception("Invalid field: %s" % name)
+        if x is None:
+            raise Exception("Invalid field: {!s}".format(name))
         return x
 
     def vsHasField(self, name):
-        return self._vs_values.get(name) != None
+        return self._vs_values.get(name) is not None
 
     def vsSetField(self, name, value):
         if isVstructType(value):
@@ -88,7 +93,7 @@ class VStruct(vs_prims.v_base):
 
     # FIXME implement more arithmetic for structs...
     def __ixor__(self, other):
-        for name,value in other._vs_values.items():
+        for name, value in other._vs_values.items():
             self._vs_values[name] ^= value
         return self
 
@@ -109,8 +114,8 @@ class VStruct(vs_prims.v_base):
 
             delta = len(self) % align
             if delta != 0:
-                print "PADDING %s by %d" % (name,align-delta)
-                pname = "_pad%d" % self._vs_padnum
+                print("PADDING {} by {:d]".format(name, align-delta))
+                pname = "_pad{:d}".format(self._vs_padnum)
                 self._vs_padnum += 1
                 self._vs_fields.append(pname)
                 self._vs_values[pname] = vs_prims.v_bytes(align-delta)
@@ -170,7 +175,7 @@ class VStruct(vs_prims.v_base):
     def __getattr__(self, name):
         # Gotta do this for pickle issues...
         vsvals = self.__dict__.get("_vs_values")
-        if vsvals == None:
+        if vsvals is None:
             vsvals = {}
             self.__dict__["_vs_values"] = vsvals
         r = vsvals.get(name)
@@ -183,7 +188,7 @@ class VStruct(vs_prims.v_base):
     def __setattr__(self, name, value):
         # If we have this field, asign to it
         x = self._vs_values.get(name, None)
-        if x != None:
+        if x is not None:
             return self.vsSetField(name, value)
 
         # If it's a vstruct type, create a new field
@@ -209,13 +214,14 @@ class VStruct(vs_prims.v_base):
             rstr = field.vsGetTypeName()
             if isinstance(field, vs_prims.v_number):
                 val = field.vsGetValue()
-                rstr = '0x%.8x (%d)' % (val,val)
+                rstr = '{:#x} {:d}'.format(val[0:7], val)
             elif isinstance(field, vs_prims.v_prim):
                 rstr = repr(field)
-            if reprmax != None and len(rstr) > reprmax:
+            if reprmax is not None and len(rstr) > reprmax:
                 rstr = rstr[:reprmax] + '...'
-            ret += "%.8x (%.2d)%s %s: %s\n" % (va+off, len(field), " "*(indent*2),name,rstr)
+            ret += "{:#x} ({:d}){} {!s}: {!s}\n".format((va+off)[0:7], len(field)[0:1], " " * (indent * 2), name, rstr)
         return ret
+
 
 class VArray(VStruct):
 
@@ -234,7 +240,8 @@ class VArray(VStruct):
     def __getitem__(self, index):
         return self.vsGetField("%d" % index)
 
-    #FIXME slice asignment
+    # FIXME slice asignment
+
 
 def resolve(impmod, nameparts):
     """
@@ -247,13 +254,15 @@ def resolve(impmod, nameparts):
     m = impmod
     for nname in nameparts:
         m = getattr(m, nname, None)
-        if m == None:
+        if m is None:
             break
 
     return m
 
+
 # NOTE: Gotta import this *after* VStruct/VSArray defined
 import vstruct.defs as vs_defs
+
 
 def getStructure(sname):
     """
@@ -263,18 +272,20 @@ def getStructure(sname):
     definition from within vstruct.defs.
     """
     x = resolve(vs_defs, sname.split("."))
-    if x != None:
+    if x is not None:
         return x()
 
     return None
 
+
 def getModuleNames():
     return [x for x in dir(vs_defs) if not x.startswith("__")]
+
 
 def getStructNames(modname):
     ret = []
     mod = resolve(vs_defs, modname)
-    if mod == None:
+    if mod is None:
         return ret
 
     for n in dir(mod):
