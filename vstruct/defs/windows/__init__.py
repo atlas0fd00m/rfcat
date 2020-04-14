@@ -1,8 +1,7 @@
-'''
+"""
 The pre-made windows structure defs (extracted from pdb syms)
-'''
+"""
 
-import envi
 import ctypes
 import platform
 
@@ -21,7 +20,7 @@ def isSysWow64():
 def getCurrentDef(normname):
     bname, wver, stuff, whichkern = platform.win32_ver()
     wvertup = wver.split('.')
-    arch = envi.getCurrentArch()
+    arch = platform.architecture()[0]
     if isSysWow64():
         arch = 'wow64'
 
