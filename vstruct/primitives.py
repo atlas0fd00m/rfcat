@@ -10,6 +10,7 @@ except NameError:
 
 class v_enum: pass
 
+
 class v_base(object):
     def __init__(self):
         self._vs_meta = {}
@@ -25,6 +26,7 @@ class v_base(object):
     def vsGetFormat(self): return NotImplemented
     def vsIsPrim(self): return NotImplemented
     def vsGetTypeName(self): return NotImplemented
+
 
 class v_prim(v_base):
 
@@ -191,39 +193,49 @@ class v_number(v_prim):
     def __hex__(self): return hex(long(self))
     def __oct__(self): return oct(long(self))
 
+
 class v_uint8(v_number):
     _vs_builder = True
     _vs_fmt = "B"
+
 
 class v_uint16(v_number):
     _vs_builder = True
     _vs_fmt = "H"
 
+
 class v_uint32(v_number):
     _vs_builder = True
     _vs_fmt = "L"
+
 
 class v_uint64(v_number):
     _vs_builder = True
     _vs_fmt = "Q"
 
+
 class v_int8(v_number):
     _vs_builder = True
     _vs_fmt = "b"
+
 
 class v_int16(v_number):
     _vs_builder = True
     _vs_fmt = "h"
 
+
 class v_int32(v_number):
     _vs_builder = True
     _vs_fmt = "l"
+
 
 class v_int64(v_number):
     _vs_builder = True
     _vs_fmt = "q"
 
+
 pointersize = struct.calcsize("P")
+
 
 class v_size_t(v_number):
     _vs_builder = True
@@ -233,18 +245,22 @@ class v_size_t(v_number):
         _vs_fmt = "Q"
 
     def __repr__(self):
-        return "0x%.8x" % self._vs_value
+        return "{:x}".format(self._vs_value[0:7])
+
 
 class v_ptr(v_size_t):
     pass
+
 
 class v_ptr32(v_ptr):
     _vs_builder = True
     _vs_fmt = "L"
 
+
 class v_ptr64(v_ptr):
     _vs_builder = True
     _vs_fmt = "Q"
+
 
 class v_bytes(v_prim):
 
@@ -262,6 +278,7 @@ class v_bytes(v_prim):
 
     def __repr__(self):
         return self._vs_value.encode('hex')
+
 
 class v_str(v_prim):
     '''
@@ -290,6 +307,7 @@ class v_str(v_prim):
 
     def __len__(self):
         return len(self._vs_value)
+
 
 class v_wstr(v_str):
     '''
@@ -357,5 +375,5 @@ class GUID(v_prim):
 
     def __repr__(self):
         base = "{%.8x-%.4x-%.4x-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x}"
-        return base  % (self._guid_fields)
+        return base % (self._guid_fields)
 

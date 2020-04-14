@@ -624,7 +624,7 @@ class _unnamed_9079(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.BankNumber = v_uint8()
-        self.Reserved2 = v_bytes(size=7) # FIXME Unknown Array Type
+        self.Reserved2 = v_bytes(size=7)  # FIXME Unknown Array Type
         self.Status = MCI_STATS()
         self.Address = MCI_ADDR()
         self.Misc = v_uint64()
@@ -651,7 +651,7 @@ class SID(vstruct.VStruct):
         self.Revision = v_uint8()
         self.SubAuthorityCount = v_uint8()
         self.IdentifierAuthority = SID_IDENTIFIER_AUTHORITY()
-        self.SubAuthority = v_bytes(size=4) # FIXME Unknown Array Type
+        self.SubAuthority = v_bytes(size=4)  # FIXME Unknown Array Type
 
 
 class WHEA_ERROR_PACKET_V2(vstruct.VStruct):
@@ -687,7 +687,7 @@ class GROUP_AFFINITY(vstruct.VStruct):
         vstruct.VStruct.__init__(self)
         self.Mask = v_uint32()
         self.Group = v_uint16()
-        self.Reserved = v_bytes(size=6) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=6)  # FIXME Unknown Array Type
 
 
 class KTSS(vstruct.VStruct):
@@ -698,7 +698,7 @@ class KTSS(vstruct.VStruct):
         self.Esp0 = v_uint32()
         self.Ss0 = v_uint16()
         self.Reserved1 = v_uint16()
-        self.NotUsed1 = v_bytes(size=16) # FIXME Unknown Array Type
+        self.NotUsed1 = v_bytes(size=16)  # FIXME Unknown Array Type
         self.CR3 = v_uint32()
         self.Eip = v_uint32()
         self.EFlags = v_uint32()
@@ -727,7 +727,7 @@ class KTSS(vstruct.VStruct):
         self.Flags = v_uint16()
         self.IoMapBase = v_uint16()
         self.IoMaps = v_uint16()
-        self.IntDirectionMap = v_bytes(size=32) # FIXME Unknown Array Type
+        self.IntDirectionMap = v_bytes(size=32)  # FIXME Unknown Array Type
 
 
 class CURDIR(vstruct.VStruct):
@@ -740,7 +740,7 @@ class CURDIR(vstruct.VStruct):
 class PERFINFO_GROUPMASK(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Masks = v_bytes(size=32) # FIXME Unknown Array Type
+        self.Masks = v_bytes(size=32)  # FIXME Unknown Array Type
 
 
 class HANDLE_TABLE_ENTRY_INFO(vstruct.VStruct):
@@ -775,7 +775,7 @@ class WHEA_ERROR_RECORD_SECTION_DESCRIPTOR(vstruct.VStruct):
         self.SectionType = GUID()
         self.FRUId = GUID()
         self.SectionSeverity = v_uint32()
-        self.FRUText = v_bytes(size=20) # FIXME Unknown Array Type
+        self.FRUText = v_bytes(size=20)  # FIXME Unknown Array Type
 
 
 class PS_CPU_QUOTA_BLOCK(vstruct.VStruct):
@@ -818,7 +818,7 @@ class RTL_TRACE_SEGMENT(vstruct.VStruct):
 class _unnamed_9787(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Data = v_bytes(size=12) # FIXME Unknown Array Type
+        self.Data = v_bytes(size=12)  # FIXME Unknown Array Type
 
 
 class _unnamed_9789(vstruct.VStruct):
@@ -879,8 +879,8 @@ class KPROCESS(vstruct.VStruct):
         self.QuantumReset = v_uint8()
         self.Visited = v_uint8()
         self.Unused3 = v_uint8()
-        self.ThreadSeed = v_bytes(size=16) # FIXME Unknown Array Type
-        self.IdealNode = v_bytes(size=8) # FIXME Unknown Array Type
+        self.ThreadSeed = v_bytes(size=16)  # FIXME Unknown Array Type
+        self.IdealNode = v_bytes(size=8)  # FIXME Unknown Array Type
         self.IdealGlobalNode = v_uint16()
         self.Flags = KEXECUTE_OPTIONS()
         self.Unused1 = v_uint8()
@@ -1052,7 +1052,7 @@ class RTL_TRACE_DATABASE(vstruct.VStruct):
         self.HashFunction = v_ptr32()
         self.NoOfTraces = v_uint32()
         self.NoOfHits = v_uint32()
-        self.HashCounter = v_bytes(size=64) # FIXME Unknown Array Type
+        self.HashCounter = v_bytes(size=64)  # FIXME Unknown Array Type
 
 
 class OWNER_ENTRY(vstruct.VStruct):
@@ -1086,7 +1086,7 @@ class HEAP_LOCAL_SEGMENT_INFO(vstruct.VStruct):
         vstruct.VStruct.__init__(self)
         self.Hint = v_ptr32()
         self.ActiveSubsegment = v_ptr32()
-        self.CachedItems = v_bytes(size=64) # FIXME Unknown Array Type
+        self.CachedItems = v_bytes(size=64)  # FIXME Unknown Array Type
         self.SListHeader = SLIST_HEADER()
         self.Counters = HEAP_BUCKET_COUNTERS()
         self.LocalData = v_ptr32()
@@ -1202,8 +1202,8 @@ class PROC_IDLE_ACCOUNTING(vstruct.VStruct):
         self.ResetCount = v_uint32()
         self._pad0010 = v_bytes(size=4)
         self.StartTime = v_uint64()
-        self.BucketLimits = v_bytes(size=128) # FIXME Unknown Array Type
-        self.State = v_bytes(size=128) # FIXME Unknown Array Type
+        self.BucketLimits = v_bytes(size=128)  # FIXME Unknown Array Type
+        self.State = v_bytes(size=128)  # FIXME Unknown Array Type
 
 
 class GDI_TEB_BATCH(vstruct.VStruct):
@@ -1211,7 +1211,7 @@ class GDI_TEB_BATCH(vstruct.VStruct):
         vstruct.VStruct.__init__(self)
         self.Offset = v_uint32()
         self.HDC = v_uint32()
-        self.Buffer = v_bytes(size=1240) # FIXME Unknown Array Type
+        self.Buffer = v_bytes(size=1240)  # FIXME Unknown Array Type
 
 
 class THREAD_PERFORMANCE_DATA(vstruct.VStruct):
@@ -1468,7 +1468,7 @@ class VPB(vstruct.VStruct):
         self.RealDevice = v_ptr32()
         self.SerialNumber = v_uint32()
         self.ReferenceCount = v_uint32()
-        self.VolumeLabel = v_bytes(size=64) # FIXME Unknown Array Type
+        self.VolumeLabel = v_bytes(size=64)  # FIXME Unknown Array Type
 
 
 class PP_LOOKASIDE_LIST(vstruct.VStruct):
@@ -1503,23 +1503,23 @@ class KUSER_SHARED_DATA(vstruct.VStruct):
         self.TimeZoneBias = KSYSTEM_TIME()
         self.ImageNumberLow = v_uint16()
         self.ImageNumberHigh = v_uint16()
-        self.NtSystemRoot = v_bytes(size=520) # FIXME Unknown Array Type
+        self.NtSystemRoot = v_bytes(size=520)  # FIXME Unknown Array Type
         self.MaxStackTraceDepth = v_uint32()
         self.CryptoExponent = v_uint32()
         self.TimeZoneId = v_uint32()
         self.LargePageMinimum = v_uint32()
-        self.Reserved2 = v_bytes(size=28) # FIXME Unknown Array Type
+        self.Reserved2 = v_bytes(size=28)  # FIXME Unknown Array Type
         self.NtProductType = v_uint32()
         self.ProductTypeIsValid = v_uint8()
         self._pad026c = v_bytes(size=3)
         self.NtMajorVersion = v_uint32()
         self.NtMinorVersion = v_uint32()
-        self.ProcessorFeatures = v_bytes(size=64) # FIXME Unknown Array Type
+        self.ProcessorFeatures = v_bytes(size=64)  # FIXME Unknown Array Type
         self.Reserved1 = v_uint32()
         self.Reserved3 = v_uint32()
         self.TimeSlip = v_uint32()
         self.AlternativeArchitecture = v_uint32()
-        self.AltArchitecturePad = v_bytes(size=4) # FIXME Unknown Array Type
+        self.AltArchitecturePad = v_bytes(size=4)  # FIXME Unknown Array Type
         self.SystemExpirationDate = LARGE_INTEGER()
         self.SuiteMask = v_uint32()
         self.KdDebuggerEnabled = v_uint8()
@@ -1532,9 +1532,9 @@ class KUSER_SHARED_DATA(vstruct.VStruct):
         self.NumberOfPhysicalPages = v_uint32()
         self.SafeBootMode = v_uint8()
         self.TscQpcData = v_uint8()
-        self.TscQpcPad = v_bytes(size=2) # FIXME Unknown Array Type
+        self.TscQpcPad = v_bytes(size=2)  # FIXME Unknown Array Type
         self.SharedDataFlags = v_uint32()
-        self.DataFlagsPad = v_bytes(size=4) # FIXME Unknown Array Type
+        self.DataFlagsPad = v_bytes(size=4)  # FIXME Unknown Array Type
         self.TestRetInstruction = v_uint64()
         self.SystemCall = v_uint32()
         self.SystemCallReturn = v_uint32()
@@ -1558,7 +1558,7 @@ class KUSER_SHARED_DATA(vstruct.VStruct):
         self.AppCompatFlag = v_uint32()
         self.SystemDllNativeRelocation = v_uint64()
         self.SystemDllWowRelocation = v_uint32()
-        self.XStatePad = v_bytes(size=4) # FIXME Unknown Array Type
+        self.XStatePad = v_bytes(size=4)  # FIXME Unknown Array Type
         self.XState = XSTATE_CONFIGURATION()
 
 
@@ -1667,8 +1667,8 @@ class EPROCESS(vstruct.VStruct):
         self.RundownProtect = EX_RUNDOWN_REF()
         self.UniqueProcessId = v_ptr32()
         self.ActiveProcessLinks = LIST_ENTRY()
-        self.ProcessQuotaUsage = v_bytes(size=8) # FIXME Unknown Array Type
-        self.ProcessQuotaPeak = v_bytes(size=8) # FIXME Unknown Array Type
+        self.ProcessQuotaUsage = v_bytes(size=8)  # FIXME Unknown Array Type
+        self.ProcessQuotaPeak = v_bytes(size=8)  # FIXME Unknown Array Type
         self.CommitCharge = v_uint32()
         self.QuotaBlock = v_ptr32()
         self.CpuQuotaBlock = v_ptr32()
@@ -1707,7 +1707,7 @@ class EPROCESS(vstruct.VStruct):
         self.PageDirectoryPte = HARDWARE_PTE_X86()
         self._pad0198 = v_bytes(size=4)
         self.Session = v_ptr32()
-        self.ImageFileName = v_bytes(size=15) # FIXME Unknown Array Type
+        self.ImageFileName = v_bytes(size=15)  # FIXME Unknown Array Type
         self.PriorityClass = v_uint8()
         self.JobLinks = LIST_ENTRY()
         self.LockedPagesList = v_ptr32()
@@ -1815,8 +1815,8 @@ class CM_FULL_RESOURCE_DESCRIPTOR(vstruct.VStruct):
 class KTIMER_TABLE(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.TimerExpiry = v_bytes(size=64) # FIXME Unknown Array Type
-        self.TimerEntries = v_bytes(size=64) # FIXME Unknown Array Type
+        self.TimerExpiry = v_bytes(size=64)  # FIXME Unknown Array Type
+        self.TimerEntries = v_bytes(size=64)  # FIXME Unknown Array Type
 
 
 class FAST_IO_DISPATCH(vstruct.VStruct):
@@ -1856,7 +1856,7 @@ class _unnamed_8164(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.InPath = v_uint8()
-        self.Reserved = v_bytes(size=3) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=3)  # FIXME Unknown Array Type
         self.Type = v_uint32()
 
 
@@ -1916,7 +1916,7 @@ class KSPECIAL_REGISTERS(vstruct.VStruct):
         self.Idtr = DESCRIPTOR()
         self.Tr = v_uint16()
         self.Ldtr = v_uint16()
-        self.Reserved = v_bytes(size=24) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=24)  # FIXME Unknown Array Type
 
 
 class RTL_CRITICAL_SECTION(vstruct.VStruct):
@@ -1964,7 +1964,7 @@ class FLOATING_SAVE_AREA(vstruct.VStruct):
         self.ErrorSelector = v_uint32()
         self.DataOffset = v_uint32()
         self.DataSelector = v_uint32()
-        self.RegisterArea = v_bytes(size=80) # FIXME Unknown Array Type
+        self.RegisterArea = v_bytes(size=80)  # FIXME Unknown Array Type
         self.Cr0NpxState = v_uint32()
 
 
@@ -2051,7 +2051,7 @@ class KTHREAD(vstruct.VStruct):
         self.ThreadLock = v_uint32()
         self.WaitRegister = KWAIT_STATUS_REGISTER()
         self.Running = v_uint8()
-        self.Alerted = v_bytes(size=2) # FIXME Unknown Array Type
+        self.Alerted = v_bytes(size=2)  # FIXME Unknown Array Type
         self.KernelStackResident = v_uint32()
         self.ApcState = KAPC_STATE()
         self.NextProcessor = v_uint32()
@@ -2094,7 +2094,7 @@ class KTHREAD(vstruct.VStruct):
         self.Affinity = GROUP_AFFINITY()
         self.IdealProcessor = v_uint32()
         self.UserIdealProcessor = v_uint32()
-        self.ApcStatePointer = v_bytes(size=8) # FIXME Unknown Array Type
+        self.ApcStatePointer = v_bytes(size=8)  # FIXME Unknown Array Type
         self.SavedApcState = KAPC_STATE()
         self.SuspendCount = v_uint8()
         self.Spare1 = v_uint8()
@@ -2140,7 +2140,7 @@ class CONTEXT(vstruct.VStruct):
         self.EFlags = v_uint32()
         self.Esp = v_uint32()
         self.SegSs = v_uint32()
-        self.ExtendedRegisters = v_bytes(size=512) # FIXME Unknown Array Type
+        self.ExtendedRegisters = v_bytes(size=512)  # FIXME Unknown Array Type
 
 
 class MCI_STATS(vstruct.VStruct):
@@ -2354,8 +2354,8 @@ class KPROCESSOR_STATE(vstruct.VStruct):
 class KiIoAccessMap(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.DirectionMap = v_bytes(size=32) # FIXME Unknown Array Type
-        self.IoMap = v_bytes(size=8196) # FIXME Unknown Array Type
+        self.DirectionMap = v_bytes(size=32)  # FIXME Unknown Array Type
+        self.IoMap = v_bytes(size=8196)  # FIXME Unknown Array Type
 
 
 class _unnamed_8209(vstruct.VStruct):
@@ -2403,7 +2403,7 @@ class RTL_STACK_DATABASE_LOCK(vstruct.VStruct):
 class SID_IDENTIFIER_AUTHORITY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Value = v_bytes(size=6) # FIXME Unknown Array Type
+        self.Value = v_bytes(size=6)  # FIXME Unknown Array Type
 
 
 class XSTATE_FEATURE(vstruct.VStruct):
@@ -2576,7 +2576,7 @@ class COMPRESSED_DATA_INFO(vstruct.VStruct):
         self.ClusterShift = v_uint8()
         self.Reserved = v_uint8()
         self.NumberOfChunks = v_uint16()
-        self.CompressedChunkSizes = v_bytes(size=4) # FIXME Unknown Array Type
+        self.CompressedChunkSizes = v_bytes(size=4)  # FIXME Unknown Array Type
 
 
 class WHEA_ERROR_RECORD(vstruct.VStruct):
@@ -2632,7 +2632,7 @@ class RTL_STACK_TRACE_ENTRY(vstruct.VStruct):
         self.IndexHigh = v_uint16()
         self.Index = v_uint16()
         self.Depth = v_uint16()
-        self.BackTrace = v_bytes(size=128) # FIXME Unknown Array Type
+        self.BackTrace = v_bytes(size=128)  # FIXME Unknown Array Type
 
 
 class OBJECT_DUMP_CONTROL(vstruct.VStruct):
@@ -2648,7 +2648,7 @@ class HANDLE_TRACE_DB_ENTRY(vstruct.VStruct):
         self.ClientId = CLIENT_ID()
         self.Handle = v_ptr32()
         self.Type = v_uint32()
-        self.StackTrace = v_bytes(size=64) # FIXME Unknown Array Type
+        self.StackTrace = v_bytes(size=64)  # FIXME Unknown Array Type
 
 
 class GENERAL_LOOKASIDE_POOL(vstruct.VStruct):
@@ -2669,7 +2669,7 @@ class GENERAL_LOOKASIDE_POOL(vstruct.VStruct):
         self.ListEntry = LIST_ENTRY()
         self.LastTotalAllocates = v_uint32()
         self.LastAllocateMisses = v_uint32()
-        self.Future = v_bytes(size=8) # FIXME Unknown Array Type
+        self.Future = v_bytes(size=8)  # FIXME Unknown Array Type
 
 
 class HARDWARE_PTE_X86(vstruct.VStruct):
@@ -2692,7 +2692,7 @@ class HEAP_TAG_ENTRY(vstruct.VStruct):
         self.Size = v_uint32()
         self.TagIndex = v_uint16()
         self.CreatorBackTraceIndex = v_uint16()
-        self.TagName = v_bytes(size=48) # FIXME Unknown Array Type
+        self.TagName = v_bytes(size=48)  # FIXME Unknown Array Type
 
 
 class STRING(vstruct.VStruct):
@@ -2779,7 +2779,7 @@ class HEAP_FAILURE_INFORMATION(vstruct.VStruct):
         self.NextBlock = v_ptr32()
         self.ExpectedEncodedEntry = HEAP_ENTRY()
         self.ExpectedDecodedEntry = HEAP_ENTRY()
-        self.StackTrace = v_bytes(size=128) # FIXME Unknown Array Type
+        self.StackTrace = v_bytes(size=128)  # FIXME Unknown Array Type
 
 
 class _unnamed_9370(vstruct.VStruct):
@@ -2895,7 +2895,7 @@ class IO_RESOURCE_DESCRIPTOR(vstruct.VStruct):
 class EX_PUSH_LOCK_CACHE_AWARE(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Locks = v_bytes(size=128) # FIXME Unknown Array Type
+        self.Locks = v_bytes(size=128)  # FIXME Unknown Array Type
 
 
 class RTL_TRACE_BLOCK(vstruct.VStruct):
@@ -3194,7 +3194,7 @@ class GENERAL_LOOKASIDE(vstruct.VStruct):
         self.ListEntry = LIST_ENTRY()
         self.LastTotalAllocates = v_uint32()
         self.LastAllocateMisses = v_uint32()
-        self.Future = v_bytes(size=8) # FIXME Unknown Array Type
+        self.Future = v_bytes(size=8)  # FIXME Unknown Array Type
 
 
 class _unnamed_7775(vstruct.VStruct):
@@ -3320,13 +3320,13 @@ class HEAP_DEBUGGING_INFORMATION(vstruct.VStruct):
 class ACCESS_REASONS(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Data = v_bytes(size=128) # FIXME Unknown Array Type
+        self.Data = v_bytes(size=128)  # FIXME Unknown Array Type
 
 
 class STACK_TRACE_DATABASE(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.Reserved = v_bytes(size=56) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=56)  # FIXME Unknown Array Type
         self.Reserved2 = v_ptr32()
         self.PeakHashCollisionListLength = v_uint32()
         self.LowerMemoryStart = v_ptr32()
@@ -3508,7 +3508,7 @@ class GUID(vstruct.VStruct):
         self.Data1 = v_uint32()
         self.Data2 = v_uint16()
         self.Data3 = v_uint16()
-        self.Data4 = v_bytes(size=8) # FIXME Unknown Array Type
+        self.Data4 = v_bytes(size=8)  # FIXME Unknown Array Type
 
 
 class HEAP_UCR_DESCRIPTOR(vstruct.VStruct):
@@ -3531,7 +3531,7 @@ class MCA_EXCEPTION(vstruct.VStruct):
         self.u = _unnamed_9067()
         self.ExtCnt = v_uint32()
         self.Reserved3 = v_uint32()
-        self.ExtReg = v_bytes(size=192) # FIXME Unknown Array Type
+        self.ExtReg = v_bytes(size=192)  # FIXME Unknown Array Type
 
 
 class PSP_CPU_QUOTA_APC(vstruct.VStruct):
@@ -3542,7 +3542,7 @@ class PSP_CPU_QUOTA_APC(vstruct.VStruct):
 class KAPC_STATE(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
-        self.ApcListHead = v_bytes(size=192) # FIXME Unknown Array Type
+        self.ApcListHead = v_bytes(size=192)  # FIXME Unknown Array Type
         self.Process = v_ptr32()
         self.KernelApcInProgress = v_uint8()
         self.KernelApcPending = v_uint8()
@@ -3655,7 +3655,7 @@ class DRIVER_OBJECT(vstruct.VStruct):
         self.DriverInit = v_ptr32()
         self.DriverStartIo = v_ptr32()
         self.DriverUnload = v_ptr32()
-        self.MajorFunction = v_bytes(size=112) # FIXME Unknown Array Type
+        self.MajorFunction = v_bytes(size=112)  # FIXME Unknown Array Type
 
 
 class FILE_GET_QUOTA_INFORMATION(vstruct.VStruct):
@@ -3694,7 +3694,7 @@ class TP_NBQ_GUARD(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.GuardLinks = LIST_ENTRY()
-        self.Guards = v_bytes(size=8) # FIXME Unknown Array Type
+        self.Guards = v_bytes(size=8)  # FIXME Unknown Array Type
 
 
 class flags(vstruct.VStruct):
@@ -3738,7 +3738,7 @@ class EXCEPTION_RECORD(vstruct.VStruct):
         self.ExceptionRecord = v_ptr32()
         self.ExceptionAddress = v_ptr32()
         self.NumberParameters = v_uint32()
-        self.ExceptionInformation = v_bytes(size=60) # FIXME Unknown Array Type
+        self.ExceptionInformation = v_bytes(size=60)  # FIXME Unknown Array Type
 
 
 class PROCESSOR_NUMBER(vstruct.VStruct):
@@ -3786,13 +3786,13 @@ class KPCR(vstruct.VStruct):
         self.Spare0 = v_uint8()
         self.SecondLevelCacheAssociativity = v_uint8()
         self.VdmAlert = v_uint32()
-        self.KernelReserved = v_bytes(size=56) # FIXME Unknown Array Type
+        self.KernelReserved = v_bytes(size=56)  # FIXME Unknown Array Type
         self.SecondLevelCacheSize = v_uint32()
-        self.HalReserved = v_bytes(size=64) # FIXME Unknown Array Type
+        self.HalReserved = v_bytes(size=64)  # FIXME Unknown Array Type
         self.InterruptMode = v_uint32()
         self.Spare1 = v_uint8()
         self._pad00dc = v_bytes(size=3)
-        self.KernelReserved2 = v_bytes(size=68) # FIXME Unknown Array Type
+        self.KernelReserved2 = v_bytes(size=68)  # FIXME Unknown Array Type
         self.PrcbData = KPRCB()
 
 
@@ -4129,12 +4129,12 @@ class PEB(vstruct.VStruct):
         self.IFEOKey = v_ptr32()
         self.CrossProcessFlags = v_uint32()
         self.KernelCallbackTable = v_ptr32()
-        self.SystemReserved = v_bytes(size=4) # FIXME Unknown Array Type
+        self.SystemReserved = v_bytes(size=4)  # FIXME Unknown Array Type
         self.AtlThunkSListPtr32 = v_uint32()
         self.ApiSetMap = v_ptr32()
         self.TlsExpansionCounter = v_uint32()
         self.TlsBitmap = v_ptr32()
-        self.TlsBitmapBits = v_bytes(size=8) # FIXME Unknown Array Type
+        self.TlsBitmapBits = v_bytes(size=8)  # FIXME Unknown Array Type
         self.ReadOnlySharedMemoryBase = v_ptr32()
         self.HotpatchInformation = v_ptr32()
         self.ReadOnlyStaticServerData = v_ptr32()
@@ -4165,10 +4165,10 @@ class PEB(vstruct.VStruct):
         self.ImageSubsystemMajorVersion = v_uint32()
         self.ImageSubsystemMinorVersion = v_uint32()
         self.ActiveProcessAffinityMask = v_uint32()
-        self.GdiHandleBuffer = v_bytes(size=136) # FIXME Unknown Array Type
+        self.GdiHandleBuffer = v_bytes(size=136)  # FIXME Unknown Array Type
         self.PostProcessInitRoutine = v_ptr32()
         self.TlsExpansionBitmap = v_ptr32()
-        self.TlsExpansionBitmapBits = v_bytes(size=128) # FIXME Unknown Array Type
+        self.TlsExpansionBitmapBits = v_bytes(size=128)  # FIXME Unknown Array Type
         self.SessionId = v_uint32()
         self.AppCompatFlags = ULARGE_INTEGER()
         self.AppCompatFlagsUser = ULARGE_INTEGER()
@@ -4183,7 +4183,7 @@ class PEB(vstruct.VStruct):
         self.FlsCallback = v_ptr32()
         self.FlsListHead = LIST_ENTRY()
         self.FlsBitmap = v_ptr32()
-        self.FlsBitmapBits = v_bytes(size=16) # FIXME Unknown Array Type
+        self.FlsBitmapBits = v_bytes(size=16)  # FIXME Unknown Array Type
         self.FlsHighIndex = v_uint32()
         self.WerRegistrationData = v_ptr32()
         self.WerShipAssertPtr = v_ptr32()
@@ -4206,7 +4206,7 @@ class RTL_BALANCED_LINKS(vstruct.VStruct):
         self.LeftChild = v_ptr32()
         self.RightChild = v_ptr32()
         self.Balance = v_uint8()
-        self.Reserved = v_bytes(size=3) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=3)  # FIXME Unknown Array Type
 
 
 class _unnamed_9722(vstruct.VStruct):
@@ -4323,7 +4323,7 @@ class WHEA_ERROR_RECORD_HEADER(vstruct.VStruct):
         self.RecordId = v_uint64()
         self.Flags = WHEA_ERROR_RECORD_HEADER_FLAGS()
         self.PersistenceInfo = WHEA_PERSISTENCE_INFO()
-        self.Reserved = v_bytes(size=12) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=12)  # FIXME Unknown Array Type
 
 
 class EVENT_DESCRIPTOR(vstruct.VStruct):
@@ -4365,7 +4365,7 @@ class MMSUPPORT(vstruct.VStruct):
         self.ExitGate = v_ptr32()
         self.AccessLog = v_ptr32()
         self.WorkingSetExpansionLinks = LIST_ENTRY()
-        self.AgeDistribution = v_bytes(size=28) # FIXME Unknown Array Type
+        self.AgeDistribution = v_bytes(size=28)  # FIXME Unknown Array Type
         self.MinimumWorkingSetSize = v_uint32()
         self.WorkingSetSize = v_uint32()
         self.WorkingSetPrivateSize = v_uint32()
@@ -4380,7 +4380,7 @@ class MMSUPPORT(vstruct.VStruct):
         self.LastTrimStamp = v_uint16()
         self.PageFaultCount = v_uint32()
         self.RepurposeCount = v_uint32()
-        self.Spare = v_bytes(size=4) # FIXME Unknown Array Type
+        self.Spare = v_bytes(size=4)  # FIXME Unknown Array Type
         self.Flags = MMSUPPORT_FLAGS()
 
 
@@ -4489,15 +4489,15 @@ class TEB(vstruct.VStruct):
         self.CountOfOwnedCriticalSections = v_uint32()
         self.CsrClientThread = v_ptr32()
         self.Win32ThreadInfo = v_ptr32()
-        self.User32Reserved = v_bytes(size=104) # FIXME Unknown Array Type
-        self.UserReserved = v_bytes(size=20) # FIXME Unknown Array Type
+        self.User32Reserved = v_bytes(size=104)  # FIXME Unknown Array Type
+        self.UserReserved = v_bytes(size=20)  # FIXME Unknown Array Type
         self.WOW32Reserved = v_ptr32()
         self.CurrentLocale = v_uint32()
         self.FpSoftwareStatusRegister = v_uint32()
-        self.SystemReserved1 = v_bytes(size=216) # FIXME Unknown Array Type
+        self.SystemReserved1 = v_bytes(size=216)  # FIXME Unknown Array Type
         self.ExceptionCode = v_uint32()
         self.ActivationContextStackPointer = v_ptr32()
-        self.SpareBytes = v_bytes(size=36) # FIXME Unknown Array Type
+        self.SpareBytes = v_bytes(size=36)  # FIXME Unknown Array Type
         self.TxFsContext = v_uint32()
         self.GdiTebBatch = GDI_TEB_BATCH()
         self.RealClientId = CLIENT_ID()
@@ -4505,9 +4505,9 @@ class TEB(vstruct.VStruct):
         self.GdiClientPID = v_uint32()
         self.GdiClientTID = v_uint32()
         self.GdiThreadLocalInfo = v_ptr32()
-        self.Win32ClientInfo = v_bytes(size=248) # FIXME Unknown Array Type
-        self.glDispatchTable = v_bytes(size=932) # FIXME Unknown Array Type
-        self.glReserved1 = v_bytes(size=116) # FIXME Unknown Array Type
+        self.Win32ClientInfo = v_bytes(size=248)  # FIXME Unknown Array Type
+        self.glDispatchTable = v_bytes(size=932)  # FIXME Unknown Array Type
+        self.glReserved1 = v_bytes(size=116)  # FIXME Unknown Array Type
         self.glReserved2 = v_ptr32()
         self.glSectionInfo = v_ptr32()
         self.glSection = v_ptr32()
@@ -4516,16 +4516,16 @@ class TEB(vstruct.VStruct):
         self.glContext = v_ptr32()
         self.LastStatusValue = v_uint32()
         self.StaticUnicodeString = UNICODE_STRING()
-        self.StaticUnicodeBuffer = v_bytes(size=522) # FIXME Unknown Array Type
+        self.StaticUnicodeBuffer = v_bytes(size=522)  # FIXME Unknown Array Type
         self._pad0e0c = v_bytes(size=2)
         self.DeallocationStack = v_ptr32()
-        self.TlsSlots = v_bytes(size=256) # FIXME Unknown Array Type
+        self.TlsSlots = v_bytes(size=256)  # FIXME Unknown Array Type
         self.TlsLinks = LIST_ENTRY()
         self.Vdm = v_ptr32()
         self.ReservedForNtRpc = v_ptr32()
-        self.DbgSsReserved = v_bytes(size=8) # FIXME Unknown Array Type
+        self.DbgSsReserved = v_bytes(size=8)  # FIXME Unknown Array Type
         self.HardErrorMode = v_uint32()
-        self.Instrumentation = v_bytes(size=36) # FIXME Unknown Array Type
+        self.Instrumentation = v_bytes(size=36)  # FIXME Unknown Array Type
         self.ActivityId = GUID()
         self.SubProcessTag = v_ptr32()
         self.EtwLocalData = v_ptr32()
@@ -4587,8 +4587,8 @@ class XSAVE_FORMAT(vstruct.VStruct):
         self.MxCsr_Mask = v_uint32()
         self.FloatRegisters = v_uint32()
         self.XmmRegisters = v_uint32()
-        self.Reserved4 = v_bytes(size=192) # FIXME Unknown Array Type
-        self.StackControl = v_bytes(size=28) # FIXME Unknown Array Type
+        self.Reserved4 = v_bytes(size=192)  # FIXME Unknown Array Type
+        self.StackControl = v_bytes(size=28)  # FIXME Unknown Array Type
         self.Cr0NpxState = v_uint32()
 
 
@@ -4596,7 +4596,7 @@ class PO_DIAG_STACK_RECORD(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.StackDepth = v_uint32()
-        self.Stack = v_bytes(size=4) # FIXME Unknown Array Type
+        self.Stack = v_bytes(size=4)  # FIXME Unknown Array Type
 
 
 class IMAGE_DOS_HEADER(vstruct.VStruct):
@@ -4616,10 +4616,10 @@ class IMAGE_DOS_HEADER(vstruct.VStruct):
         self.e_cs = v_uint16()
         self.e_lfarlc = v_uint16()
         self.e_ovno = v_uint16()
-        self.e_res = v_bytes(size=8) # FIXME Unknown Array Type
+        self.e_res = v_bytes(size=8)  # FIXME Unknown Array Type
         self.e_oemid = v_uint16()
         self.e_oeminfo = v_uint16()
-        self.e_res2 = v_bytes(size=20) # FIXME Unknown Array Type
+        self.e_res2 = v_bytes(size=20)  # FIXME Unknown Array Type
         self.e_lfanew = v_uint32()
 
 
@@ -4694,20 +4694,20 @@ class KPRCB(vstruct.VStruct):
         self.CpuID = v_uint8()
         self.CpuStep = v_uint16()
         self.ProcessorState = KPROCESSOR_STATE()
-        self.KernelReserved = v_bytes(size=64) # FIXME Unknown Array Type
-        self.HalReserved = v_bytes(size=64) # FIXME Unknown Array Type
+        self.KernelReserved = v_bytes(size=64)  # FIXME Unknown Array Type
+        self.HalReserved = v_bytes(size=64)  # FIXME Unknown Array Type
         self.CFlushSize = v_uint32()
         self.CoresPerPhysicalProcessor = v_uint8()
         self.LogicalProcessorsPerCore = v_uint8()
-        self.PrcbPad0 = v_bytes(size=2) # FIXME Unknown Array Type
+        self.PrcbPad0 = v_bytes(size=2)  # FIXME Unknown Array Type
         self.MHz = v_uint32()
         self.CpuVendor = v_uint8()
         self.GroupIndex = v_uint8()
         self.Group = v_uint16()
         self.GroupSetMember = v_uint32()
         self.Number = v_uint32()
-        self.PrcbPad1 = v_bytes(size=72) # FIXME Unknown Array Type
-        self.LockQueue = v_bytes(size=72) # FIXME Unknown Array Type
+        self.PrcbPad1 = v_bytes(size=72)  # FIXME Unknown Array Type
+        self.LockQueue = v_bytes(size=72)  # FIXME Unknown Array Type
         self.NpxThread = v_ptr32()
         self.InterruptCount = v_uint32()
         self.KernelTime = v_uint32()
@@ -4719,12 +4719,12 @@ class KPRCB(vstruct.VStruct):
         self.PageColor = v_uint32()
         self.DebuggerSavedIRQL = v_uint8()
         self.NodeColor = v_uint8()
-        self.PrcbPad20 = v_bytes(size=2) # FIXME Unknown Array Type
+        self.PrcbPad20 = v_bytes(size=2)  # FIXME Unknown Array Type
         self.NodeShiftedColor = v_uint32()
         self.ParentNode = v_ptr32()
         self.SecondaryColorMask = v_uint32()
         self.DpcTimeLimit = v_uint32()
-        self.PrcbPad21 = v_bytes(size=8) # FIXME Unknown Array Type
+        self.PrcbPad21 = v_bytes(size=8)  # FIXME Unknown Array Type
         self.CcFastReadNoWait = v_uint32()
         self.CcFastReadWait = v_uint32()
         self.CcFastReadNotPossible = v_uint32()
@@ -4768,23 +4768,23 @@ class KPRCB(vstruct.VStruct):
         self.KeExceptionDispatchCount = v_uint32()
         self.KeSystemCalls = v_uint32()
         self.AvailableTime = v_uint32()
-        self.PrcbPad22 = v_bytes(size=8) # FIXME Unknown Array Type
-        self.PPLookasideList = v_bytes(size=8) # FIXME Unknown Array Type
-        self.PPNPagedLookasideList = v_bytes(size=8) # FIXME Unknown Array Type
-        self.PPPagedLookasideList = v_bytes(size=8) # FIXME Unknown Array Type
+        self.PrcbPad22 = v_bytes(size=8)  # FIXME Unknown Array Type
+        self.PPLookasideList = v_bytes(size=8)  # FIXME Unknown Array Type
+        self.PPNPagedLookasideList = v_bytes(size=8)  # FIXME Unknown Array Type
+        self.PPPagedLookasideList = v_bytes(size=8)  # FIXME Unknown Array Type
         self.PacketBarrier = v_uint32()
         self.ReverseStall = v_uint32()
         self.IpiFrame = v_ptr32()
-        self.PrcbPad3 = v_bytes(size=52) # FIXME Unknown Array Type
-        self.CurrentPacket = v_bytes(size=12) # FIXME Unknown Array Type
+        self.PrcbPad3 = v_bytes(size=52)  # FIXME Unknown Array Type
+        self.CurrentPacket = v_bytes(size=12)  # FIXME Unknown Array Type
         self.TargetSet = v_uint32()
         self.WorkerRoutine = v_ptr32()
         self.IpiFrozen = v_uint32()
-        self.PrcbPad4 = v_bytes(size=40) # FIXME Unknown Array Type
+        self.PrcbPad4 = v_bytes(size=40)  # FIXME Unknown Array Type
         self.RequestSummary = v_uint32()
         self.SignalDone = v_ptr32()
-        self.PrcbPad50 = v_bytes(size=56) # FIXME Unknown Array Type
-        self.DpcData = v_bytes(size=56) # FIXME Unknown Array Type
+        self.PrcbPad50 = v_bytes(size=56)  # FIXME Unknown Array Type
+        self.DpcData = v_bytes(size=56)  # FIXME Unknown Array Type
         self.DpcStack = v_ptr32()
         self.MaximumDpcQueueDepth = v_uint32()
         self.DpcRequestRate = v_uint32()
@@ -4800,7 +4800,7 @@ class KPRCB(vstruct.VStruct):
         self.TimerHand = v_uint32()
         self.LastTick = v_uint32()
         self.MasterOffset = v_uint32()
-        self.PrcbPad41 = v_bytes(size=8) # FIXME Unknown Array Type
+        self.PrcbPad41 = v_bytes(size=8)  # FIXME Unknown Array Type
         self.PeriodicCount = v_uint32()
         self.PeriodicBias = v_uint32()
         self._pad1958 = v_bytes(size=4)
@@ -4810,13 +4810,13 @@ class KPRCB(vstruct.VStruct):
         self.ClockKeepAlive = v_uint32()
         self.ClockCheckSlot = v_uint8()
         self.ClockPollCycle = v_uint8()
-        self.PrcbPad6 = v_bytes(size=2) # FIXME Unknown Array Type
+        self.PrcbPad6 = v_bytes(size=2)  # FIXME Unknown Array Type
         self.DpcWatchdogPeriod = v_uint32()
         self.DpcWatchdogCount = v_uint32()
         self.ThreadWatchdogPeriod = v_uint32()
         self.ThreadWatchdogCount = v_uint32()
         self.KeSpinLockOrdering = v_uint32()
-        self.PrcbPad70 = v_bytes(size=4) # FIXME Unknown Array Type
+        self.PrcbPad70 = v_bytes(size=4)  # FIXME Unknown Array Type
         self.WaitListHead = LIST_ENTRY()
         self.WaitLock = v_uint32()
         self.ReadySummary = v_uint32()
@@ -4826,8 +4826,8 @@ class KPRCB(vstruct.VStruct):
         self.CycleTime = v_uint64()
         self.HighCycleTime = v_uint32()
         self.PrcbPad71 = v_uint32()
-        self.PrcbPad72 = v_bytes(size=16) # FIXME Unknown Array Type
-        self.DispatcherReadyListHead = v_bytes(size=16) # FIXME Unknown Array Type
+        self.PrcbPad72 = v_bytes(size=16)  # FIXME Unknown Array Type
+        self.DispatcherReadyListHead = v_bytes(size=16)  # FIXME Unknown Array Type
         self.ChainedInterruptList = v_ptr32()
         self.LookasideIrpFloat = v_uint32()
         self.MmPageFaultCount = v_uint32()
@@ -4846,11 +4846,11 @@ class KPRCB(vstruct.VStruct):
         self.CachedCommit = v_uint32()
         self.CachedResidentAvailable = v_uint32()
         self.HyperPte = v_ptr32()
-        self.PrcbPad8 = v_bytes(size=4) # FIXME Unknown Array Type
-        self.VendorString = v_bytes(size=13) # FIXME Unknown Array Type
+        self.PrcbPad8 = v_bytes(size=4)  # FIXME Unknown Array Type
+        self.VendorString = v_bytes(size=13)  # FIXME Unknown Array Type
         self.InitialApicId = v_uint8()
         self.LogicalProcessorsPerPhysicalProcessor = v_uint8()
-        self.PrcbPad9 = v_bytes(size=5) # FIXME Unknown Array Type
+        self.PrcbPad9 = v_bytes(size=5)  # FIXME Unknown Array Type
         self.FeatureBits = v_uint32()
         self._pad3388 = v_bytes(size=4)
         self.UpdateSignature = LARGE_INTEGER()
@@ -4869,9 +4869,9 @@ class KPRCB(vstruct.VStruct):
         self.RateControl = v_ptr32()
         self.Cache = v_ptr32()
         self.CacheCount = v_uint32()
-        self.CacheProcessorMask = v_bytes(size=20) # FIXME Unknown Array Type
+        self.CacheProcessorMask = v_bytes(size=20)  # FIXME Unknown Array Type
         self.PackageProcessorSet = KAFFINITY_EX()
-        self.PrcbPad91 = v_bytes(size=56) # FIXME Unknown Array Type
+        self.PrcbPad91 = v_bytes(size=56)  # FIXME Unknown Array Type
         self.CoreProcessorSet = v_uint32()
         self.TimerExpirationDpc = KDPC()
         self.SpinLockAcquireCount = v_uint32()
@@ -4945,7 +4945,7 @@ class KAFFINITY_EX(vstruct.VStruct):
         self.Count = v_uint16()
         self.Size = v_uint16()
         self.Reserved = v_uint32()
-        self.Bitmap = v_bytes(size=16) # FIXME Unknown Array Type
+        self.Bitmap = v_bytes(size=16)  # FIXME Unknown Array Type
 
 
 class DEVICE_OBJECT(vstruct.VStruct):
@@ -5046,7 +5046,7 @@ class KNODE(vstruct.VStruct):
         self.NodePad0 = v_uint8()
         self.Seed = v_uint32()
         self.MmShiftedColor = v_uint32()
-        self.FreeCount = v_bytes(size=8) # FIXME Unknown Array Type
+        self.FreeCount = v_bytes(size=8)  # FIXME Unknown Array Type
         self.CachedKernelStacks = CACHED_KSTACK_LIST()
         self.ParkLock = v_uint32()
         self.NodePad1 = v_uint32()
@@ -5066,7 +5066,7 @@ class XSAVE_AREA_HEADER(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.Mask = v_uint64()
-        self.Reserved = v_bytes(size=56) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=56)  # FIXME Unknown Array Type
 
 
 class PSP_CPU_SHARE_CAPTURED_WEIGHT_DATA(vstruct.VStruct):
@@ -5124,7 +5124,7 @@ class IO_RESOURCE_REQUIREMENTS_LIST(vstruct.VStruct):
         self.InterfaceType = v_uint32()
         self.BusNumber = v_uint32()
         self.SlotNumber = v_uint32()
-        self.Reserved = v_bytes(size=12) # FIXME Unknown Array Type
+        self.Reserved = v_bytes(size=12)  # FIXME Unknown Array Type
         self.AlternativeLists = v_uint32()
         self.List = v_uint32()
 

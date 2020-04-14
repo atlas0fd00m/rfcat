@@ -21,11 +21,13 @@ class EXCEPTION_RECORD(vstruct.VStruct):
         self.ExceptionAddress = v_ptr()
         self.NumberParameters = v_uint32()
 
+
 class EXCEPTION_REGISTRATION(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.prev = v_ptr()
         self.handler = v_ptr()
+
 
 class HEAP(vstruct.VStruct):
     def __init__(self):
@@ -67,6 +69,7 @@ class HEAP(vstruct.VStruct):
         self.FrontEndHeapType = v_uint8()
         self.LastSegmentIndex = v_uint8()
 
+
 class HEAP_SEGMENT(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -86,6 +89,7 @@ class HEAP_SEGMENT(vstruct.VStruct):
         self.Reserved = v_uint16()
         self.LastEntryInSegment = v_ptr()
 
+
 class HEAP_ENTRY(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -96,11 +100,13 @@ class HEAP_ENTRY(vstruct.VStruct):
         self.Unused = v_uint8()
         self.TagIndex = v_uint8()
 
+
 class ListEntry(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.Flink = v_ptr()
         self.Blink = v_ptr()
+
 
 class NT_TIB(vstruct.VStruct):
     def __init__(self):
@@ -113,6 +119,7 @@ class NT_TIB(vstruct.VStruct):
         #x.Version = v_ptr() # This is a union field
         self.ArbitraryUserPtr = v_ptr()
         self.Self = v_ptr()
+
 
 class PEB(vstruct.VStruct):
     def __init__(self):
@@ -184,12 +191,14 @@ class PEB(vstruct.VStruct):
         self.SystemAssemblyStorageMap = v_ptr()
         self.MinimumStackCommit = v_uint32()
 
+
 class SEH3_SCOPETABLE(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.EnclosingLevel = v_int32()
         self.FilterFunction = v_ptr()
         self.HandlerFunction = v_ptr()
+
 
 class SEH4_SCOPETABLE(vstruct.VStruct):
     def __init__(self):
@@ -201,6 +210,7 @@ class SEH4_SCOPETABLE(vstruct.VStruct):
         self.EnclosingLevel = v_int32()
         self.FilterFunction = v_ptr()
         self.HandlerFunction = v_ptr()
+
 
 class TEB(vstruct.VStruct):
     def __init__(self):
@@ -221,10 +231,12 @@ class TEB(vstruct.VStruct):
         self.CurrentLocale = v_uint32()
         self.FpSoftwareStatusRegister = v_uint32()
 
+
 class CLSID(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.uuid = GUID()
+
 
 class IID(vstruct.VStruct):
     def __init__(self):

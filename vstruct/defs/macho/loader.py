@@ -6,6 +6,7 @@ cpu_type_t = vs_prim.v_uint32
 cpu_subtype_t = vs_prim.v_uint32
 lc_str = vs_prim.v_uint32
 
+
 class mach_header(vstruct.VStruct):
 
     def __init__(self):
@@ -349,6 +350,7 @@ class twolevel_hint(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.itoc = vs_prim.v_uint32() # index into the table of contents
+
 
 class prebind_cksum_command(vstruct.VStruct):
 

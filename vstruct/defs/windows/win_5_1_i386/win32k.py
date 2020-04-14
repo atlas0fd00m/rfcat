@@ -355,7 +355,8 @@ class FAST_IO_DISPATCH(vstruct.VStruct):
         self.ReleaseForCcFlush = v_ptr32()
 
 
-class ACCESS_STATE::__unnamed(vstruct.VStruct):
+class ACCESS_STATE::__unnamed(vstruct.VStruct):  # FIXME and others? Type annotation syntax may be wrong?
+    # FIXME see https://dev.to/dstarner/using-pythons-type-annotations-4cfe
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.InitialPrivilegeSet = INITIAL_PRIVILEGE_SET()

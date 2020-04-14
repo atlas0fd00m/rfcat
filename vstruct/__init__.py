@@ -27,9 +27,9 @@ class VStruct(vs_prims.v_base):
             self._vs_fmtbase = '>'
 
     def vsGetClassPath(self):
-        '''
+        """
         Return the entire class name (including module path).
-        '''
+        """
         return '%s.%s' % (self.__module__, self._vs_name)
 
     def vsParse(self, bytes_parse, offset=0):

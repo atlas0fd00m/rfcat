@@ -6,6 +6,7 @@ import envi
 import ctypes
 import platform
 
+
 def isSysWow64():
     k32 = ctypes.windll.kernel32
     if not hasattr(k32, 'IsWow64Process'):
@@ -16,6 +17,7 @@ def isSysWow64():
         return False
     return bool(ret.value)
 
+
 def getCurrentDef(normname):
     bname, wver, stuff, whichkern = platform.win32_ver()
     wvertup = wver.split('.')
@@ -23,14 +25,15 @@ def getCurrentDef(normname):
     if isSysWow64():
         arch = 'wow64'
 
-    modname = 'vstruct.defs.windows.win_%s_%s_%s.%s' % (wvertup[0], wvertup[1], arch, normname)
+    modname = 'vstruct.defs.windows.win_{!s}_{!s}_{!s}.{!s}'.format(wvertup[0], wvertup[1], arch, normname)
 
     try:
         mod = __import__(modname, {}, {}, 1)
-    except ImportError, e:
+    except ImportError as e:
         mod = None
     return mod
 
+
 if __name__ == '__main__':
-    print getCurrentDef('ntdll')
+    print(getCurrentDef('ntdll'))
 

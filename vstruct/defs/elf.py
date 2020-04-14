@@ -29,6 +29,7 @@ class Elf32(vstruct.VStruct):
         self.e_shnum       = v_uint16()
         self.e_shstrndx    = v_uint16()
 
+
 class Elf32Section(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -43,6 +44,7 @@ class Elf32Section(vstruct.VStruct):
         self.sh_addralign = v_uint32()
         self.sh_entsize = v_uint32()
 
+
 class Elf32Pheader(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -55,16 +57,19 @@ class Elf32Pheader(vstruct.VStruct):
         self.p_flags  = v_uint32()
         self.p_align  = v_uint32()
 
+
 class Elf32Reloc(vstruct.VStruct):
     def __init__(self):
         vstruct.VStruct.__init__(self)
         self.r_offset = v_ptr32()
         self.r_info   = v_uint32()
 
+
 class Elf32Reloca(Elf32Reloc):
     def __init__(self):
         Elf32Reloc.__init__(self)
         self.r_addend = v_uint32()
+
 
 class Elf32Symbol(vstruct.VStruct):
     def __init__(self):
@@ -75,6 +80,7 @@ class Elf32Symbol(vstruct.VStruct):
         self.st_info  = v_uint8()
         self.st_other = v_uint8()
         self.st_shndx = v_uint16()
+
 
 class Elf32Dynamic(vstruct.VStruct):
     def __init__(self):
@@ -107,6 +113,7 @@ class Elf64(vstruct.VStruct):
         self.e_shnum       = v_uint16()
         self.e_shstrndx    = v_uint16()
 
+
 class Elf64Section(Elf32Section):
     def __init__(self):
         vstruct.VStruct.__init__(self)
@@ -120,6 +127,7 @@ class Elf64Section(Elf32Section):
         self.sh_info      = v_uint32()
         self.sh_addralign = v_uint64()
         self.sh_entsize   = v_uint64()
+
 
 class Elf64Pheader(Elf32Pheader):
     def __init__(self):
@@ -140,6 +148,7 @@ class Elf64Reloc(vstruct.VStruct):
         self.r_offset = v_ptr64()
         self.r_info   = v_uint64()
 
+
 class Elf64Reloca(Elf64Reloc):
     def __init__(self):
         #Elf64Reloc.__init__(self)
@@ -147,6 +156,7 @@ class Elf64Reloca(Elf64Reloc):
         self.r_offset = v_uint64()
         self.r_info   = v_uint64()
         self.r_addend = v_uint64()
+
 
 class Elf64Symbol(vstruct.VStruct):
     def __init__(self):
@@ -157,6 +167,7 @@ class Elf64Symbol(vstruct.VStruct):
         self.st_shndx = v_uint16()
         self.st_value = v_uint64()
         self.st_size  = v_uint64()
+
 
 class Elf64Dynamic(Elf32Dynamic):
     pass
