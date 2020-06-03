@@ -63,7 +63,7 @@ def verify_code(ihx_file, serial_port):
         block_length = length
       else:
         block_length = ((length / 16) + 1) * 16
-      print("\rVerifying %04d bytes at address: %04X".format(length, start_addr))
+      print("\rVerifying {0:04d} bytes at address: {1:04X}".format(length, start_addr))
       do_flash_read(serial_port, start_addr, block_length)
       verify_data = ''
       for read_data in serial_port:
@@ -94,7 +94,7 @@ def reset_bootloader(serial_port):
   rc = serial_port.read()
   print("RC = {}".format(rc))
   if rc in bootloader_error_codes:
-    print("(%s)".format(bootloader_error_codes[rc]))
+    print("{!s}".format(bootloader_error_codes[rc]))
   else:
     print("(Unknown Error)")
   if rc != '0':
@@ -106,9 +106,9 @@ def reset_bootloader(serial_port):
 def erase_all_user(serial_port):
   serial_port.write(":00000023DD\n")
   rc = serial_port.read()
-  print("RC = ".format(rc))
+  print("RC = {}".format(rc))
   if rc in bootloader_error_codes:
-    print("(%s)".format(bootloader_error_codes[rc]))
+    print("({!s})".format(bootloader_error_codes[rc]))
   else:
     print("(Unknown Error)")
   if rc != '0':
@@ -121,9 +121,9 @@ def erase_user_page(serial_port, page):
   chksum = (0xDB + 0x100 - page) & 0xFF
   serial_port.write(":01000024%02X%02X\n" % (page, chksum))
   rc = serial_port.read()
-  print("RC = ".format(rc))
+  print("RC = {!s}".format(rc))
   if rc in bootloader_error_codes:
-    print("(%s)".format(bootloader_error_codes[rc]))
+    print("({!s})".format(bootloader_error_codes[rc]))
   else:
     print("(Unknown Error)")
   if rc != '0':
@@ -139,7 +139,7 @@ def do_flash_read(serial_port, start_addr, length):
             (0x100 - (length & 0xFF)) +
             (0x100 - ((length >> 8) & 0xFF))
            ) & 0xFF
-  serial_port.write(":02%04X25%04X%02X\n" % (start_addr, length, chksum))
+  serial_port.write(":02{0:04X}25{1:04X}{2:02X}\n".format(start_addr, length, chksum))
 
 
 def flash_read(ihx_file, serial_port, start_addr, length):
@@ -159,7 +159,7 @@ def print_usage():
   print("""
 CC Bootloader Download Utility
 
-Usage:  %s serial_port command
+Usage:  {} serial_port command
 
 Commands:
 
@@ -201,7 +201,7 @@ Commands:
   verify <hex_file>
 
     Verify hex_file matches device flash memory.
-  """ % sys.argv[0])
+  """.format(sys.argv[0]))
 
 
 if __name__ == '__main__':
