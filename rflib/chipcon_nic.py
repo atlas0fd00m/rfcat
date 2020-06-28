@@ -1432,7 +1432,7 @@ class NICxx11(USBDongle):
         freqoff = self.getFsOffset(mhz, radiocfg)
         freqest = self.getFreqEst(radiocfg)
         
-        output.append("Intermediate freq:   {:d} hz".format(freq_if))
+        output.append("Intermediate freq:   {:f} hz".format(freq_if))
         output.append("Frequency Offset:    {:d} +/-".format(freqoff))
         output.append("Est. Freq Offset:    {:d}".format(freqest))
 
