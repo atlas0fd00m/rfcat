@@ -37,7 +37,7 @@ RfCat currently requires Python 2.7.  the only suspected incompatabilities with 
 ### Build requirements
 
 * Make
-* SDCC (code is kept up-to-date with the current Ubuntu release, as of this writing: 3.4.0+dfsg-2ubuntu1)
+* SDCC (no later than 3.5.0, newer versions do not work)
 
 ## DEVELOPMENT
 
@@ -164,14 +164,55 @@ Pogo pads on the back are clearly marked, but if you want to use the header...
                   9 <----- GND ----> 9
 ```
 
-### Your build environment
+
+## INSTALLING WITH BOOTLOADER
+
+### Steps required for all firmware installs and updates
+
+
+You will also need to install the build requirements of python-usb, libusb-1.0.0, make, and sdcc.
+
+* python-usb
+* libusb-1.0.0
+* make
+* sdcc  (no later than version 3.5.0, newer versions will not work)
+
+```
+sudo apt install python-usb libusb-1.0.0 make sdcc=3.5.0
+```
+
+For sdcc and its dependency, sdcc-libraries, you may need to download it from a earlier release's repository if you are on a newer version of Debian or Ubuntu  such as:
+
+* https://packages.debian.org/stretch/sdcc
+
+Next, your user must have read/write access to the dongle when it shows up to the operating system.  
+For most Linux distros, this means you have to be a member of the "dialout" group.
+
+```
+usermod -a -G sudo $USER
+su - $USER
+```
+
+You will also need permanent symlinks to the USB serial devices that will communicate with the CHRONOS, DONSDONGLE or YARDSTICKONE
+bootloader when required. If you haven't done this step already (see above), then run:
+
+```
+sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
+sudo udevadm control --reload-rules
+```
+
+### Steps for bootloader + firmware installs via hardware debugger
+
+To prepare your dongle for the first time, you'll need to hook up your debugger as described above 
 
 Intended development model is using a [GoodFET](http://goodfet.sf.net) although one of our developers uses the chipcon debugger from Texas Instruments.
-* install sdcc
-* install make
-* make sure both are in the path
-* cd into the `rfcat/firmware/` directory
-* `make testgoodfet` will read info from your dongle using the GoodFET. you should see something like:
+
+```
+cd rfcat/firmware/
+make testgoodfet
+```
+
+This will read info from your dongle using the GoodFET. you should see something like:
 
 ```
 SmartRF not found for this chip.
@@ -186,7 +227,6 @@ RSSI    00
 * `make clean installRfCatDonsDongle` will clean, build, and install the RfCat (`appFHSSNIC.c`) firmware for a cc1111emk.
 * `make clean installimmesnifffw` will clean, build, and install the RfSniff firmware for the IMME girls toy from girltech 
 
-## INSTALLING WITH BOOTLOADER
 
 Dependencies: Fergus Noble's CC-Bootloader (slightly modified). For your convenience, hex files are provided in 
 the CCBootloader sub-directory in firmware. 
@@ -197,20 +237,7 @@ Source can be found here
 Which is branched from here
 * https://github.com/fnoble/CC-Bootloader
 
-### To install
-
-We need permanent symlinks to the USB serial devices that will communicate with the CHRONOS, DONSDONGLE or YARDSTICKONE
-bootloader when required. If you haven't done this step already (see above), then run:
-
-```
-sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
-sudo udevadm control --reload-rules
-```
-
-Next, your user must have read/write access to the dongle when it shows up to the operating system.  
-For most Linux distros, this means you have to be a member of the "dialout" group.
-
-To prepare your dongle for the first time, you'll need to hook up your debugger as described above and do:
+and do:
 
 (install `rfcat_bootloader` from the CC-Bootloader subdirectory to somewhere on your execution path)
 
@@ -229,7 +256,9 @@ now unplug the debugger and plug in your USB dongle.
 
 If you have just installed the bootloader, the dongle should be in bootloader mode, indicated by a solid LED. 
 
-If you are re-flashing a dongle that is already running rfcat, the Makefile targets will force it into bootloader
+### Steps for firmware updates via USB port
+
+If you are re-flashing a dongle that is already running rfcat firmware, such as a YarstickOne, the Makefile targets will force it into bootloader
 mode for you, but you can manually put it into bootloader mode either by holding down the EMK/DONS button as you plug 
 it into USB (on the CHRONOS or YARDSTICKONE jumper P2_2/DC to GROUND), or by issuing the command `d.bootloader()` to rfcat in interactive 
 mode (`rfcat -r`), or by issuing the command `rfcat --bootloader --force` from the command line.
@@ -252,6 +281,7 @@ The new version will be installed, and bootloader exited.
 ## Installing client
 
 ### Dependencies
+
 * python-usb
 * libusb
 
