@@ -136,10 +136,10 @@ class USBDongle(object):
             self.xsema = copyDongle.xsema
             return
 
-        self._internal_select_dongle()
+        self._internal_select_dongle(console)
         self.finish_setup()
 
-    def _internal_select_dongle(self):
+    def _internal_select_dongle(self, console=False):
         '''
         strap in USB interface.  this has to insert a ._d and ._do widget with 
         the correct USB-like interface
