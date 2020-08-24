@@ -2,3 +2,4 @@ PySide2
 pyusb
 future
 ipython
+pyserial
