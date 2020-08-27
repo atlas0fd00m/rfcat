@@ -227,7 +227,7 @@ class USBDongle(object):
                 #if console: sys.stderr.write('.')
                 if not self._quiet:
                     print(("Error in resetup():" + repr(e)), file=sys.stderr)
-                #if console or self._debug: print >>sys.stderr,("Error in resetup():" + repr(e))
+                #if console or self._debug: print("Error in resetup():" + repr(e), file=sys.stderr)
                 time.sleep(1)
 
 
@@ -369,13 +369,13 @@ class USBDongle(object):
                                             q.insert(0,requeuebuf)
                                         print(("DEBUG: (%.3f) %s" % (timestamp, repr(printbuf))), file=sys.stderr)
                             elif (cmd == DEBUG_CMD_HEX):
-                                #print >>sys.stderr, repr(buf)
+                                #print(repr(buf), file=sys.stderr)
                                 print("DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("B", buf[4:5])[0], struct.unpack("B", buf[4:5])[0]), file=sys.stderr)
                             elif (cmd == DEBUG_CMD_HEX16):
-                                #print >>sys.stderr, repr(buf)
+                                #print(repr(buf), file=sys.stderr)
                                 print("DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("<H", buf[4:6])[0], struct.unpack("<H", buf[4:6])[0]), file=sys.stderr)
                             elif (cmd == DEBUG_CMD_HEX32):
-                                #print >>sys.stderr, repr(buf)
+                                #print(repr(buf), file=sys.stderr)
                                 print("DEBUG: (%.3f) 0x%x %d"%(timestamp, struct.unpack("<L", buf[4:8])[0], struct.unpack("<L", buf[4:8])[0]), file=sys.stderr)
                             elif (cmd == DEBUG_CMD_INT):
                                 print("DEBUG: (%.3f) %d"%(timestamp, struct.unpack("<L", buf[4:8])[0]), file=sys.stderr)
@@ -453,7 +453,7 @@ class USBDongle(object):
                         # DON'T CHANGE recv_queue from other threads!
                         msg = self.recv_queue
                         msglen = len(msg)
-                        #if self._debug > 2: print >> sys.stderr, "Sorting msg", len(msg), hexlify(msg)
+                        #if self._debug > 2: print( "Sorting msg", len(msg), hexlify(msg)
                         while (msglen>=5):                                      # if not enough to parse length... we'll wait.
                             if not self._recv_time:                             # should be 0 to start and when done with a packet
                                 self._recv_time = time.time()
@@ -678,14 +678,14 @@ class USBDongle(object):
         while True:
             """
             try:
-                print >>sys.stderr, ("DONGLE RESPONDING:  mode :%x, last error# %d"%(self.getDebugCodes()))
+                print(("DONGLE RESPONDING:  mode :%x, last error# %d"%(self.getDebugCodes()), file=sys.stderr)
             except:
                 pass
-            print >>sys.stderr,('recv_queue:\t\t (%d bytes) "%s"'%(len(self.recv_queue),repr(self.recv_queue)[:len(self.recv_queue)%39+20]))
-            print >>sys.stderr,('trash:     \t\t (%d bytes) "%s"'%(len(self.trash),repr(self.trash)[:len(self.trash)%39+20]))
-            print >>sys.stderr,('recv_mbox  \t\t (%d keys)  "%s"'%(len(self.recv_mbox),repr(self.recv_mbox)[:len(repr(self.recv_mbox))%79]))
+            print('recv_queue:\t\t (%d bytes) "%s"'%(len(self.recv_queue),repr(self.recv_queue)[:len(self.recv_queue)%39+20]), file=sys.stderr)
+            print('trash:     \t\t (%d bytes) "%s"'%(len(self.trash),repr(self.trash)[:len(self.trash)%39+20]), file=sys.stderr)
+            print('recv_mbox  \t\t (%d keys)  "%s"'%(len(self.recv_mbox),repr(self.recv_mbox)[:len(repr(self.recv_mbox))%79]), file=sys.stderr)
             for x in self.recv_mbox.keys():
-                print >>sys.stderr,('    recv_mbox   %d\t (%d records)  "%s"'%(x,len(self.recv_mbox[x]),repr(self.recv_mbox[x])[:len(repr(self.recv_mbox[x]))%79]))
+                print('    recv_mbox   %d\t (%d records)  "%s"'%(x,len(self.recv_mbox[x]),repr(self.recv_mbox[x])[:len(repr(self.recv_mbox[x]))%79]), file=sys.stderr)
                 """
             print(self.reprRadioState())
             print(self.reprClientState())

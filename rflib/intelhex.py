@@ -185,6 +185,22 @@ class IntelHex(object):
                                        bin[7]),
                               }
 
+    def loadhexbytes(self, hbytes):
+        """Load hex bytes into internal buffer.
+
+        @param  hbytes          intelhex file in bytes
+        """
+        self._offset = 0
+        line = 0
+
+        decode = self._decode_record
+        try:
+            for s in fobj:
+                line += 1
+                decode(s, line)
+        except _EndOfFile:
+            pass
+
     def loadhex(self, fobj):
         """Load hex file into internal buffer. This is not necessary
         if object was initialized with source set. This will overwrite

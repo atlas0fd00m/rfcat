@@ -16,7 +16,7 @@ s=serial.Serial(dport, 115200)
 
 counter = 0
 while True:
-    print ("%d: %s" % (counter, repr(s.read(12))))
+    print("%d: %s" % (counter, repr(s.read(12))))
     counter += 1
     #sys.stdout.write(s.read(1))
     #sys.stdout.flush()

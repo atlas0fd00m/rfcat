@@ -335,3 +335,4 @@ CHIPmhz = {
     0x01: 26,
 }
 
+FAKE_PARTNUM = 0x40
