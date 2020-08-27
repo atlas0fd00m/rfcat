@@ -239,9 +239,9 @@ class USBDongle(object):
         return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, buf, value, index, timeout), buf
 
     def _recvEP0(self, request=0, length=64, value=0, index=0, timeout=100):
-        retary = ["%c"%x for x in self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_IN, request, length, value, index, timeout)]
+        retary = [b"%c"%x for x in self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_IN, request, length, value, index, timeout)]
         if len(retary):
-            return ''.join(retary)
+            return b''.join(retary)
         return b""
 
     def _sendEP5(self, buf=None, timeout=DEFAULT_USB_TIMEOUT):
