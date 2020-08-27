@@ -6,6 +6,7 @@ import queue
 import logging
 import unittest
 import threading
+import traceback
 
 from rflib.const import *
 
@@ -20,10 +21,16 @@ class fakeMemory:
         self.memory = [0 for x in range(size)]
 
     def readMemory(self, addr, size):
-        return b''.join([chr(x) for x in self.memory[addr:addr+size]])
+        logger.debug("fm.readMemory(0x%x, 0x%x)", addr, size)
+        chunk = b''.join([b'%c' % x for x in self.memory[addr:addr+size]])
+        if len(chunk) < size:
+            chunk += b"@" * (size-len(chunk))
+        return chunk
 
     def writeMemory(self, addr, data):
-        self.memory = self.memory[:addr] + data + self.memory[addr+len(data):]
+        logger.debug("fm.writeMemory(0x%x, %r)", addr, data)
+        for x in range(len(data)):
+            self.memory[addr+x] = data[x] 
 
 
 class fakeDon:
@@ -46,49 +53,56 @@ class fakeDongle:
                 return b'\0\0'
 
     def bulkWrite(self, chan, buf, timeout=1):
-        self._initrcvd = buf
-        logger.debug("=> fakeDoer.bulkWrite(5, %r)", buf)
+        try:
+            self._initrcvd = buf
+            logger.debug("=> fakeDoer.bulkWrite(5, %r)", buf)
 
-        app, cmd, mlen = struct.unpack("<BBH", buf[:4])
-        data = buf[4:]
+            app, cmd, mlen = struct.unpack("<BBH", buf[:4])
+            data = buf[4:]
 
-        if app == APP_SYSTEM:
-            if cmd == SYS_CMD_PEEK:
-                size, addr = struct.unpack("<HH", data[:4])
-                retmsg = struct.pack("<BBH", app, cmd, size) 
-                retmsg += b'A' * size
-                self.bulk5.put(retmsg)
+            if app == APP_SYSTEM:
+                if cmd == SYS_CMD_PEEK:
+                    size, addr = struct.unpack("<HH", data[:4])
+                    retmsg = struct.pack("<BBH", app, cmd, size) 
+                    retmsg += self.memory.readMemory(addr, size)
+                    self.bulk5.put(retmsg)
 
-            elif cmd == SYS_CMD_POKE:
-                size, addr = struct.unpack("<HH", data[:4])
-                retmsg = struct.pack("<BBH", app, cmd, size) 
-                retmsg += b'A' * size
-                self.bulk5.put(retmsg)
+                elif cmd == SYS_CMD_POKE:
+                    addr, = struct.unpack("<H", data[:2])
+                    size = mlen - 2
+                    chunk = data[2:size]
+                    logger.debug("%r\t\t%r\t\t%r\t\t%r", repr(buf), repr(data), hex(size), hex(addr))
+                    self.memory.writeMemory(addr, chunk)
 
-            elif cmd == SYS_CMD_PING:
-                self.bulk5.put(buf)
+                    self.bulk5.put(buf)
 
-            elif cmd == SYS_CMD_RFMODE:
-                self.bulk5.put(buf)
+                elif cmd == SYS_CMD_PING:
+                    self.bulk5.put(buf)
 
+                elif cmd == SYS_CMD_RFMODE:
+                    self.bulk5.put(buf)
+
+                else:
+                    self.log(b'WTFO!  no APP_SYSTEM::0x%x', cmd)
+                    self.bulk5.put(buf)
+
+            elif app == APP_NIC:
+                if cmd == NIC_GET_AES_MODE:
+                    retmsg = struct.pack("<BBH", app, cmd, 1) 
+                    retmsg += b'\0'
+                    self.bulk5.put(retmsg)
+
+                else:
+                    self.log(b'WTFO!  no APP_NIC::0x%x', cmd)
+                    self.bulk5.put(buf)
             else:
-                self.log(b'WTFO!  no APP_SYSTEM::0x%x', cmd)
+                # everything else...  just echo
                 self.bulk5.put(buf)
 
-        elif app == APP_NIC:
-            if cmd == NIC_GET_AES_MODE:
-                retmsg = struct.pack("<BBH", app, cmd, 1) 
-                retmsg += b'\0'
-                self.bulk5.put(retmsg)
+            return len(buf)
 
-            else:
-                self.log(b'WTFO!  no APP_NIC::0x%x', cmd)
-                self.bulk5.put(buf)
-        else:
-            # everything else...  just echo
-            self.bulk5.put(buf)
-
-        return len(buf)
+        except:
+            logger.error(traceback.format_exc())
 
     def bulkRead(self, chan, length, timeout=1):
         starttime = time.time()
