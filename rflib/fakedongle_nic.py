@@ -20,7 +20,7 @@ class fakeMemory:
         self.memory = [0 for x in range(size)]
 
     def readMemory(self, addr, size):
-        return ''.join([chr(x) for x in self.memory[addr:addr+size]])
+        return b''.join([chr(x) for x in self.memory[addr:addr+size]])
 
     def writeMemory(self, addr, data):
         self.memory = self.memory[:addr] + data + self.memory[addr+len(data):]
@@ -54,13 +54,13 @@ class fakeDongle:
             if cmd == SYS_CMD_PEEK:
                 size, addr = struct.unpack("<HH", data[:4])
                 retmsg = struct.pack("<BBH", app, cmd, size) 
-                retmsg += 'A' * size
+                retmsg += b'A' * size
                 self.bulk5.put(retmsg)
 
             elif cmd == SYS_CMD_POKE:
                 size, addr = struct.unpack("<HH", data[:4])
                 retmsg = struct.pack("<BBH", app, cmd, size) 
-                retmsg += 'A' * size
+                retmsg += b'A' * size
                 self.bulk5.put(retmsg)
 
             elif cmd == SYS_CMD_PING:
@@ -70,17 +70,17 @@ class fakeDongle:
                 self.bulk5.put(buf)
 
             else:
-                self.log('WTFO!  no APP_SYSTEM::0x%x', cmd)
+                self.log(b'WTFO!  no APP_SYSTEM::0x%x', cmd)
                 self.bulk5.put(buf)
 
         elif app == APP_NIC:
             if cmd == NIC_GET_AES_MODE:
                 retmsg = struct.pack("<BBH", app, cmd, 1) 
-                retmsg += '\0'
+                retmsg += b'\0'
                 self.bulk5.put(retmsg)
 
             else:
-                self.log('WTFO!  no APP_NIC::0x%x', cmd)
+                self.log(b'WTFO!  no APP_NIC::0x%x', cmd)
                 self.bulk5.put(buf)
         else:
             # everything else...  just echo
@@ -95,7 +95,7 @@ class fakeDongle:
             try:
                 out = self.bulk5.get_nowait()
                 logger.debug('<= fakeDoer.bulkRead(5, %r) == %r', length, out)
-                return "@" + out
+                return b"@" + out
             except queue.Empty:
                 time.sleep(.05)
 
