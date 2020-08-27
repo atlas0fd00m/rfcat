@@ -36,10 +36,9 @@ class TestApis(unittest.TestCase):
 
     def test_api_usb(self):
         self.assertEqual(self.d.getPartNum(), FAKE_PARTNUM)
+        
         '''
-rflib/chipcon_usb.py:35:def getRfCatDevices():
 rflib/chipcon_usb.py:106:    def setRFparameters(self):
-rflib/chipcon_usb.py:119:    def setup(self, console=True, copyDongle=None):
 rflib/chipcon_usb.py:623:    def getDebugCodes(self, timeout=100):
 rflib/chipcon_usb.py:698:    def getPartNum(self):
 rflib/chipcon_usb.py:763:    def getBuildInfo(self):

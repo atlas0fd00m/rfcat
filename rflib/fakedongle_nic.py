@@ -42,6 +42,8 @@ class fakeDongle:
             logger.warn("=> fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
         elif flags & USB_BM_REQTYPE_DIR_IN:
             logger.warn("<= fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
+            if request == EP0_CMD_GET_DEBUG_CODES:
+                return b'\0\0'
 
     def bulkWrite(self, chan, buf, timeout=1):
         self._initrcvd = buf
