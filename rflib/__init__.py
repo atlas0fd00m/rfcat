@@ -103,7 +103,7 @@ class RfCat(FHSSNIC):
         self.setRFparameters(*args, **kwargs)
 
     def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
-        buf = ''
+        buf = b''
 
         if len(fdtup)>1:
             fd0i, fd0o = fdtup 

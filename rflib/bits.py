@@ -34,6 +34,13 @@ def wtfo(string):
 
     return outstr
 
+
+def ord23(thing):
+    if PYVER == 2:
+        return ord(thing)
+    return thing
+
+
 def strBitReverse(string):
     # FIXME: this is really dependent upon python's number system.  large strings will not convert well.  
     # FIXME: break up array of 8-bit numbers and bit-swap in the array
