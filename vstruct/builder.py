@@ -50,7 +50,7 @@ class VStructBuilder:
         if vsdef != None:
             return VStructConstructor(self, name)
 
-        raise AttributeError, name
+        raise AttributeError(name)
 
     def addVStructEnumeration(self, enum):
         self._vs_enums[enum[0]] = enum
@@ -59,17 +59,17 @@ class VStructBuilder:
         self._vs_namespaces[name] = builder
 
     def getVStructNamespaces(self):
-        return self._vs_namespaces.items()
+        return list(self._vs_namespaces.items())
 
     def getVStructNamespaceNames(self):
-        return self._vs_namespaces.keys()
+        return list(self._vs_namespaces.keys())
 
     def hasVStructNamespace(self, namespace):
         return self._vs_namespaces.get(namespace, None) != None
 
     def getVStructNames(self, namespace=None):
         if namespace == None:
-            return self._vs_defs.keys()
+            return list(self._vs_defs.keys())
         nsmod = self._vs_namespaces.get(namespace)
         ret = []
         for name in dir(nsmod):
@@ -161,14 +161,14 @@ class VStructBuilder:
         ret += 'from vstruct.primitives import *'
         ret += '\n\n'
 
-        for ename, esize, ekids in self._vs_enums.values():
+        for ename, esize, ekids in list(self._vs_enums.values()):
             ret += '%s = v_enum()\n' % ename
             for kname, kval in ekids:
                 ret += '%s.%s = %d\n' % (ename,kname,kval)
             ret += '\n\n'
 
 
-        for vsname, vsize, vskids in self._vs_defs.values():
+        for vsname, vsize, vskids in list(self._vs_defs.values()):
             ret += 'class %s(vstruct.VStruct):\n' % vsname
             ret += '    def __init__(self):\n'
             ret += '        vstruct.VStruct.__init__(self)\n'
@@ -239,11 +239,11 @@ if __name__ == '__main__':
     parser = vt_win32.Win32SymbolParser(0xffffffff, sys.argv[1], baseaddr)
     parser.parse()
 
-    t = parser._sym_types.values()
-    e = parser._sym_enums.values()
+    t = list(parser._sym_types.values())
+    e = list(parser._sym_enums.values())
     builder = VStructBuilder(defs=t, enums=e)
 
-    print '# Version: %d.%d' % (osmajor, osminor)
-    print '# Architecture: %s' % archname
-    print builder.genVStructPyCode()
+    print('# Version: %d.%d' % (osmajor, osminor))
+    print('# Architecture: %s' % archname)
+    print(builder.genVStructPyCode())
 
