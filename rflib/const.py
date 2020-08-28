@@ -281,6 +281,43 @@ LENGTH_CONFIGS = [
         "reserved",
         "reserved",
         ]
+
+
+# RFST (0xE1) - RF Strobe Commands
+RFST_SFSTXON                    = 0x00
+RFST_SCAL                       = 0x01
+RFST_SRX                        = 0x02
+RFST_STX                        = 0x03
+RFST_SIDLE                      = 0x04
+RFST_SNOP                       = 0x05
+
+# 0xDF3B: MARCSTATE - Main Radio Control State Machine State
+MARCSTATE_MARC_STATE            = 0x1F
+
+MARC_STATE_SLEEP                = 0x00
+MARC_STATE_IDLE                 = 0x01
+MARC_STATE_VCOON_MC             = 0x03
+MARC_STATE_REGON_MC             = 0x04
+MARC_STATE_MANCAL               = 0x05
+MARC_STATE_VCOON                = 0x06
+MARC_STATE_REGON                = 0x07
+MARC_STATE_STARTCAL             = 0x08
+MARC_STATE_BWBOOST              = 0x09
+MARC_STATE_FS_LOCK              = 0x0A
+MARC_STATE_IFADCON              = 0x0B
+MARC_STATE_ENDCAL               = 0x0C
+MARC_STATE_RX                   = 0x0D
+MARC_STATE_RX_END               = 0x0E
+MARC_STATE_RX_RST               = 0x0F
+MARC_STATE_TXRX_SWITCH          = 0x10
+MARC_STATE_RX_OVERFLOW          = 0x11
+MARC_STATE_FSTXON               = 0x12
+MARC_STATE_TX                   = 0x13
+MARC_STATE_TX_END               = 0x14
+MARC_STATE_RXTX_SWITCH          = 0x15
+MARC_STATE_TX_UNDERFLOW         = 0x16
+
+
 MARC_STATE_MAPPINGS = [
     (0, 'MARC_STATE_SLEEP', RFST_SIDLE),
     (1, 'MARC_STATE_IDLE', RFST_SIDLE),
@@ -335,4 +372,24 @@ CHIPmhz = {
     0x01: 26,
 }
 
+# FAKE DONGLE settings. mostly used for unittests.
 FAKE_PARTNUM = 0x40
+FAKE_DEBUG_CODES = (0x41, 0x42)
+FAKE_DONGLE_BUILDDATA = b'DONS BROKEN FAKE DONGLE r0001\0'
+FAKE_DONGLE_COMPILER = b'ATLASv100'
+FAKE_DONGLE_SERIALNUM = b'0x47145'
+FAKE_INTERRUPT_REGISTERS = {
+        'IEN0': b'\xff',
+        'IEN1': b'\x01',
+        'IEN2': b'\xe0',
+        'TCON': b'\xff',
+        'S0CON': b'\x05',
+        'IRCON': b'\x02',
+        'IRCON2': b'\t',
+        'S1CON': b'\x02',
+        'RFIF': b'\x04',
+        'DMAIE': b'\x01',
+        'DMAIF': b'\x01',
+        'DMAIRQ': b'\x10'}
+# initial radio config
+FAKE_MEM_DF00 = b'\x0cN\xff@\x00\x00\x00\x0c\x00%\x95U\xca\xa3\x01#\x116\x07\x0f\x18\x17l\x03@\x91\xb6\x10\xef*+\x1fY??\x881\t\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00\x11\x03\x12\x80\xaa\r\x90\xfd'

@@ -235,7 +235,6 @@ class USBDongle(object):
     def _sendEP0(self, request=0, buf=None, value=0x200, index=0, timeout=DEFAULT_USB_TIMEOUT):
         if buf == None:
             buf = b'HELLO THERE'
-        #return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, "\x00\x00\x00\x00\x00\x00\x00\x00"+buf, value, index, timeout), buf
         return self._do.controlMsg(USB_BM_REQTYPE_TGT_EP|USB_BM_REQTYPE_TYPE_VENDOR|USB_BM_REQTYPE_DIR_OUT, request, buf, value, index, timeout), buf
 
     def _recvEP0(self, request=0, length=64, value=0, index=0, timeout=100):
@@ -653,7 +652,7 @@ class USBDongle(object):
         x = self._recvEP0(request=EP0_CMD_PEEKX, value=addr, length=length, timeout=timeout)
         return x#x[3:]
 
-    def ep0Poke(self, addr, buf='\x00', timeout=100):
+    def ep0Poke(self, addr, buf=b'\x00', timeout=100):
         x = self._sendEP0(request=EP0_CMD_POKEX, buf=buf, value=addr, timeout=timeout)
         return x
 
@@ -761,15 +760,15 @@ class USBDongle(object):
         return r
 
     def getBuildInfo(self):
-        r, t = self.send(APP_SYSTEM, SYS_CMD_BUILDTYPE, '')
+        r, t = self.send(APP_SYSTEM, SYS_CMD_BUILDTYPE, b'')
         return r
             
     def getCompilerInfo(self):
-        r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, '')
+        r, t = self.send(APP_SYSTEM, SYS_CMD_COMPILER, b'')
         return r
 
     def getDeviceSerialNumber(self):
-        r, t = self.send(APP_SYSTEM, SYS_CMD_DEVICE_SERIAL_NUMBER, '')
+        r, t = self.send(APP_SYSTEM, SYS_CMD_DEVICE_SERIAL_NUMBER, b'')
         return r
             
     def getInterruptRegisters(self):
@@ -802,9 +801,9 @@ class USBDongle(object):
         output= []
 
         hardware = self.getBuildInfo()
-        output.append("Dongle:              %s" % hardware.split(' ')[0])
+        output.append("Dongle:              %s" % hardware.split(b' ')[0])
         try:
-            output.append("Firmware rev:        %s" % hardware.split('r')[1])
+            output.append("Firmware rev:        %s" % hardware.split(b'r')[1])
         except:
             output.append("Firmware rev:        Not found! Update needed!")
         try:
