@@ -170,8 +170,8 @@ NIC_SET_AES_IV =                0x8
 NIC_SET_AES_KEY =               0x9
 NIC_SET_AMP_MODE =              0xa
 NIC_GET_AMP_MODE =              0xb
-NIC_XMIT_LONG =                 0xc
-NIC_XMIT_LONG_MORE =            0xd
+NIC_LONG_XMIT =                 0xc
+NIC_LONG_XMIT_MORE =            0xd
 
 FHSS_SET_CHANNELS =             0x10
 FHSS_NEXT_CHANNEL =             0x11

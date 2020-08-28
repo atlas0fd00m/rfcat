@@ -1094,7 +1094,10 @@ class NICxx11(USBDongle):
         '''
         get the amplifier mode (RF amp external to CC1111)
         '''
-        return self.send(APP_NIC, NIC_GET_AMP_MODE, b"")
+        retval = self.send(APP_NIC, NIC_GET_AMP_MODE, b"")
+        if len(retval) == 2:
+            retval = ord(retval[0])
+        return retval
 
     def setPktAddr(self, addr):
         return self.poke(ADDR, correctbytes(addr))
@@ -1146,7 +1149,7 @@ class NICxx11(USBDongle):
             chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
         preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, b"%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
+        retval, ts = self.send(APP_NIC, NIC_LONG_XMIT, b"%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
         error = struct.unpack("<B", retval[0])[0]
         if error:
@@ -1157,7 +1160,7 @@ class NICxx11(USBDongle):
             chunk = chunks[chidx]
             error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
             while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
-                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, b"%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
@@ -1165,7 +1168,7 @@ class NICxx11(USBDongle):
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
-        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, b"%s" % struct.pack("B", 0), wait=wait)
+        retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", 0), wait=wait)
         return struct.unpack("<b", retval[0])[0]
 
     def RFtestLong(self, data=b"BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
@@ -1176,7 +1179,7 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_LONG_XMIT, b"%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         sys.stderr.write('=' + repr(retval))
 
 
@@ -1197,8 +1200,10 @@ class NICxx11(USBDongle):
         return data
 
     def RFlisten(self):
-        ''' just sit and dump packets as they come in
-        kinda like discover() but without changing any of the communications settings '''
+        '''
+        just sit and dump packets as they come in
+        kinda like discover() but without changing any of the communications settings
+        '''
         print("Entering RFlisten mode...  packets arriving will be displayed on the screen")
         print("(press Enter to stop)")
         while not keystop():
@@ -1215,8 +1220,10 @@ class NICxx11(USBDongle):
         sys.stdin.read(1)
 
     def RFcapture(self):
-        ''' dump packets as they come in, but return a list of packets when you exit capture mode.
-        kinda like discover() but without changing any of the communications settings '''
+        '''
+        dump packets as they come in, but return a list of packets when you exit capture mode.
+        kinda like discover() but without changing any of the communications settings
+        '''
         capture = []
         print("Entering RFlisten mode...  packets arriving will be displayed on the screen (and returned in a list)")
         print("(press Enter to stop)")
@@ -1794,28 +1801,28 @@ class FHSSNIC(NICxx11):
     advanced NIC implementation for CCxx11 chips, including Frequency Hopping
     '''
     def FHSSxmit(self, data):
-        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
+        return self.send(APP_NIC, FHSS_XMIT, b"%c%s" % (len(data), data))
 
     def changeChannel(self, chan):
-        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
+        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, b"%c" % (chan))
 
     def getChannels(self, channels=[]):
-        return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
+        return self.send(APP_NIC, FHSS_GET_CHANNELS, b'')
 
     def setChannels(self, channels=[]):
-        chans = ''.join(["%c" % chan for chan in channels])
+        chans = b''.join([b"%c" % chan for chan in channels])
         length = struct.pack("<H", len(chans))
         
         return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
 
     def nextChannel(self):
-        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '' )
+        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, b'')
 
     def startHopping(self):
-        return self.send(APP_NIC, FHSS_START_HOPPING, '')
+        return self.send(APP_NIC, FHSS_START_HOPPING, b'')
 
     def stopHopping(self):
-        return self.send(APP_NIC, FHSS_STOP_HOPPING, '')
+        return self.send(APP_NIC, FHSS_STOP_HOPPING, b'')
 
     def setMACperiod(self, dwell_ms, mhz=24):
         macdata = self.getMACdata()
@@ -1885,7 +1892,10 @@ u16 synched_chans           %x
     """
     
     def getMACthreshold(self):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+        retval = self.send(APP_NIC, FHSS_GET_MAC_THRESHOLD, b'')
+        if len(retval) == 2:
+            retval, = struct.unpack("<I", retval[0])
+        return retval
 
     def setMACthreshold(self, value):
         return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
