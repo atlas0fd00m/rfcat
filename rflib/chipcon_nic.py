@@ -1063,7 +1063,7 @@ class NICxx11(USBDongle):
           (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT)
 
         '''
-        return self.send(APP_NIC, NIC_SET_AES_MODE, "%c"%aesmode)
+        return self.send(APP_NIC, NIC_SET_AES_MODE, b"%c"%aesmode)
 
     def getAESmode(self):
         '''
@@ -1089,7 +1089,7 @@ class NICxx11(USBDongle):
         '''
         set the amplifier mode (RF amp external to CC1111)
         '''
-        return self.send(APP_NIC, NIC_SET_AMP_MODE, "%c"%ampmode)
+        return self.send(APP_NIC, NIC_SET_AMP_MODE, b"%c"%ampmode)
     def getAmpMode(self):
         '''
         get the amplifier mode (RF amp external to CC1111)
@@ -1121,7 +1121,7 @@ class NICxx11(USBDongle):
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
-        self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+        self.send(APP_NIC, NIC_XMIT, b"%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
     def RFxmitLong(self, data, doencoding=True):
         # encode, if necessary
@@ -1146,7 +1146,7 @@ class NICxx11(USBDongle):
             chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
         preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
+        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, b"%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
         error = struct.unpack("<B", retval[0])[0]
         if error:
@@ -1157,7 +1157,7 @@ class NICxx11(USBDongle):
             chunk = chunks[chidx]
             error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
             while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
-                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, b"%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
@@ -1165,10 +1165,10 @@ class NICxx11(USBDongle):
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
-        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, b"%s" % struct.pack("B", 0), wait=wait)
         return struct.unpack("<b", retval[0])[0]
 
-    def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
+    def RFtestLong(self, data=b"BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
 
         chunks = []
@@ -1185,7 +1185,7 @@ class NICxx11(USBDongle):
         if not blocksize == None:
             if blocksize > EP5OUT_BUFFER_SIZE: 
                 raise Exception("Blocksize too large. Maximum %d" % EP5OUT_BUFFER_SIZE)
-            self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
+            self.send(APP_NIC, NIC_SET_RECV_LARGE, b"%s" % struct.pack("<H",blocksize))
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
         if self.endec is not None:

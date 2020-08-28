@@ -92,20 +92,32 @@ class TestApis(unittest.TestCase):
 
         self.d.setEnablePktCRC()
         self.assertEqual(self.d.getEnablePktCRC(), True)
+
+        self.d.setEnablePktDataWhitening()
+        self.assertEqual(self.d.getEnablePktDataWhitening(), True)
+
+        self.d.setEnablePktAppendStatus()
+        self.assertEqual(self.d.getEnablePktAppendStatus(), True)
+
+        self.d.setEnableMdmManchester()
+        self.assertEqual(self.d.getEnableMdmManchester(), True)
+
+        self.d.setEnableMdmFEC()
+        self.assertEqual(self.d.getEnableMdmFEC(), True)
+
+        self.d.setEnableMdmDCFilter()
+        self.assertEqual(self.d.getEnableMdmDCFilter(), True)
+
+        self.d.setFsIF(freq_if=23e3)
+        self.d.getFsIF()
+
+        self.d.setAmpMode(ampmode=1)
+        self.d.getAmpMode()
+        self.d.setPktAddr(addr=4)
+        self.d.getPktAddr()
+
         '''
         setRFbits(self, addr, bitnum, bitsz, val, suppress=False):
-        setEnablePktDataWhitening(self, enable=True, radiocfg=None):
-        getEnablePktDataWhitening(self, radiocfg=None):
-        setEnablePktAppendStatus(self, enable=True, radiocfg=None):
-        getEnablePktAppendStatus(self, radiocfg=None):
-        setEnableMdmManchester(self, enable=True, radiocfg=None):
-        getEnableMdmManchester(self, radiocfg=None):
-        setEnableMdmFEC(self, enable=True, radiocfg=None):
-        getEnableMdmFEC(self, radiocfg=None):
-        setEnableMdmDCFilter(self, enable=True, radiocfg=None):
-        getEnableMdmDCFilter(self, radiocfg=None):
-        setFsIF(self, freq_if, mhz=24, radiocfg=None):
-        getFsIF(self, mhz=24, radiocfg=None):
         setFsOffset(self, if_off, mhz=24, radiocfg=None):
         getFsOffset(self, mhz=24, radiocfg=None):
         getChannel(self, radiocfg=None):
@@ -130,16 +142,10 @@ class TestApis(unittest.TestCase):
         getAESmode(self):
         setAESiv(self, iv= b'\0'*16):
         setAESkey(self, key= b'\0'*16):
-        setAmpMode(self, ampmode=0):
-        getAmpMode(self):
-        setPktAddr(self, addr):
-        getPktAddr(self):
         setEnDeCoder(self, endec=None):
-        setup24330MHz(self):
         setup900MHz(self):
         setup900MHzHopTrans(self):
         setup900MHzContTrans(self):
-        setup_rfstudio_902PktTx(self):
         getChannels(self, channels=[]):
         setChannels(self, channels=[]):
         setMACperiod(self, dwell_ms, mhz=24):

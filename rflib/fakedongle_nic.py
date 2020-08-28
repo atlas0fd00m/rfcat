@@ -48,7 +48,7 @@ class fakeMemory:
                 self.memory[tgt] = val
 
     def mmio_RFST(self, tgt, dbyte):
-        logger.warning('mmio_RFST(0x%x, %r)', tgt, dbyte)
+        logger.info('mmio_RFST(0x%x, %r)', tgt, dbyte)
         print("RFST==%x  (%x)" % (self.readMemory(X_RFST, 1), ord(dbyte)))
 
 
@@ -67,7 +67,7 @@ class fakeMemory:
 
     def mmio_MARCSTATE(self, tgt, dbyte):
         rfst = self.readMemory(X_RFST, 1)
-        logger.warning('mmio_MARCSTATE(0x%x, %r) rfst=%r', tgt, dbyte, rfst)
+        logger.info('mmio_MARCSTATE(0x%x, %r) rfst=%r', tgt, dbyte, rfst)
         return MARC_STATE_RX
 
 class fakeDon:
@@ -84,7 +84,7 @@ class fakeDongle:
         self.memory.writeMemory(0xdf00, FAKE_MEM_DF00)
         self.memory.writeMemory(0xdf46, b'\xf0\x0d')
         for intreg, intval in FAKE_INTERRUPT_REGISTERS.items():
-            logger.warning('setting interrupt register: %r = %r', intreg, intval)
+            logger.info('setting interrupt register: %r = %r', intreg, intval)
             self.memory.writeMemory(eval(intreg), intval)
 
     def controlMsg(self, flags, request, buf, value, index, timeout):
@@ -92,14 +92,14 @@ class fakeDongle:
         try:
             # split by direction (IN/OUT)
             if flags & USB_BM_REQTYPE_DIR_IN:
-                logger.warning("<= fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
+                logger.info("<= fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
                 if request == EP0_CMD_GET_DEBUG_CODES:
                     return b'AB'
                 if request == EP0_CMD_PEEKX:
                     return self.memory.readMemory(value, buf)
 
             else:  # flags & USB_BM_REQTYPE_DIR_OUT fails since USB_BM_REQTYPE_DIR_OUT == 0!
-                logger.warning("=> fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
+                logger.info("=> fakeDoer.controlMsg(flags=0x%x, request=%r, buf=%r, value=%r, index=%x, timeout=%r)", flags, request, buf, value, index, timeout)
                 if request == EP0_CMD_POKEX:
                     self.memory.writeMemory(value, buf)
 
