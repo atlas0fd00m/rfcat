@@ -1,5 +1,5 @@
-
 import struct
+from binascii import hexlify
 
 class v_enum: pass
 
@@ -254,7 +254,7 @@ class v_bytes(v_prim):
         return "%ds" % len(self)
 
     def __repr__(self):
-        return self._vs_value.encode('hex')
+        return hexlify(self._vs_value)
 
 class v_str(v_prim):
     '''
