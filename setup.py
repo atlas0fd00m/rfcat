@@ -1,7 +1,7 @@
 import sys
 import os
 import codecs
-from distutils.core import setup, Extension
+import setuptools
 
 packages = ['rflib', 'vstruct', 'vstruct.defs']
 mods = []
@@ -14,9 +14,9 @@ scripts = ['rfcat',
 
 # store the HG revision in an rflib python file
 try:
-    REV = os.popen('./revision.sh').readline()
+    REV = os.popen('./revision.sh').readline().encode('UTF-8')
     if len(REV):
-        file('rflib/rflib_version.py', 'wb').write("RFLIB_VERSION=%s" % REV)
+        open('rflib/rflib_version.py', 'wb').write(b"RFLIB_VERSION=%s" % REV)
 except:
     sys.excepthook(*sys.exc_info())
 
@@ -27,17 +27,18 @@ def readme():
         return f.read()
 
 
-setup  (name             = 'rfcat',
-        version          = '1.0.1',
+setuptools.setup  (name  = 'rfcat',
+        version          = '1.9.1',
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
         author_email     = 'atlas@r4780y.com',
         url              = 'https://github.com/atlas0fd00m/rfcat',
-        download_url     = 'https://github.com/atlas0fd00m/rfcat/archive/1.0.1.tar.gz',
-        keywords         = ['radio', 'subghz'],
+        download_url     = 'https://github.com/atlas0fd00m/rfcat/archive/v1.9.1.tar.gz',
+        keywords         = ['radio', 'subghz', 'cc1111', 'chipcon', 'hacking', 'reverse engineering'],
         #include_dirs = [],
-        packages         = packages,
+        #packages         = packages,
+        packages         = setuptools.find_packages(),
         package_data     = pkgdata,
         ext_modules      = mods,
         scripts          = scripts,
@@ -46,7 +47,7 @@ setup  (name             = 'rfcat',
                             #   3 - Alpha
                             #   4 - Beta
                             #   5 - Production/Stable
-                            'Development Status :: 3 - Alpha',
+                            'Development Status :: 5 - Production/Stable',
 
                             # Indicate who your project is intended for: See info here: https://pypi.python.org/pypi/classifiers
                             'Intended Audience :: Telecommunications Industry',
@@ -59,16 +60,9 @@ setup  (name             = 'rfcat',
                             # that you indicate whether you support Python 2, Python 3 or both.
                             'Programming Language :: Python :: 2',
                             'Programming Language :: Python :: 2.7',
-                            # 'Programming Language :: Python :: 3',
-                            # 'Programming Language :: Python :: 3.2',
-                            # 'Programming Language :: Python :: 3.3',
-                            # 'Programming Language :: Python :: 3.4',
-                           ],
-        install_requires = [
-                            'pyusb>=1.0.0',
-                            'libusb>=1.0.21b2',
-                            'PySide2==5.12.0',
-                            'future>=0.17.1'
+                            'Programming Language :: Python :: 3',
+                            'Programming Language :: Python :: 3.8',
+                            'Operating System :: OS Indepentent',
                            ],
         python_requires  = '>=2.7,<3.0.0'
         )
