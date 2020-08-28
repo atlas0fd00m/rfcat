@@ -108,55 +108,74 @@ class TestApis(unittest.TestCase):
         self.d.setEnableMdmDCFilter()
         self.assertEqual(self.d.getEnableMdmDCFilter(), True)
 
-        self.d.setFsIF(freq_if=23e3)
-        self.d.getFsIF()
+        self.d.setFsIF(freq_if=23.5e3)
+        self.assertAlmostEqual(self.d.getFsIF(), 23.5e3, delta=80)
 
         self.d.setAmpMode(ampmode=1)
-        self.d.getAmpMode()
-        self.d.setPktAddr(addr=4)
-        self.d.getPktAddr()
+        self.assertEqual(self.d.getAmpMode(), 1)
 
+        self.d.setPktAddr(addr=4)
+        self.assertEqual(ord(self.d.getPktAddr()), 4)
+
+        self.d.setFsOffset(if_off=4, mhz=24, radiocfg=None)
+        self.assertEqual(self.d.getFsOffset(mhz=24, radiocfg=None), 4)
+
+        self.d.setChannel(channr=0x40, radiocfg=None)
+        self.assertEqual(self.d.getChannel(radiocfg=None), 0x40)
+
+        self.d.setMdmChanBW(bw=93.7e3, mhz=24, radiocfg=None)
+        self.assertAlmostEqual(self.d.getMdmChanBW(mhz=24, radiocfg=None), 93.7e3, delta=100)
+
+        self.d.setMdmDRate(drate=57.6e3, mhz=24, radiocfg=None)
+        self.assertAlmostEqual(self.d.getMdmDRate(mhz=24, radiocfg=None), 57.6e3, delta=100)
+
+        self.d.setMdmDeviatn(deviatn=20.5e3, mhz=24, radiocfg=None)
+        self.assertAlmostEqual(self.d.getMdmDeviatn(mhz=24, radiocfg=None), 20.5e3, delta=100)
+
+        self.d.setMdmSyncWord(word=0x7145, radiocfg=None)
+        self.assertEqual(self.d.getMdmSyncWord(radiocfg=None), 0x7145)
+        
+        self.d.setMdmSyncMode(syncmode=SYNCM_15_of_16, radiocfg=None)
+        self.assertEqual(self.d.getMdmSyncMode(radiocfg=None), SYNCM_15_of_16)
+
+        self.d.setMdmNumPreamble(preamble=MFMCFG1_NUM_PREAMBLE_4, radiocfg=None)
+        self.assertEqual(self.d.getMdmNumPreamble(radiocfg=None), MFMCFG1_NUM_PREAMBLE_4)
+        
+        self.d.setBSLimit(bslimit=3, radiocfg=None)
+        self.assertEqual(self.d.getBSLimit(radiocfg=None), 3)
+
+        self.d.getRSSI()
+        self.d.getLQI()
+
+        self.d.setAESmode(aesmode=AES_CRYPTO_DEFAULT)
+        self.d.getAESmode()
+        self.d.setAESiv(iv= b'@'*16)
+        self.d.setAESkey(key= b'@'*16)
+
+        self.d.setChannels(channels=[1,1,2,3,5,8,13,21,34,55,89,144])
+        self.d.getChannels()
+
+
+
+        self.d.setMACperiod(dwell_ms=20, mhz=24)
+
+        fakemacdata = (0, 6, 0, 83, 83, 0, 0, 0, 0, 0, 0, 0)
+        self.d.setMACdata(fakemacdata)
+        testmacdata = self.d.getMACdata()
+        self.assertEqual(fakemacdata[3:], testmacdata[3:])
+        self.assertEqual(fakemacdata[0:2],  testmacdata[0:2])
+        self.assertAlmostEqual(fakemacdata[2],  testmacdata[2], delta=10)     # MAC timer, ticks 20x per second
+
+        self.d.setMACthreshold(value=24)
+        self.assertEqual(self.d.getMACthreshold(), 24)
+
+        self.d.setFHSSstate(state=FHSS_STATE_SYNCHED)
+        self.assertEqual(self.d.getFHSSstate(), ('FHSS_STATE_SYNCHED', 3))
         '''
-        setRFbits(self, addr, bitnum, bitsz, val, suppress=False):
-        setFsOffset(self, if_off, mhz=24, radiocfg=None):
-        getFsOffset(self, mhz=24, radiocfg=None):
-        getChannel(self, radiocfg=None):
-        setChannel(self, channr, radiocfg=None):
-        setMdmChanBW(self, bw, mhz=24, radiocfg=None):
-        getMdmChanBW(self, mhz=24, radiocfg=None):
-        setMdmDRate(self, drate, mhz=24, radiocfg=None):
-        getMdmDRate(self, mhz=24, radiocfg=None):
-        setMdmDeviatn(self, deviatn, mhz=24, radiocfg=None):
-        getMdmDeviatn(self, mhz=24, radiocfg=None):
-        getMdmSyncWord(self, radiocfg=None):
-        setMdmSyncWord(self, word, radiocfg=None):
-        getMdmSyncMode(self, radiocfg=None):
-        setMdmSyncMode(self, syncmode=SYNCM_15_of_16, radiocfg=None):
-        getMdmNumPreamble(self, radiocfg=None):
-        setMdmNumPreamble(self, preamble=MFMCFG1_NUM_PREAMBLE_4, radiocfg=None):
-        getBSLimit(self, radiocfg=None):
-        setBSLimit(self, bslimit, radiocfg=None):
-        getRSSI(self):
-        getLQI(self):
-        setAESmode(self, aesmode=AES_CRYPTO_DEFAULT):
-        getAESmode(self):
-        setAESiv(self, iv= b'\0'*16):
-        setAESkey(self, key= b'\0'*16):
-        setEnDeCoder(self, endec=None):
-        setup900MHz(self):
-        setup900MHzHopTrans(self):
-        setup900MHzContTrans(self):
-        getChannels(self, channels=[]):
-        setChannels(self, channels=[]):
-        setMACperiod(self, dwell_ms, mhz=24):
-        setMACdata(self, data):
-        getMACdata(self):
-        getMACthreshold(self):
-        setMACthreshold(self, value):
-        setFHSSstate(self, state):
-        getFHSSstate(self):
-        getValueFromReprString(stringarray, line_text):
-'''
+        self.d.setRFbits(addr, bitnum, bitsz, val, suppress=False)
+        self.d.setEnDeCoder(endec=None)
+        self.d.getValueFromReprString(stringarray, line_text)
+        '''
 
 
     def test_bits(self):
