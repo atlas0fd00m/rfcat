@@ -1,4 +1,4 @@
-#!/usr/bin/env ipython
+#!/usr/bin/env ipython3
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -18,8 +18,9 @@ import struct
 import pickle
 import threading
 from .chipcon_usb import *
-from .bits import correctbytes
+from .bits import correctbytes, ord23
 from .const import *
+from binascii import hexlify
 
 def makeFriendlyAscii(instring):
     out = []
@@ -28,7 +29,7 @@ def makeFriendlyAscii(instring):
     instrlen = len(instring)
 
     for cidx in range(instrlen):
-        if (0x20 < ord(instring[cidx]) < 0x7f):
+        if (0x20 < ord23(instring[cidx]) < 0x7f):
             if last < cidx-1:
                 out.append( "." * (cidx-1-last))
                 start = cidx
@@ -42,7 +43,7 @@ def makeFriendlyAscii(instring):
     else: # if start == 0:
         out.append( instring[ start: ] )
 
-    return ''.join(out)
+    return b''.join(out)
 
 
 
@@ -110,12 +111,12 @@ class NICxx11(USBDongle):
         self.freq_offset_accumulator = 0
 
     ######## RADIO METHODS #########
-    def setRfMode(self, rfmode, parms=''):
+    def setRfMode(self, rfmode, parms=b''):
         '''
         sets the radio state to "rfmode", and makes 
         '''
         self._rfmode = rfmode
-        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, "%c" % (self._rfmode) + parms)
+        r = self.send(APP_SYSTEM, SYS_CMD_RFMODE, b"%c" % (self._rfmode) + parms)
 
     ### set standard radio state to TX/RX/IDLE (TX is pretty much only good for jamming).  TX/RX modes are set to return to whatever state you choose here.
     def setModeTX(self):
@@ -145,31 +146,31 @@ class NICxx11(USBDongle):
         '''
         set radio to TX state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_STX)
+        self.poke(X_RFST, b"%c"%RFST_STX)
 
     def strobeModeRX(self):
         '''
         set radio to RX state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SRX)
+        self.poke(X_RFST, b"%c"%RFST_SRX)
 
     def strobeModeIDLE(self):
         '''
         set radio to IDLE state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SIDLE)
+        self.poke(X_RFST, b"%c"%RFST_SIDLE)
 
     def strobeModeFSTXON(self):
         '''
         set radio to FSTXON state (transient)
         '''
-        self.poke(X_RFST, "%c"%RFST_SFSTXON)
+        self.poke(X_RFST, b"%c"%RFST_SFSTXON)
 
     def strobeModeCAL(self):
         '''
         set radio to CAL state (will return to whichever state is configured (via setMode* functions)
         '''
-        self.poke(X_RFST, "%c"%RFST_SCAL)
+        self.poke(X_RFST, b"%c"%RFST_SCAL)
         
     def strobeModeReturn(self, marcstate=None):
         """
@@ -180,7 +181,7 @@ class NICxx11(USBDongle):
             #marcstate = self.radiocfg.marcstate
         #if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
         #self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
-        self.poke(X_RFST, "%c" % self._rfmode)
+        self.poke(X_RFST, b"%c" % self._rfmode)
 
         
         
@@ -219,7 +220,7 @@ class NICxx11(USBDongle):
         sets the led state to "ledmode"
         '''
         self._ledmode = ledmode
-        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, "%c" % (self._ledmode))
+        r = self.send(APP_SYSTEM, SYS_CMD_LED_MODE, b"%c" % (self._ledmode))
 
     def getMARCSTATE(self, radiocfg=None):
         if radiocfg is None:
@@ -1062,15 +1063,15 @@ class NICxx11(USBDongle):
           (ENCCS_MODE_CBC | AES_CRYPTO_OUT_ON | AES_CRYPTO_OUT_ENCRYPT | AES_CRYPTO_IN_ON | AES_CRYPTO_IN_DECRYPT)
 
         '''
-        return self.send(APP_NIC, NIC_SET_AES_MODE, "%c"%aesmode)
+        return self.send(APP_NIC, NIC_SET_AES_MODE, b"%c"%aesmode)
 
     def getAESmode(self):
         '''
         get the currently set AES co-processor mode
         '''
-        return self.send(APP_NIC, NIC_GET_AES_MODE, "")
+        return self.send(APP_NIC, NIC_GET_AES_MODE, b"")
 
-    def setAESiv(self, iv= '\0'*16):
+    def setAESiv(self, iv= b'\0'*16):
         '''
         set the AES IV. this will persist until the next reboot, but it should be noted that some modes
         update the IV automatically with each operation, so care must be taken with the higher level 
@@ -1078,7 +1079,7 @@ class NICxx11(USBDongle):
         '''
         return self.send(APP_NIC, NIC_SET_AES_IV, iv)
 
-    def setAESkey(self, key= '\0'*16):
+    def setAESkey(self, key= b'\0'*16):
         '''
         set the AES key. this will persist until the next reboot. key must be 128 bits.
         '''
@@ -1088,12 +1089,15 @@ class NICxx11(USBDongle):
         '''
         set the amplifier mode (RF amp external to CC1111)
         '''
-        return self.send(APP_NIC, NIC_SET_AMP_MODE, "%c"%ampmode)
+        return self.send(APP_NIC, NIC_SET_AMP_MODE, b"%c"%ampmode)
     def getAmpMode(self):
         '''
         get the amplifier mode (RF amp external to CC1111)
         '''
-        return self.send(APP_NIC, NIC_GET_AMP_MODE, "")
+        retval = self.send(APP_NIC, NIC_GET_AMP_MODE, b"")
+        if len(retval) == 2:
+            retval = ord(retval[0])
+        return retval
 
     def setPktAddr(self, addr):
         return self.poke(ADDR, correctbytes(addr))
@@ -1120,7 +1124,7 @@ class NICxx11(USBDongle):
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
-        self.send(APP_NIC, NIC_XMIT, "%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+        self.send(APP_NIC, NIC_XMIT, b"%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
 
     def RFxmitLong(self, data, doencoding=True):
         # encode, if necessary
@@ -1145,7 +1149,7 @@ class NICxx11(USBDongle):
             chunks.append(data[-(datalen % RF_MAX_TX_CHUNK):])
 
         preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
+        retval, ts = self.send(APP_NIC, NIC_LONG_XMIT, b"%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
         error = struct.unpack("<B", retval[0])[0]
         if error:
@@ -1156,7 +1160,7 @@ class NICxx11(USBDongle):
             chunk = chunks[chidx]
             error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
             while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
-                retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
+                retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
                 error = struct.unpack("<B", retval[0])[0]
             if error:
                 return error
@@ -1164,10 +1168,10 @@ class NICxx11(USBDongle):
                 #    sys.stderr.write('.')
             #sys.stderr.write('+')
         # tell dongle we've finished
-        retval,ts = self.send(APP_NIC, NIC_XMIT_LONG_MORE, "%s" % struct.pack("B", 0), wait=wait)
+        retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", 0), wait=wait)
         return struct.unpack("<b", retval[0])[0]
 
-    def RFtestLong(self, data="BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
+    def RFtestLong(self, data=b"BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
 
         chunks = []
@@ -1175,7 +1179,7 @@ class NICxx11(USBDongle):
             chunks.append(data[:RF_MAX_TX_CHUNK])
             data = data[RF_MAX_TX_CHUNK:]
 
-        retval, ts = self.send(APP_NIC, NIC_XMIT_LONG, "%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
+        retval, ts = self.send(APP_NIC, NIC_LONG_XMIT, b"%s" % struct.pack("<H",datalen)+chunks[0], wait=1000)
         sys.stderr.write('=' + repr(retval))
 
 
@@ -1184,7 +1188,7 @@ class NICxx11(USBDongle):
         if not blocksize == None:
             if blocksize > EP5OUT_BUFFER_SIZE: 
                 raise Exception("Blocksize too large. Maximum %d" % EP5OUT_BUFFER_SIZE)
-            self.send(APP_NIC, NIC_SET_RECV_LARGE, "%s" % struct.pack("<H",blocksize))
+            self.send(APP_NIC, NIC_SET_RECV_LARGE, b"%s" % struct.pack("<H",blocksize))
         data = self.recv(APP_NIC, NIC_RECV, timeout)
         # decode, if necessary
         if self.endec is not None:
@@ -1196,15 +1200,17 @@ class NICxx11(USBDongle):
         return data
 
     def RFlisten(self):
-        ''' just sit and dump packets as they come in
-        kinda like discover() but without changing any of the communications settings '''
+        '''
+        just sit and dump packets as they come in
+        kinda like discover() but without changing any of the communications settings
+        '''
         print("Entering RFlisten mode...  packets arriving will be displayed on the screen")
         print("(press Enter to stop)")
         while not keystop():
 
             try:
                 y, t = self.RFrecv()
-                print("(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y)))
+                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y), makeFriendlyAscii(y)))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -1214,8 +1220,10 @@ class NICxx11(USBDongle):
         sys.stdin.read(1)
 
     def RFcapture(self):
-        ''' dump packets as they come in, but return a list of packets when you exit capture mode.
-        kinda like discover() but without changing any of the communications settings '''
+        '''
+        dump packets as they come in, but return a list of packets when you exit capture mode.
+        kinda like discover() but without changing any of the communications settings
+        '''
         capture = []
         print("Entering RFlisten mode...  packets arriving will be displayed on the screen (and returned in a list)")
         print("(press Enter to stop)")
@@ -1223,8 +1231,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                #print "(%5.3f) Received:  %s" % (t, y.encode('hex'))
-                print("(%5.3f) Received:  %s  | %s" % (t, y.encode('hex'), makeFriendlyAscii(y)))
+                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y), makeFriendlyAscii(y)))
                 capture.append((y,t))
 
             except ChipconUsbTimeoutException:
@@ -1282,7 +1289,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                yhex = y.encode('hex')
+                yhex = hexlify(y)
 
                 print("(%5.3f) Received:  %s" % (t, yhex))
                 if RegExpSearch is not None:
@@ -1301,7 +1308,7 @@ class NICxx11(USBDongle):
 
                 if IdentSyncWord:
                     #if lowball == 1:
-                    #    y = '\xaa\xaa' + y
+                    #    y = b'\xaa\xaa' + y
 
                     poss = bits.findSyncWord(y, ISWsensitivity, ISWminpreamble)
                     if len(poss):
@@ -1367,7 +1374,7 @@ class NICxx11(USBDongle):
         if not hasattr(self, '_last_radiocfg'):
             raise Exception("lowballRestore requires that lowball have been executed first (it saves radio config state!)")
         self.setRadioConfig(self._last_radiocfg)
-        self._last_radiocfg = ''
+        self._last_radiocfg = b''
 
     ##### REPR FUNCTIONS #####
     def printRadioConfig(self, mhz=24, radiocfg=None):
@@ -1794,28 +1801,28 @@ class FHSSNIC(NICxx11):
     advanced NIC implementation for CCxx11 chips, including Frequency Hopping
     '''
     def FHSSxmit(self, data):
-        return self.send(APP_NIC, FHSS_XMIT, "%c%s" % (len(data), data))
+        return self.send(APP_NIC, FHSS_XMIT, b"%c%s" % (len(data), data))
 
     def changeChannel(self, chan):
-        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, "%c" % (chan))
+        return self.send(APP_NIC, FHSS_CHANGE_CHANNEL, b"%c" % (chan))
 
     def getChannels(self, channels=[]):
-        return self.send(APP_NIC, FHSS_GET_CHANNELS, '')
+        return self.send(APP_NIC, FHSS_GET_CHANNELS, b'')
 
     def setChannels(self, channels=[]):
-        chans = ''.join(["%c" % chan for chan in channels])
+        chans = b''.join([b"%c" % chan for chan in channels])
         length = struct.pack("<H", len(chans))
         
         return self.send(APP_NIC, FHSS_SET_CHANNELS, length + chans)
 
     def nextChannel(self):
-        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, '' )
+        return self.send(APP_NIC, FHSS_NEXT_CHANNEL, b'')
 
     def startHopping(self):
-        return self.send(APP_NIC, FHSS_START_HOPPING, '')
+        return self.send(APP_NIC, FHSS_START_HOPPING, b'')
 
     def stopHopping(self):
-        return self.send(APP_NIC, FHSS_STOP_HOPPING, '')
+        return self.send(APP_NIC, FHSS_STOP_HOPPING, b'')
 
     def setMACperiod(self, dwell_ms, mhz=24):
         macdata = self.getMACdata()
@@ -1847,7 +1854,7 @@ class FHSSNIC(NICxx11):
         return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
 
     def getMACdata(self):
-        datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, '')
+        datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, b'')
         #print (repr(datastr))
         data = struct.unpack("<BHHHHHHHHBBH", datastr)
         return data
@@ -1885,7 +1892,10 @@ u16 synched_chans           %x
     """
     
     def getMACthreshold(self):
-        return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
+        retval = self.send(APP_NIC, FHSS_GET_MAC_THRESHOLD, b'')
+        if len(retval) == 2:
+            retval, = struct.unpack("<I", retval[0])
+        return retval
 
     def setMACthreshold(self, value):
         return self.send(APP_NIC, FHSS_SET_MAC_THRESHOLD, struct.pack("<I",value))
@@ -1894,7 +1904,7 @@ u16 synched_chans           %x
         return self.send(APP_NIC, FHSS_SET_STATE, struct.pack("<I",state))
         
     def getFHSSstate(self):
-        state = self.send(APP_NIC, FHSS_GET_STATE, '')
+        state = self.send(APP_NIC, FHSS_GET_STATE, b'')
         #print repr(state)
         state = ord(state[0])
         return FHSS_STATES[state], state

@@ -1,4 +1,4 @@
-#!/usr/bin/env ipython -i --no-banner
+#!/usr/bin/env ipython3 -i --no-banner
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -103,7 +103,7 @@ class RfCat(FHSSNIC):
         self.setRFparameters(*args, **kwargs)
 
     def rf_redirection(self, fdtup, use_rawinput=False, printable=False):
-        buf = ''
+        buf = b''
 
         if len(fdtup)>1:
             fd0i, fd0o = fdtup 

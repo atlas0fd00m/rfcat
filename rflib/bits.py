@@ -34,6 +34,13 @@ def wtfo(string):
 
     return outstr
 
+
+def ord23(thing):
+    if PYVER == 2:
+        return ord(thing)
+    return thing
+
+
 def strBitReverse(string):
     # FIXME: this is really dependent upon python's number system.  large strings will not convert well.  
     # FIXME: break up array of 8-bit numbers and bit-swap in the array
@@ -46,9 +53,9 @@ def strBitReverse(string):
         num <<= 8
         num |= ord(ch)
 
-    print (hex(num))
+    print(hex(num))
     rnum = bitReverse(num, bits)
-    print (hex(rnum))
+    print(hex(rnum))
 
     # convert back from MSB number to string
     out = []
@@ -111,7 +118,7 @@ def getNextByte_feedbackRegister7bitsMSB():
         retval |= (fbRegister >> 6)         # start with bit 7
         nb = ( ( fbRegister>>3) ^ (fbRegister>>6)) &1 
         fbRegister = ( ( fbRegister << 1 )   |   nb ) & 0x7f # do shifting
-        #print "retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb)
+        #print("retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb))
 
     return retval
 
@@ -129,7 +136,7 @@ def getNextByte_feedbackRegister7bitsLSB():
 
         nb = ( ( fbRegister>>3) ^ (fbRegister>>6)) &1 
         fbRegister = ( ( fbRegister << 1 )   |   nb ) & 0x7f # do shifting
-        #print "retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb)
+        #print("retval: %x  fbRegister: %x  bit7: %x  nb: %x" % (retval, fbRegister, (fbRegister>>6), nb))
 
     return retval
 
@@ -164,18 +171,18 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
             
             # chop off the nonsense before the preamble
             sbyts = byts[pidx:]
-            #print "sbyts: %s" % repr(sbyts)
+            #print("sbyts: %s" % repr(sbyts))
             
             # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
             while (sbyts[0] == '\xaa' and len(sbyts)>2):
                 sbyts = sbyts[1:]
             
-            #print "sbyts: %s" % repr(sbyts)
+            #print("sbyts: %s" % repr(sbyts))
             # now we look at the next 16 bits to narrow the possibilities to 8
             # at this point we have no hints at bit-alignment aside from 0xaa vs 0x55
             dwbits, = struct.unpack(">H", sbyts[:2])
-            #print "sbyts: %s" % repr(sbyts)
-            #print "dwbits: %s" % repr(dwbits)
+            #print("sbyts: %s" % repr(sbyts))
+            #print("dwbits: %s" % repr(dwbits))
             if len(sbyts)>=3:
                 bitcnt = 0
                 #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
@@ -185,16 +192,16 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
                 bits1 = bits1 | (ord('\xaa') << 24)
                 bits1 <<= 8
                 bits1 |= (ord(sbyts[2]) )
-                #print "bits: %x" % (bits1)
+                #print("bits: %x" % (bits1))
 
                 bit = (5 * 8) - 2  # bytes times bits/byte          #FIXME: MAGIC NUMBERS!?
                 while (bits1 & (3<<bit) == (2<<bit)):
                     bit -= 2
-                #print "bit = %d" % bit
+                #print("bit = %d" % bit)
                 bits1 >>= (bit-16)
                 #while (bits1 & 0x30000 != 0x20000): # now we align the end of the 101010 pattern with the beginning of the dword
                 #    bits1 >>= 2
-                #print "bits: %x" % (bits1)
+                #print("bits: %x" % (bits1))
                 
                 bitcount = min( 2 * sensitivity, 17 ) 
                 for frontbits in range( bitcount ):            # with so many bit-inverted systems, let's not assume we know anything about the bit-arrangement.  \x55\x55 could be a perfectly reasonable preamble.
@@ -305,7 +312,7 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
         d1 <<= 1
         d1 |= getBit(data, p1)
         d1 &= mask
-        #print bin(d1)
+        #print(bin(d1))
 
         if c1 < (size):
             p1 += 1
@@ -318,7 +325,7 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
             d2 <<= 1
             d2 |= getBit(data, p2)
             d2 &= mask
-            #print bin(d2)
+            #print(bin(d2))
 
             if c2 < (size):
                 p2 += 1
@@ -334,8 +341,8 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
                 while True:
                     p1 += 1
                     p2 += 1
-                    #print "s1: %d\t  p1: %d\t  " % (s1, p1)
-                    #print "s2: %d\t  p2: %d\t  " % (s2, p2)
+                    #print("s1: %d\t  p1: %d\t  " % (s1, p1))
+                    #print("s2: %d\t  p2: %d\t  " % (s2, p2))
                     if p2 >= bitlen:
                         break
 
@@ -355,7 +362,7 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
                     print("  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSection.encode("hex")))
                     print("  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2)))
             #else:
-            #    print "  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2)
+            #    print("  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2))
             p2 += 1
         p1 += 1
 
@@ -401,7 +408,7 @@ def bitSectString(string, startbit, endbit):
         s += correctbytes(byte)
     
     ent = old_div((min(entropy)+1.0), (max(entropy)+1))
-    #print "entropy: %f" % ent
+    #print("entropy: %f" % ent)
     return (s, ent)
 
 
@@ -504,7 +511,7 @@ def invertBits(data):
 
     #method2
     count = old_div(ldata, 4)
-    #print ldata, count
+    #print(ldata, count)
     numlist = struct.unpack( "<%dI" % count, data[off:] )
     modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
     output.extend(modlist)

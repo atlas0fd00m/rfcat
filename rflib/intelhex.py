@@ -185,6 +185,22 @@ class IntelHex(object):
                                        bin[7]),
                               }
 
+    def loadhexbytes(self, hbytes):
+        """Load hex bytes into internal buffer.
+
+        @param  hbytes          intelhex file in bytes
+        """
+        self._offset = 0
+        line = 0
+
+        decode = self._decode_record
+        try:
+            for s in fobj:
+                line += 1
+                decode(s, line)
+        except _EndOfFile:
+            pass
+
     def loadhex(self, fobj):
         """Load hex file into internal buffer. This is not necessary
         if object was initialized with source set. This will overwrite
@@ -193,7 +209,7 @@ class IntelHex(object):
         @param  fobj        file name or file-like object
         """
         if getattr(fobj, "read", None) is None:
-            fobj = file(fobj, "r")
+            fobj = open(fobj, "r")
             fclose = fobj.close
         else:
             fclose = None
@@ -223,7 +239,7 @@ class IntelHex(object):
         """
         fread = getattr(fobj, "read", None)
         if fread is None:
-            f = file(fobj, "rb")
+            f = open(fobj, "rb")
             fread = f.read
             fclose = f.close
         else:
@@ -332,7 +348,7 @@ class IntelHex(object):
                         (if None used self.padding).
         '''
         if getattr(fobj, "write", None) is None:
-            fobj = file(fobj, "wb")
+            fobj = open(fobj, "wb")
             close_fd = True
         else:
             close_fd = False
@@ -483,7 +499,7 @@ class IntelHex(object):
             fobj = f
             fclose = None
         else:
-            fobj = file(f, 'w')
+            fobj = open(f, 'w')
             fwrite = fobj.write
             fclose = fobj.close
 
