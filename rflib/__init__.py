@@ -18,7 +18,7 @@ class RfCat(FHSSNIC):
         try:
             for x in range(maxnum):
                 y, t = self.RFrecv(timeoutms)
-                print("(%5.3f) %s:  %s" % (t, msg, y.encode('hex')))
+                print("(%5.3f) %s:  %s" % (t, msg, hexlify(y)))
         except ChipconUsbTimeoutException:
             pass
 
