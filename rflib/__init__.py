@@ -62,17 +62,17 @@ class RfCat(FHSSNIC):
         window = rfspecan.Window(self, freq, fhigh, delta, 0)
         window.show()
         rfspecan._qt_app.exec_()
-        
+
     def _doSpecAn(self, centfreq, inc, count):
         '''
         store radio config and start sending spectrum analysis data
-        
+
         centfreq = Center Frequency
         '''
         if count>255:
             raise Exception("sorry, only 255 samples per pass... (count)")
 
-        spectrum = (count * inc) 
+        spectrum = (count * inc)
         halfspec = spectrum / 2.0
         basefreq = centfreq - halfspec
         if (count * inc) + basefreq > MAX_FREQ:
@@ -91,7 +91,7 @@ class RfCat(FHSSNIC):
         return freq, delta
 
     def _stopSpecAn(self):
-        ''' 
+        '''
         stop sending rfdata and return radio to original config
         '''
         self.send(APP_NIC, RFCAT_STOP_SPECAN, '')
@@ -106,10 +106,10 @@ class RfCat(FHSSNIC):
         buf = b''
 
         if len(fdtup)>1:
-            fd0i, fd0o = fdtup 
+            fd0i, fd0o = fdtup
         else:
-            fd0i, = fdtup 
-            fd0o, = fdtup 
+            fd0i, = fdtup
+            fd0o, = fdtup
 
         fdsock = False      # socket or fileio?
         if hasattr(fd0i, 'recv'):
