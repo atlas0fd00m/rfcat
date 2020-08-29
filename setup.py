@@ -20,6 +20,8 @@ try:
 except:
     sys.excepthook(*sys.exc_info())
 
+requirements = open('requirements.txt').read().split('\n')
+
 
 # Readme function to show readme as a desription in pypi
 def readme():
@@ -28,7 +30,7 @@ def readme():
 
 
 setuptools.setup  (name  = 'rfcat',
-        version          = '1.9.1',
+        version          = '1.9.1.2',
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
@@ -36,12 +38,11 @@ setuptools.setup  (name  = 'rfcat',
         url              = 'https://github.com/atlas0fd00m/rfcat',
         download_url     = 'https://github.com/atlas0fd00m/rfcat/archive/v1.9.1.tar.gz',
         keywords         = ['radio', 'subghz', 'cc1111', 'chipcon', 'hacking', 'reverse engineering'],
-        #include_dirs = [],
-        #packages         = packages,
         packages         = setuptools.find_packages(),
         package_data     = pkgdata,
         ext_modules      = mods,
         scripts          = scripts,
+        install_requires = requirements,
         classifiers      = [
                             # How mature is this project? Common values are
                             #   3 - Alpha
@@ -62,7 +63,7 @@ setuptools.setup  (name  = 'rfcat',
                             'Programming Language :: Python :: 2.7',
                             'Programming Language :: Python :: 3',
                             'Programming Language :: Python :: 3.8',
-                            'Operating System :: OS Indepentent',
+                            #'Operating System :: OS Indepentent',
                            ],
-        python_requires  = '>=2.7,<3.0.0'
+        python_requires  = '>=2.7'
         )
