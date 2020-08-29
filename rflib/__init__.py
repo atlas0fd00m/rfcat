@@ -212,7 +212,7 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
     gbls = globals()
     lcls = locals()
 
-    shellfailed = False
+    shellexception = None
 
     try:
         from IPython.terminal.interactiveshell import TerminalInteractiveShell
@@ -223,9 +223,9 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         print(intro)
         ipsh.mainloop()
     except ImportError as e:
-        shellfailed = True
+        shellexception = e
 
-    if shellfailed:
+    if shellexception:
         try:
             import IPython.Shell
             ipsh = IPython.Shell.IPShell(argv=[''], user_ns=lcls, user_global_ns=gbls)
@@ -233,9 +233,9 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
             ipsh.mainloop()
 
         except ImportError as e:
-            shellfailed = True
+            shellexception = e
 
-    if shellfailed:
+    if shellexception:
         try:
             from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
             ipsh = TerminalInteractiveShell()
@@ -246,10 +246,10 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
             print(intro)
             ipsh.mainloop()
         except ImportError as e:
-            shellfailed = True
+            shellexception = e
 
-    if shellfailed:
-        print("falling back to straight Python... (%r)" % e)
+    if shellexception:
+        print("falling back to straight Python... (%r)" % shellexception)
         shell = code.InteractiveConsole(gbls)
         print(intro)
         shell.interact()
