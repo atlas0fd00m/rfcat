@@ -23,27 +23,16 @@ from .const import *
 from binascii import hexlify
 
 def makeFriendlyAscii(instring):
-    out = []
-    start = 0
-    last = -1
-    instrlen = len(instring)
+    out = ""
 
-    for cidx in range(instrlen):
-        if (0x20 < ord23(instring[cidx]) < 0x7f):
-            if last < cidx-1:
-                out.append( "." * (cidx-1-last))
-                start = cidx
-            last = cidx
+    for char in instring:
+        n = ord23(char)
+        if 0x20 < n < 0x7f:
+            out += chr(n)
         else:
-            if last == cidx-1:
-                out.append( instring[ start:last+1 ] )
+            out += "."
 
-    if last != cidx:
-        out.append( "." * (cidx-last) )
-    else: # if start == 0:
-        out.append( instring[ start: ] )
-
-    return b''.join(out)
+    return out
 
 
 
@@ -1210,7 +1199,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y), makeFriendlyAscii(y)))
+                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y).decode(), makeFriendlyAscii(y)))
 
             except ChipconUsbTimeoutException:
                 pass
@@ -1231,7 +1220,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y), makeFriendlyAscii(y)))
+                print("(%5.3f) Received:  %s  | %s" % (t, hexlify(y).decode(), makeFriendlyAscii(y)))
                 capture.append((y,t))
 
             except ChipconUsbTimeoutException:
@@ -1289,7 +1278,7 @@ class NICxx11(USBDongle):
 
             try:
                 y, t = self.RFrecv()
-                yhex = hexlify(y)
+                yhex = hexlify(y).decode()
 
                 print("(%5.3f) Received:  %s" % (t, yhex))
                 if RegExpSearch is not None:
