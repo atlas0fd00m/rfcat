@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Modified rfcat_server to support Metasploit HWBridge
 
-from __future__ import print_function
+
 
 import re
 import os
@@ -13,8 +13,8 @@ import base64
 import socket
 import threading
 
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
-from urlparse import parse_qs,urlparse
+from http.server import BaseHTTPRequestHandler,HTTPServer
+from urllib.parse import parse_qs,urlparse
 from rflib import *
 
 # Global Nic used for MSFHandler
@@ -84,7 +84,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         if not "mod" in args:
             return self.not_supported()
         modvalue = -1
-        for modv, modstr in MODULATIONS.items():
+        for modv, modstr in list(MODULATIONS.items()):
             if modstr.split(' ')[0] == args["mod"][0]:
                 modvalue = modv
         if modvalue == -1:
