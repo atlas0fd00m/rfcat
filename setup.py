@@ -30,7 +30,7 @@ def readme():
 
 
 setuptools.setup  (name  = 'rfcat',
-        version          = '1.9.1.3',
+        version          = '1.9.2',
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
