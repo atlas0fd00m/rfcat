@@ -32,6 +32,7 @@ import time
 import numpy
 import threading
 import rflib
+from rflib.bits import ord23
 from .bits import correctbytes
 # import cPickle in Python 2 instead of pickle in Python 3
 if sys.version_info < (3,):
@@ -74,7 +75,7 @@ class SpecanThread(threading.Thread):
         
         if type(self._data) == list:
             for rssi_values, timestamp in self._data:
-                rssi_values = [ (old_div((ord(x)^0x80),2))-88 for x in rssi_values[4:] ]
+                rssi_values = [ (old_div((ord23(x)^0x80),2))-88 for x in rssi_values[4:] ]
                 # since we are not accessing the dongle, we need some sort of delay
                 time.sleep(self._delay)
                 frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
@@ -86,7 +87,7 @@ class SpecanThread(threading.Thread):
             while not self._stop:
                 try:
                     rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
-                    rssi_values = [ (old_div((ord(x)^0x80),2))-88 for x in rssi_values ]
+                    rssi_values = [ (old_div((ord23(x)^0x80),2))-88 for x in rssi_values ]
                     frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                     self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
@@ -359,7 +360,7 @@ class Window(QtWidgets.QWidget):
                 numChans = int(old_div((self._high_freq-self._low_freq), self._spacing))
                 data._doSpecAn(freq, spc, numChans)
             else:
-                data = pickle.load(file(data,'rb'))
+                data = pickle.load(open(data,'rb'))
         if data is None:
             raise Exception('Data not found')
         return data

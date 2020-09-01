@@ -688,7 +688,7 @@ class CC1111NIC_Server(cmd.Cmd):
         '''
         * save_config <filename> - save the radio configuration to a file you specify
         '''
-        file(line, "wb").write(repr(self.nic.getRadioConfig()))
+        open(line, "wb").write(repr(self.nic.getRadioConfig()))
 
 
     def do_load_config(self, line):
@@ -696,7 +696,7 @@ class CC1111NIC_Server(cmd.Cmd):
         * load_config
         (be very cautious!  the firmware expects certain things like return-to-RX, and no RX-timeout, etc..)
         '''
-        config = file(line, "rb").read()
+        config = open(line, "rb").read()
         self.nic.setModeIDLE()
         print("loading config from bytes: %s" % repr(config))
         self.setRadioConfig(config)

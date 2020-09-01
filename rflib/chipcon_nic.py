@@ -180,7 +180,7 @@ class NICxx11(USBDongle):
         #if marcstate is None:
             #marcstate = self.radiocfg.marcstate
         #if self._debug: print("MARCSTATE: %x   returning to %x" % (marcstate, MARC_STATE_MAPPINGS[marcstate][2]) )
-        #self.poke(X_RFST, "%c"%MARC_STATE_MAPPINGS[marcstate][2])
+        #self.poke(X_RFST, b"%c"%MARC_STATE_MAPPINGS[marcstate][2])
         self.poke(X_RFST, b"%c" % self._rfmode)
 
         

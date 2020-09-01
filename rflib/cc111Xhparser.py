@@ -123,9 +123,9 @@ def parseLines(lines):
 
 if __name__ == '__main__':
     defs = {}
-    defs.update(parseLines(file('../includes/cc1110-ext.h')))
-    defs.update(parseLines(file('../includes/cc1111.h')))
-    defs.update(parseLines(file('/usr/share/sdcc/include/mcs51/cc1110.h')))
+    defs.update(parseLines(open('../includes/cc1110-ext.h')))
+    defs.update(parseLines(open('../includes/cc1111.h')))
+    defs.update(parseLines(open('/usr/share/sdcc/include/mcs51/cc1110.h')))
 
     skeys = list(defs.keys())
     skeys.sort()

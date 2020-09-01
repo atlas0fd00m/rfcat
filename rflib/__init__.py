@@ -87,7 +87,7 @@ class RfCat(FHSSNIC):
         freq, fbytes = self.getFreq()
         delta = self.getMdmChanSpc()
 
-        self.send(APP_NIC, RFCAT_START_SPECAN, "%c" % (count) )
+        self.send(APP_NIC, RFCAT_START_SPECAN, b"%c" % (count) )
         return freq, delta
 
     def _stopSpecAn(self):
