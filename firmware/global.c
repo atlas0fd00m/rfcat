@@ -177,7 +177,7 @@ void io_init(void)
  #elif defined YARDSTICKONE
     // USB, LED1, LED2, and LED3
     P1DIR |= 0xf;
-    // amplifer configuration pins
+    // amplifier configuration pins
     P2DIR |= 0x19;
     // initial states
     LED2 = 0;

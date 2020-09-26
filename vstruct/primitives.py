@@ -288,7 +288,7 @@ class v_wstr(v_str):
     '''
     Unicode variant of the above string class
 
-    NOTE: the size paramater is in WCHARs!
+    NOTE: the size parameter is in WCHARs!
     '''
 
     _vs_builder = True

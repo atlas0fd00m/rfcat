@@ -39,7 +39,7 @@
 #define USBPOW_RST              0x08    //r
 #define USBPOW_ISO_WAIT_SOF     0x80    //rw
 
-// IN Enpoints and EP0 Interrupt Flags
+// IN Endpoints and EP0 Interrupt Flags
 #define USBIIF_EP0IF            0x01    //r h0
 #define USBIIF_INEP1IF          0x02    //r h0
 #define USBIIF_INEP2IF          0x04    //r h0

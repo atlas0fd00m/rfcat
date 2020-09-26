@@ -909,7 +909,7 @@ class NICxx11(USBDongle):
     def getMdmNumPreamble(self, radiocfg=None):
         '''
         get the minimum number of preamble bits to be transmitted. note this is a flag, not a count
-        so the return value must be interpeted - e.g. 0x30 == 0x03 << 4 == MFMCFG1_NUM_PREAMBLE_6 == 6 bytes
+        so the return value must be interpreted - e.g. 0x30 == 0x03 << 4 == MFMCFG1_NUM_PREAMBLE_6 == 6 bytes
         '''
         if radiocfg == None:
             self.getRadioConfig()

@@ -39,7 +39,7 @@ REQUIREMENTS
 ------------
 
 RfCat currently requires Python 2.7. the only suspected
-incompatabilities with Python 3.x are minimal, mostly print(“stuff”)
+incompatibilities with Python 3.x are minimal, mostly print(“stuff”)
 versus print “stuff” and other str/bytes issues.
 
 Other requirements
