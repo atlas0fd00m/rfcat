@@ -17,7 +17,7 @@
  *
  * if you should need to change anything about the USB descriptors, do your homework!  particularly
  * keep in mind, if you change the IN or OUT max packetsize, you *must* change it in the 
- * EPx_MAX_PACKET_SIZE define, the desciptor definition (be sure to get the right one!) and should 
+ * EPx_MAX_PACKET_SIZE define, the descriptor definition (be sure to get the right one!) and should 
  * correspond to the setting of MAXI and MAXO.
  * 
  * */

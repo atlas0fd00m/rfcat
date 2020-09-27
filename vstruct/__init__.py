@@ -184,7 +184,7 @@ class VStruct(vs_prims.v_base):
         return r
 
     def __setattr__(self, name, value):
-        # If we have this field, asign to it
+        # If we have this field, assign to it
         x = self._vs_values.get(name, None)
         if x != None:
             return self.vsSetField(name, value)
@@ -237,7 +237,7 @@ class VArray(VStruct):
     def __getitem__(self, index):
         return self.vsGetField("%d" % index)
 
-    #FIXME slice asignment
+    #FIXME slice assignment
 
 def resolve(impmod, nameparts):
     """

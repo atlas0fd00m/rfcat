@@ -176,7 +176,7 @@ Commands:
 
     Erases the entire user flash area.
     
-  erage <n>
+  erase <n>
 
     Erases page n of the flash memory (organised into 1024 byte pages). The
     bootloader occupies the first few pages and the rest are reserved for user

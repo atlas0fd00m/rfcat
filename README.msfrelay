@@ -15,7 +15,7 @@ To download Metasploit: https://www.metasploit.com/
 Usage
 =====
 
-With a RfCat compatiable device plugged into a machine (ie YardStickOne)
+With a RfCat compatible device plugged into a machine (ie YardStickOne)
 run rfcat_msfrelay.  It will start a webserver and report
 
   RfCat MSFRelay running.
@@ -96,9 +96,9 @@ RFtransceiver Commands
     power              sets the power level
     preamble           sets the preamble number
     recv               receive a packet of data
-    supported_idx      suppored USB indexes
+    supported_idx      supported USB indexes
     sync_word          sets the sync word
-    vlen               sets the variable lenght packet size
+    vlen               sets the variable length packet size
     xmit               transmits some data
 
 hwbridge > run post/hardware/rftransceiver/...

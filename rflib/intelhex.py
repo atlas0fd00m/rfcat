@@ -865,7 +865,7 @@ class IntelHex16bit(IntelHex):
 
 
 def hex2bin(fin, fout, start=None, end=None, size=None, pad=0xFF):
-    """Hex-to-Bin convertor engine.
+    """Hex-to-Bin converter engine.
     @return     0   if all OK
 
     @param  fin     input hex file (filename or file-like object)
@@ -904,7 +904,7 @@ def hex2bin(fin, fout, start=None, end=None, size=None, pad=0xFF):
 
 
 def bin2hex(fin, fout, offset=0):
-    """Simple bin-to-hex convertor.
+    """Simple bin-to-hex converter.
     @return     0   if all OK
 
     @param  fin     input bin file (filename or file-like object)
