@@ -209,9 +209,12 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
     d.setModeRX()       # this puts the dongle into receive mode
     atexit.register(cleanupInteractiveAtExit)
 
+    print(intro)
     gbls = globals()
     lcls = locals()
+    interact(lcls, gbls)
 
+def interact(lcls, gbls):
     shellexception = None
 
     try:
@@ -220,7 +223,6 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         ipsh.user_global_ns.update(gbls)
         ipsh.user_global_ns.update(lcls)
         ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
-        print(intro)
         ipsh.mainloop()
     except ImportError as e:
         shellexception = e
@@ -229,7 +231,6 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
         try:
             import IPython.Shell
             ipsh = IPython.Shell.IPShell(argv=[''], user_ns=lcls, user_global_ns=gbls)
-            print(intro)
             ipsh.mainloop()
 
         except ImportError as e:
@@ -243,7 +244,6 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
             ipsh.user_global_ns.update(lcls)
             ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
 
-            print(intro)
             ipsh.mainloop()
         except ImportError as e:
             shellexception = e
@@ -251,7 +251,6 @@ def interactive(idx=0, DongleClass=RfCat, intro=''):
     if shellexception:
         print("falling back to straight Python... (%r)" % shellexception)
         shell = code.InteractiveConsole(gbls)
-        print(intro)
         shell.interact()
 
 

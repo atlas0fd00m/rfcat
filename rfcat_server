@@ -8,6 +8,7 @@ import socket
 import threading
 
 from rflib import *
+from __future__ import print_function
 
 DATA_START_IDX = 4      # without the app/cmd/len bytes, the data starts at byte 4
 

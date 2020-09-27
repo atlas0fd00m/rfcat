@@ -1,7 +1,7 @@
 
 import struct
 try:
-    from StringIO import StringIO ## for Python 2
+    from io import StringIO ## for Python 2
 except ImportError:
     from io import StringIO ## for Python 3
 
@@ -91,7 +91,7 @@ class VStruct(vs_prims.v_base):
 
     # FIXME implement more arithmetic for structs...
     def __ixor__(self, other):
-        for name,value in other._vs_values.items():
+        for name,value in list(other._vs_values.items()):
             self._vs_values[name] ^= value
         return self
 

@@ -31,7 +31,7 @@ def makeFriendlyAscii(instring):
     for cidx in range(instrlen):
         if (0x20 < ord23(instring[cidx]) < 0x7f):
             if last < cidx-1:
-                out.append( "." * (cidx-1-last))
+                out.append( b"." * (cidx-1-last))
                 start = cidx
             last = cidx
         else:
@@ -39,7 +39,7 @@ def makeFriendlyAscii(instring):
                 out.append( instring[ start:last+1 ] )
 
     if last != cidx:
-        out.append( "." * (cidx-last) )
+        out.append( b"." * (cidx-last) )
     else: # if start == 0:
         out.append( instring[ start: ] )
 

@@ -148,7 +148,7 @@ class fakeDongle:
 
         self.memory.writeMemory(0xdf00, FAKE_MEM_DF00)
         self.memory.writeMemory(0xdf46, b'\xf0\x0d')
-        for intreg, intval in FAKE_INTERRUPT_REGISTERS.items():
+        for intreg, intval in list(FAKE_INTERRUPT_REGISTERS.items()):
             logger.info('setting interrupt register: %r = %r', intreg, intval)
             self.memory.writeMemory(eval(intreg), intval)
 
