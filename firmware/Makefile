@@ -1,12 +1,19 @@
 # set BOOTLOADER_SIZE to match your bootloader
+#
 BOOTLOADER_SIZE = 0x1400
 LDFLAGS_FLASH = --code-loc $(BOOTLOADER_SIZE)
 USB_DEVICE_SERIAL_NUMBER="`./new_serial.py`"
+
+SDCCVEROK=$(shell expr `sdcc --version|grep SDCC|cut -d' ' -f 4` \<= 3.5.0)
 
 CC=sdcc
 CFLAGS=-Iinclude -DBUILD_VERSION=`../revision.sh`
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
+
+ifeq "$(SDCCVEROK)" "0"
+    CC=FUCKNO_use_SDCC_3.5.0_instead
+endif
 
 apps2531 = global.rel
 apps1111 = cc1111rf.rel global.rel cc1111_aes.rel
