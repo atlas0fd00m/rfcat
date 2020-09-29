@@ -142,13 +142,13 @@ def flash_read(ihx_file, serial_port, start_addr, length):
       if(ihx_file):
         ihx_file.write(line)
       else:
-        print line,
+        print(line,)
       if (line == ":00000001FF\n"):
         break
 
 def print_usage():
   import sys
-  print(""")
+  print("""
 CC Bootloader Download Utility
 
 Usage:  %s serial_port command
@@ -193,7 +193,7 @@ Commands:
   verify <hex_file>
 
     Verify hex_file matches device flash memory.
-  """ % sys.argv[0]
+  """ % sys.argv[0])
 
 if __name__ == '__main__':
   import sys
@@ -210,15 +210,15 @@ if __name__ == '__main__':
           serial_port = serial.Serial(serial_port_name, timeout=1)
           break
 
-      except SerialException,e:
+      except SerialException as e:
           print("\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient.  (error: %r)") % e
           time.sleep(6)
       except KeyboardInterrupt:
           print("Caught <CTRL-C>, exitting...")
           exit (-2)
-      except Exception,e:
+      except Exception as e:
           sys.excepthook(*sys.exc_info())
-          print e
+          print(e)
           exit (-1)
   
   try:
