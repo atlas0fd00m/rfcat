@@ -1,5 +1,5 @@
-import vstruct
-from vstruct.primitives import *
+from rflib import vstruct
+from .vstruct.primitives import *
 
 class RadioConfig(vstruct.VStruct):
     def __init__(self):

@@ -154,7 +154,7 @@ class RfCat(FHSSNIC):
                     if printable:
                         data = "\n"+str(time)+": "+repr(data)
                     else:
-                        data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                        data = struct.pack("<fH", time, len(data)) + data
 
                     if fdsock:
                         fd0o.sendall(data)
@@ -167,7 +167,7 @@ class RfCat(FHSSNIC):
                 #special handling of specan dumps...  somewhat set in solid jello
                 try:
                     data, time = self.recv(APP_SPECAN, 1, 1)
-                    data = struct.pack("<L", time) + struct.pack("<H", len(data)) + data
+                    data = struct.pack("<fH", time, len(data)) + data
                     if fdsock:
                         fd0o.sendall(data)
                     else:
