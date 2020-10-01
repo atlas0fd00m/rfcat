@@ -1,12 +1,12 @@
-import vstruct
+from rflib.vstruct import VStruct
 from vstruct.primitives import *
 
 EI_NIDENT = 4
 EI_PADLEN = 7
 
-class Elf32(vstruct.VStruct):
+class Elf32(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.e_ident       = v_bytes(EI_NIDENT)
         self.e_class       = v_uint8()
         self.e_data        = v_uint8()
@@ -28,9 +28,9 @@ class Elf32(vstruct.VStruct):
         self.e_shnum       = v_uint16()
         self.e_shstrndx    = v_uint16()
 
-class Elf32Section(vstruct.VStruct):
+class Elf32Section(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.sh_name      = v_uint32()
         self.sh_type      = v_uint32()
         self.sh_flags     = v_uint32()
@@ -42,9 +42,9 @@ class Elf32Section(vstruct.VStruct):
         self.sh_addralign = v_uint32()
         self.sh_entsize = v_uint32()
 
-class Elf32Pheader(vstruct.VStruct):
+class Elf32Pheader(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.p_type   = v_uint32()
         self.p_offset = v_uint32()
         self.p_vaddr  = v_uint32()
@@ -54,9 +54,9 @@ class Elf32Pheader(vstruct.VStruct):
         self.p_flags  = v_uint32()
         self.p_align  = v_uint32()
 
-class Elf32Reloc(vstruct.VStruct):
+class Elf32Reloc(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.r_offset = v_ptr32()
         self.r_info   = v_uint32()
 
@@ -65,9 +65,9 @@ class Elf32Reloca(Elf32Reloc):
         Elf32Reloc.__init__(self)
         self.r_addend = v_uint32()
 
-class Elf32Symbol(vstruct.VStruct):
+class Elf32Symbol(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.st_name  = v_uint32()
         self.st_value = v_uint32()
         self.st_size  = v_uint32()
@@ -75,16 +75,16 @@ class Elf32Symbol(vstruct.VStruct):
         self.st_other = v_uint8()
         self.st_shndx = v_uint16()
 
-class Elf32Dynamic(vstruct.VStruct):
+class Elf32Dynamic(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.d_tag   = v_uint32()
         self.d_value = v_uint32()
 
 
-class Elf64(vstruct.VStruct):
+class Elf64(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.e_ident       = v_bytes(EI_NIDENT)
         self.e_class       = v_uint8()
         self.e_data        = v_uint8()
@@ -108,7 +108,7 @@ class Elf64(vstruct.VStruct):
 
 class Elf64Section(Elf32Section):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.sh_name      = v_uint32()
         self.sh_type      = v_uint32()
         self.sh_flags     = v_uint64()
@@ -122,7 +122,7 @@ class Elf64Section(Elf32Section):
 
 class Elf64Pheader(Elf32Pheader):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.p_type   = v_uint32()
         self.p_flags  = v_uint32()
         self.p_offset = v_uint64()
@@ -133,23 +133,23 @@ class Elf64Pheader(Elf32Pheader):
         self.p_align  = v_uint64()
 
 
-class Elf64Reloc(vstruct.VStruct):
+class Elf64Reloc(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.r_offset = v_ptr64()
         self.r_info   = v_uint64()
 
 class Elf64Reloca(Elf64Reloc):
     def __init__(self):
         #Elf64Reloc.__init__(self)
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.r_offset = v_uint64()
         self.r_info   = v_uint64()
         self.r_addend = v_uint64()
 
-class Elf64Symbol(vstruct.VStruct):
+class Elf64Symbol(VStruct):
     def __init__(self):
-        vstruct.VStruct.__init__(self)
+        VStruct.__init__(self)
         self.st_name  = v_uint32()
         self.st_info  = v_uint8()
         self.st_other = v_uint8()
