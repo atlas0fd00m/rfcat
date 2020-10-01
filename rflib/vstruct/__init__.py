@@ -256,7 +256,6 @@ def resolve(impmod, nameparts):
     return m
 
 # NOTE: Gotta import this *after* VStruct/VSArray defined
-from . import defs as vs_defs
 
 def getStructure(sname):
     """
@@ -265,6 +264,7 @@ def getStructure(sname):
     addStructure() or a python path (ie. win32.TEB) of a
     definition from within vstruct.defs.
     """
+    from . import defs as vs_defs
     x = resolve(vs_defs, sname.split("."))
     if x != None:
         return x()
@@ -272,9 +272,11 @@ def getStructure(sname):
     return None
 
 def getModuleNames():
+    from . import defs as vs_defs
     return [x for x in dir(vs_defs) if not x.startswith("__")]
 
 def getStructNames(modname):
+    from . import defs as vs_defs
     ret = []
     mod = resolve(vs_defs, modname)
     if mod == None:
