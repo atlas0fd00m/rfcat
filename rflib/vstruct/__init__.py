@@ -256,7 +256,7 @@ def resolve(impmod, nameparts):
     return m
 
 # NOTE: Gotta import this *after* VStruct/VSArray defined
-import vstruct.defs as vs_defs
+from . import defs as vs_defs
 
 def getStructure(sname):
     """
