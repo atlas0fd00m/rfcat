@@ -5,7 +5,7 @@ try:
 except ImportError:
     from io import StringIO ## for Python 3
 
-import vstruct.primitives as vs_prims
+from . import primitives as vs_prims
 
 def isVstructType(x):
     return isinstance(x, vs_prims.v_base)

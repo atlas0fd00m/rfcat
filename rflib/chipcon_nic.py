@@ -228,7 +228,7 @@ class NICxx11(USBDongle):
             radiocfg=self.radiocfg
 
         mode = radiocfg.marcstate
-        return (MODES[mode], mode)
+        return (MODES.get(mode), mode)
 
     def setRFRegister(self, regaddr, value, suppress=False):
         '''
