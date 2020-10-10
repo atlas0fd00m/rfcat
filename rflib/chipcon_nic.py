@@ -1124,7 +1124,7 @@ class NICxx11(USBDongle):
         waitlen = len(data)
         waitlen += repeat * (len(data) - offset)
         wait = USB_TX_WAIT * ((old_div(waitlen, RF_MAX_TX_BLOCK)) + 1)
-        self.send(APP_NIC, NIC_XMIT, b"%s" % struct.pack("<HHH",len(data),repeat,offset)+data, wait=wait)
+        self.send(APP_NIC, NIC_XMIT, "{}{}".format(struct.pack("<HHH",len(data),repeat,offset), data).encode("utf-8"), wait=wait)
 
     def RFxmitLong(self, data, doencoding=True):
         # encode, if necessary
