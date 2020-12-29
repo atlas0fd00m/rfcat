@@ -7,7 +7,8 @@ USB_DEVICE_SERIAL_NUMBER="`./new_serial.py`"
 SDCCVEROK=$(shell expr `sdcc --version|grep SDCC|cut -d' ' -f 4` \<= 3.5.0)
 
 CC=sdcc
-CFLAGS=-Iinclude -DBUILD_VERSION=`../revision.sh`
+RFLIB_VERSION=`../revision.sh`
+CFLAGS=-Iinclude -DBUILD_VERSION=$(RFLIB_VERSION)
 CFLAGSold=--no-pack-iram $(CF)
 LFLAGS=--xram-loc 0xF000 
 

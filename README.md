@@ -16,6 +16,7 @@ Welcome to the rfcat project
   * [To install](#to-install)
 * [Installing client](#installing-client)
 * [Using RfCat](#using-rfcat)
+* [Cool Projects Using RfCat](#external-projects)
 * [Epilogue](#epilogue)
 
 ## GOALS
@@ -329,7 +330,8 @@ However, you will find that I've done that for you in the client for most things
         * if you use "d.setRFRegister()", this is handled for you
         * `use d.setRFRegister()`
 
-
+## External Projects
+[ZWave Attack](https://www.initbrain.fr/security/2016/z-attack/):  [https://github.com/initbrain/Z-Attack](https://github.com/initbrain/Z-Attack)
 
 ## Epilogue
 

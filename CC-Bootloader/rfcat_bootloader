@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from __future__ import print_function
 
 import sys
 import time
@@ -7,31 +8,31 @@ from serial.serialutil import SerialException
 
 
 bootloader_error_codes = {
-  '0' : "OK",
-  '1' : "Intel HEX Invalid",
-  '2' : "Bad Checksum",
-  '3' : "Bad Address",
-  '4' : "Bad Record Type",
-  '5' : "Record Too Long"
+  b'0' : "OK",
+  b'1' : "Intel HEX Invalid",
+  b'2' : "Bad Checksum",
+  b'3' : "Bad Address",
+  b'4' : "Bad Record Type",
+  b'5' : "Record Too Long"
 }
 
 def download_code(ihx_file, serial_port):
   for line in ihx_file.readlines():
     record_type = int(line[7:9], 16)
     if (record_type == 0x00):
-      print("Writing"), line[:-1],
+      print("Writing", line[:-1], end='')
       serial_port.write(line)
       rc = serial_port.read()
-      print(" RC ="), rc,
+      print(" RC = %r" % rc, end='')
       if rc in bootloader_error_codes:
-        print("(%s)") % bootloader_error_codes[rc]
+        print("(%s)" % bootloader_error_codes[rc])
       else:
         print("(Unknown Error)")
-      if (rc != '0'):
+      if (rc != b'0'):
         print("Error downloading code!")
         return False
     else:
-      print("Skipping non data record: '%s'") % line[:-1]
+      print("Skipping non data record: '%s'" % line[:-1])
   return True
 
 def verify_code(ihx_file, serial_port):
@@ -61,9 +62,10 @@ def verify_code(ihx_file, serial_port):
         block_length= length
       else:
         block_length= ((length / 16) + 1) * 16
-      print("\rVerifying %04d bytes at address: %04X") % (length, start_addr),
+      print("\r                                               ")
+      print("\rVerifying %04d bytes at address: %04X" % (length, start_addr), end='')
       do_flash_read(serial_port, start_addr, block_length)
-      verify_data= ''
+      verify_data= b''
       for read_data in serial_port:
         read_data= read_data.strip()
         if (not data or read_data == ":00000001FF"):
@@ -71,56 +73,56 @@ def verify_code(ihx_file, serial_port):
         # strip header and checksum
         verify_data += read_data[9:-2]
       if (data == verify_data[:length*2]):
-        print("(OK)"),
+        print("(OK)", end='')
       else:
         print("Failed! Expected:", data, "Got:"), verify_data[:length*2]
         exit(1)
       sys.stdout.flush()
     else:
-      print("Skipping non data record: '%s'") % line[:-1]
+      print("Skipping non data record: '%s'" % line[:-1])
   return True
 
 def run_user_code(serial_port):
   # User code is entered on intel HEX EOF record
-  serial_port.write(":00000001FF\n")
+  serial_port.write(b":00000001FF\n")
   return True
   
 def reset_bootloader(serial_port):
-  serial_port.write(":00000022DE\n")
+  serial_port.write(b":00000022DE\n")
   rc = serial_port.read()
-  print("RC ="), rc,
+  print("RC = %r" % rc, end='')
   if rc in bootloader_error_codes:
-    print("(%s)") % bootloader_error_codes[rc]
+    print("(%s)" % bootloader_error_codes[rc])
   else:
     print("(Unknown Error)")
-  if (rc != '0'):
+  if (rc != b'0'):
     print("Error resetting bootloader!")
     return False
   return True
 
 def erase_all_user(serial_port):
-  serial_port.write(":00000023DD\n")
+  serial_port.write(b":00000023DD\n")
   rc = serial_port.read()
-  print("RC ="), rc,
+  print("RC = %r" % rc, end='')
   if rc in bootloader_error_codes:
-    print("(%s)") % bootloader_error_codes[rc]
+    print("(%s)" % bootloader_error_codes[rc])
   else:
     print("(Unknown Error)")
-  if (rc != '0'):
+  if (rc != b'0'):
     print("Error erasing all user flash!")
     return False
   return True
   
 def erase_user_page(serial_port, page):
   chksum = (0xDB + 0x100 - page) & 0xFF
-  serial_port.write(":01000024%02X%02X\n" % (page, chksum))
+  serial_port.write(b":01000024%02X%02X\n" % (page, chksum))
   rc = serial_port.read()
-  print("RC ="), rc,
+  print("RC = %r" % rc, end='')
   if rc in bootloader_error_codes:
-    print("(%s)") % bootloader_error_codes[rc]
+    print("(%s)" % bootloader_error_codes[rc])
   else:
     print("(Unknown Error)")
-  if (rc != '0'):
+  if (rc != b'0'):
     print("Error erasing user flash page!")
     return False
   return True
@@ -132,7 +134,7 @@ def do_flash_read(serial_port, start_addr, length):
             (0x100 - (length & 0xFF)) +
             (0x100 - ((length>>8) & 0xFF))
            ) & 0xFF
-  serial_port.write(":02%04X25%04X%02X\n" % (start_addr, length, chksum))
+  serial_port.write(b":02%04X25%04X%02X\n" % (start_addr, length, chksum))
 
 
 def flash_read(ihx_file, serial_port, start_addr, length):
@@ -143,7 +145,7 @@ def flash_read(ihx_file, serial_port, start_addr, length):
         ihx_file.write(line)
       else:
         print(line,)
-      if (line == ":00000001FF\n"):
+      if (line == b":00000001FF\n"):
         break
 
 def print_usage():
@@ -211,7 +213,7 @@ if __name__ == '__main__':
           break
 
       except SerialException as e:
-          print("\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient.  (error: %r)") % e
+          print("\nSomething is talking to the RfCat dongle (Modem Manager, most likely).  Retrying again after 5 seconds.  This can take a minute, please be patient.  (error: %r)" % e)
           time.sleep(6)
       except KeyboardInterrupt:
           print("Caught <CTRL-C>, exitting...")
@@ -227,7 +229,7 @@ if __name__ == '__main__':
         print_usage()
       else:
         ihx_filename = options[0]
-        ihx_file = open(ihx_filename, 'r')
+        ihx_file = open(ihx_filename, 'rb')
         if (command == 'download'):
           download_code(ihx_file, serial_port)
         else:
@@ -256,7 +258,7 @@ if __name__ == '__main__':
         if(len(options) == 3):
           try:
             ihx_filename = options[2]
-            ihx_file = open(ihx_filename, 'w')
+            ihx_file = open(ihx_filename, 'wb')
             print("reading to:"), ihx_filename
           except:
             print("couldn't open output file:"), ihx_filename
