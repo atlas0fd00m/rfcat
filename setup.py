@@ -12,11 +12,13 @@ scripts = ['rfcat',
            'CC-Bootloader/rfcat_bootloader',
            ]
 
-# store the HG revision in an rflib python file
+# store the GIT revision in an rflib python file
 try:
     REV = os.popen('./revision.sh').readline().encode('UTF-8')
     if len(REV):
         open('rflib/rflib_version.py', 'wb').write(b"RFLIB_VERSION=%s" % REV)
+
+    RFCAT_VERSION = open('VERSION').read().strip()
 except:
     sys.excepthook(*sys.exc_info())
 
@@ -30,7 +32,7 @@ def readme():
 
 
 setuptools.setup  (name  = 'rfcat',
-        version          = '1.9.4',
+        version          = RFCAT_VERSION,
         description      = "the swiss army knife of subGHz",
         long_description = readme(),
         author           = 'atlas of d00m',
