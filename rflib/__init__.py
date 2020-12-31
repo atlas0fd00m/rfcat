@@ -200,13 +200,15 @@ def cleanupInteractiveAtExit():
     except:
         pass
 
-def interactive(idx=0, DongleClass=RfCat, intro=''):
+def interactive(idx=0, DongleClass=RfCat, intro='', safemode=False):
     global d
     import rflib.chipcon_nic as rfnic
     import atexit
 
-    d = DongleClass(idx=idx)
-    d.setModeRX()       # this puts the dongle into receive mode
+    d = DongleClass(idx=idx, debug=safemode, safemode=safemode)
+    if not safemode:
+        d.setModeRX()       # this puts the dongle into receive mode
+
     atexit.register(cleanupInteractiveAtExit)
 
     print(intro)

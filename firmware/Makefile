@@ -339,7 +339,7 @@ installRfCatChronosDongle: RfCatChronos.hex
 	goodfet.cc info
 
 installRfCatChronosDongleCCBootloader: RfCatChronosCCBootloader.hex
-	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_C erase_all
 	rfcat_bootloader /dev/RFCAT_BL_C download bins/RfCatChronosCCBootloader.hex
 	rfcat_bootloader /dev/RFCAT_BL_C verify bins/RfCatChronosCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_C run
@@ -351,7 +351,7 @@ installRfCat24DonsDongle: RfCatDons24.hex
 	goodfet.cc info
 
 installRfCat24DonsDongleCCBootloader: RfCatDons24CCBootloader.hex
-	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_D erase_all
 	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDons24CCBootloader.hex
 	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDons24CCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
@@ -363,7 +363,7 @@ installRfCatDonsDongle: RfCatDons.hex
 	goodfet.cc info
 
 installRfCatDonsDongleCCBootloader: RfCatDonsCCBootloader.hex
-	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_D erase_all
 	rfcat_bootloader /dev/RFCAT_BL_D download bins/RfCatDonsCCBootloader.hex
 	rfcat_bootloader /dev/RFCAT_BL_D verify bins/RfCatDonsCCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_D run
@@ -375,7 +375,7 @@ installRfCatYS1: RfCatYS1.hex
 	goodfet.cc info
 
 installRfCatYS1CCBootloader: RfCatYS1CCBootloader.hex
-	if [ ! -c /dev/RFCAT_BL_YS1 ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_YS1 ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_YS1 erase_all
 	rfcat_bootloader /dev/RFCAT_BL_YS1 download bins/RfCatYS1CCBootloader.hex
 	rfcat_bootloader /dev/RFCAT_BL_YS1 verify bins/RfCatYS1CCBootloader.hex && rfcat_bootloader /dev/RFCAT_BL_YS1 run
@@ -472,7 +472,7 @@ installchronostestrecvusbfw: chronostestrecvusb.hex
 	goodfet.cc info
 
 installchronostestrecvusbfwCC: chronostestrecvusbCC.hex
-	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_C ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_C erase_all
 	rfcat_bootloader /dev/RFCAT_BL_C download bins/testrecv.hex
 	rfcat_bootloader /dev/RFCAT_BL_C verify bins/testrecv.hex && rfcat_bootloader /dev/RFCAT_BL_C run
@@ -484,7 +484,7 @@ installdonstestrecvusbfw: donstestrecvusb.hex
 	goodfet.cc info
 
 installdonstestrecvusbfwCC: donstestrecvusbCC.hex
-	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force && sleep 1 ; fi ;
+	if [ ! -c /dev/RFCAT_BL_D ] ; then ../rfcat --bootloader --force -S && sleep 1 ; fi ;
 	rfcat_bootloader /dev/RFCAT_BL_D erase_all
 	rfcat_bootloader /dev/RFCAT_BL_D download bins/testrecv.hex
 	rfcat_bootloader /dev/RFCAT_BL_D verify bins/testrecv.hex && rfcat_bootloader /dev/RFCAT_BL_D run

@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--specchans', default=104, type=int) 
     parser.add_argument('--bootloader', default=False, action="store_true", help='trigger the bootloader (use in order to flash the dongle)')
     parser.add_argument('--force', default=False, action="store_true", help='use this to make sure you want to set bootloader mode (you *must* flash after setting --bootloader)')
+    parser.add_argument('-S', '--safemode', default=False, action="store_true", help='TROUBLESHOOTING ONLY, used with -r')
 
     ifo = parser.parse_args()
 
@@ -51,14 +52,14 @@ if __name__ == "__main__":
             exit(-1)
 
         print("Entering RfCat Bootloader mode, ready for new image...")
-        RfCat(ifo.index).bootloader()
+        RfCat(ifo.index, safemode=ifo.safemode).bootloader()
         exit(0)
 
     elif ifo.specan:
         RfCat(ifo.index).specan(ifo.centfreq,ifo.inc,ifo.specchans)
 
     elif ifo.research:
-        interactive(ifo.index, DongleClass=RfCat, intro=intro)
+        interactive(ifo.index, DongleClass=RfCat, intro=intro, safemode=ifo.safemode)
 
     else:
         # do the full-rfcat thing

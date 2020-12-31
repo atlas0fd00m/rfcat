@@ -58,13 +58,14 @@ direct=False
 
 class USBDongle(object):
     ######## INITIALIZATION ########
-    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
+    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX, safemode=False):
+        self._safemode = safemode
         self.chipnum = None
         self.chipstr = "uninitialized"
         self.rsema = None
         self.xsema = None
         self._bootloader = False
-        self._init_on_reconnect = True
+        self._init_on_reconnect = not safemode
         self._do = None
         self.idx = idx
         self.cleanup()
@@ -88,8 +89,8 @@ class USBDongle(object):
         self.send_thread.setDaemon(True)
         self.send_thread.start()
 
-        self.resetup(copyDongle=copyDongle)
         self.max_packet_size = USB_MAX_BLOCK_SIZE
+        self.resetup(copyDongle=copyDongle)
 
     def cleanup(self):
         self._usberrorcnt = 0;
@@ -190,6 +191,9 @@ class USBDongle(object):
         self._usbmaxi, self._usbmaxo = (EP5IN_MAX_PACKET_SIZE, EP5OUT_MAX_PACKET_SIZE)
         self._threadGo.set()
 
+        if self._safemode:
+            return
+
         self.getRadioConfig()
         chip = self.getPartNum()
         chipstr = CHIPS.get(chip)
@@ -215,13 +219,16 @@ class USBDongle(object):
         if self._bootloader: 
             return
         if self._debug: print(("waiting (resetup) %x" % self.idx), file=sys.stderr)
+
         while (self._do==None):
             try:
                 self.setup(console, copyDongle)
                 if copyDongle is None:
                     self._clear_buffers(False)
-                self.ping(3, wait=10, silent=True)
-                self.setRfMode(self._rfmode)
+
+                if not self._safemode:
+                    self.ping(3, wait=10, silent=True)
+                    self.setRfMode(self._rfmode)
 
             except Exception as e:
                 #if console: sys.stderr.write('.')
@@ -409,12 +416,10 @@ class USBDongle(object):
                         pass
                     elif ('No such device' in errstr):
                         self._threadGo.clear()
-                        #self.resetup(False) ## THIS IS A PROBLEM.
                         self.reset_event.set()
                         print("===== RESETUP set from recv thread")
                     elif ('Input/output error' in errstr):  # USBerror 5
                         self._threadGo.clear()
-                        #self.resetup(False) ## THIS IS A PROBLEM.
                         self.reset_event.set()
                         print("===== RESETUP set from recv thread")
 
@@ -427,7 +432,6 @@ class USBDongle(object):
                 if "'NoneType' object has no attribute 'bInterfaceNumber'" in str(e):
                     print("Error: dongle went away.  USB bus problems?")
                     self._threadGo.clear()
-                    #self.resetup(False)
                     self.reset_event.set()
 
             except:
@@ -754,6 +758,14 @@ class USBDongle(object):
     def poke(self, addr, data):
         r, t = self.send(APP_SYSTEM, SYS_CMD_POKE, struct.pack("<H", addr) + data)
         return r
+    
+    def poke8(self, addr, data):
+        data = b'%c' % (data)
+        return self.poke(addr, data)
+    
+    def poke16(self, addr, data):
+        data = struct.pack('<H', data)
+        return self.poke(addr, data)
     
     def pokeReg(self, addr, data):
         r, t = self.send(APP_SYSTEM, SYS_CMD_POKE_REG, struct.pack("<H", addr) + data)

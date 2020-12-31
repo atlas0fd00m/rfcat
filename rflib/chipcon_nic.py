@@ -99,8 +99,8 @@ class NICxx11(USBDongle):
     the same radio concepts (frequency, channels, etc) and functionality
     (AES, Manchester Encoding, etc).
     '''
-    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
-        USBDongle.__init__(self, idx, debug, copyDongle, RfMode)
+    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX, safemode=False):
+        USBDongle.__init__(self, idx, debug, copyDongle, RfMode, safemode=safemode)
         self.max_packet_size = RF_MAX_RX_BLOCK
         self.endec = None
         if hasattr(self, "chipnum"):
@@ -1096,7 +1096,7 @@ class NICxx11(USBDongle):
         '''
         retval = self.send(APP_NIC, NIC_GET_AMP_MODE, b"")
         if len(retval) == 2:
-            retval = ord(retval[0])
+            retval = ord(retval[0:1])
         return retval
 
     def setPktAddr(self, addr):
@@ -1151,7 +1151,7 @@ class NICxx11(USBDongle):
         preload = old_div(RF_MAX_TX_BLOCK, RF_MAX_TX_CHUNK)
         retval, ts = self.send(APP_NIC, NIC_LONG_XMIT, b"%s" % struct.pack("<HB",datalen,preload)+data[:RF_MAX_TX_CHUNK * preload], wait=wait*preload)
         #sys.stderr.write('=' + repr(retval))
-        error = struct.unpack("<B", retval[0])[0]
+        error = struct.unpack(b"<B", retval[0:1])[0]
         if error:
             return error
 
@@ -1161,7 +1161,7 @@ class NICxx11(USBDongle):
             error = RC_TEMP_ERR_BUFFER_NOT_AVAILABLE
             while error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
                 retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", len(chunk))+chunk, wait=wait)
-                error = struct.unpack("<B", retval[0])[0]
+                error = struct.unpack(b"<B", retval[0:1])[0]
             if error:
                 return error
                 #if error == RC_TEMP_ERR_BUFFER_NOT_AVAILABLE:
@@ -1169,7 +1169,7 @@ class NICxx11(USBDongle):
             #sys.stderr.write('+')
         # tell dongle we've finished
         retval,ts = self.send(APP_NIC, NIC_LONG_XMIT_MORE, b"%s" % struct.pack("B", 0), wait=wait)
-        return struct.unpack("<b", retval[0])[0]
+        return struct.unpack("<b", retval[0:1])[0]
 
     def RFtestLong(self, data=b"BLAHabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZblahaBcDeFgHiJkLmNoPqRsTuVwXyZBLahAbCdEfGhIjKlMnOpQrStUvWxYz"):
         datalen = len(data)
@@ -1850,13 +1850,13 @@ class FHSSNIC(NICxx11):
         self.setMACdata(macdata)
 
     def setMACdata(self, data):
-        datastr = struct.pack("<BHHHHHHHHBBH", *data)
+        datastr = struct.pack(b"<BHHHHHHHHBBH", *data)
         return self.send(APP_NIC, FHSS_SET_MAC_DATA, datastr)
 
     def getMACdata(self):
         datastr, timestamp = self.send(APP_NIC, FHSS_GET_MAC_DATA, b'')
         #print (repr(datastr))
-        data = struct.unpack("<BHHHHHHHHBBH", datastr)
+        data = struct.unpack(b"<BHHHHHHHHBBH", datastr)
         return data
 
     def reprMACdata(self):
