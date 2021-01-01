@@ -1096,7 +1096,7 @@ class NICxx11(USBDongle):
         '''
         retval = self.send(APP_NIC, NIC_GET_AMP_MODE, b"")
         if len(retval) == 2:
-            retval = ord(retval[0:1])
+            retval = ord(retval[0])
         return retval
 
     def setPktAddr(self, addr):
