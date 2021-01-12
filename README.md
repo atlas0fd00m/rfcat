@@ -33,7 +33,8 @@ RfCat currently requires Python 2.7.  the only suspected incompatibilities with 
 * libusb - should be able to work with either 1.x or 0.1 versions.  please let us know if you run into issues.
 * pyreadline (especially for Windows)
 * PySide2 (for Spectrum Analyzer GUI):  (Ubuntu 18.10+: python-pyside2)
-    $ sudo pip install PySide2
+    PySide2 is no longer installed automatically, due to support concerns for RPi platforms.  You can install it (if available for your platform) using pip:
+    $ sudo pip install PySide2  
 
 ### Build requirements
 

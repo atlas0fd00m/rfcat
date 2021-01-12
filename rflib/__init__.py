@@ -1,4 +1,4 @@
-#!/usr/bin/env ipython3 -i --no-banner
+#!/usr/bin/env ipython -i --no-banner
 
 from __future__ import print_function
 from __future__ import absolute_import
