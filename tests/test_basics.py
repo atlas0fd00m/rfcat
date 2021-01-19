@@ -10,7 +10,7 @@ class RfCatBasicTests(unittest.TestCase):
         import rflib.chipcon_usb
         import rflib.chipcondefs
         import rflib.bits
-        import rflib.ccspecan
+        #import rflib.ccspecan
         import rflib.intelhex
         import rflib.rflib_defs
 
