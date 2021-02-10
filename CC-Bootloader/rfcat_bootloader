@@ -62,7 +62,7 @@ def verify_code(ihx_file, serial_port):
         block_length= length
       else:
         block_length= ((length / 16) + 1) * 16
-      print("\r                                               ")
+      print("\r                                               ", end='')
       print("\rVerifying %04d bytes at address: %04X" % (length, start_addr), end='')
       do_flash_read(serial_port, start_addr, block_length)
       verify_data= b''
@@ -75,7 +75,7 @@ def verify_code(ihx_file, serial_port):
       if (data == verify_data[:length*2]):
         print("(OK)", end='')
       else:
-        print("Failed! Expected:", data, "Got:"), verify_data[:length*2]
+        print("\nFailed! Expected:", data, "Got:", verify_data[:length*2])
         exit(1)
       sys.stdout.flush()
     else:
