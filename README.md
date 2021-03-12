@@ -108,14 +108,14 @@ This tool is created, maintained, and used primarily on linux.  make and sdcc mu
             | Chronos                      |
             --------------------------------
 
-               GoodFET            Chronos
-                 PIN                PIN
+               GoodFET            Chronos           GreatFET            Chronos
+                 PIN                PIN              PIN                  PIN
 
-                  1 <----- DD -----> 6
-                  2 <----- VCC ----> 4
-                  5 <----- RST ----> 1
-                  7 <----- DC -----> 5
-                  9 <----- GND ----> 3
+                  1 <----- DD -----> 6              J1.37 <----- DD -----> 6
+                  2 <----- VCC ----> 4               J1.2 <----- VCC ----> 4
+                  5 <----- RST ----> 1              J1.40 <----- RST ----> 1
+                  7 <----- DC -----> 5              J1.39 <----- DC -----> 5
+                  9 <----- GND ----> 3               J1.1 <----- GND ----> 3
 ```
 
 #### EMK Dongle
@@ -132,14 +132,14 @@ This tool is created, maintained, and used primarily on linux.  make and sdcc mu
             | Don's Dongle (EMK)           |
             --------------------------------
 
-               GoodFET              EMK  
-                 PIN             DEBUG PIN
+               GoodFET              EMK               GreatFET             EMK  
+                 PIN             DEBUG PIN              PIN            DEBUG PIN
 
-                  1 <----- DD -----> 4
-                  2 <----- VCC ----> 2
-                  5 <----- RST ----> 7
-                  7 <----- DC -----> 3
-                  9 <----- GND ----> 1
+                  1 <----- DD -----> 4              J1.37 <----- DD -----> 4
+                  2 <----- VCC ----> 2               J1.2 <----- VCC ----> 2
+                  5 <----- RST ----> 7              J1.40 <----- RST ----> 7
+                  7 <----- DC -----> 3              J1.39 <----- DC -----> 3
+                  9 <----- GND ----> 1               J1.1 <----- GND ----> 1
 ```
 
 #### YARD Stick One
@@ -156,14 +156,14 @@ Pogo pads on the back are clearly marked, but if you want to use the header...
             -----------------------------------------
 
     
-               GoodFET           YARD Stick One
-                 PIN                 PIN
+               GoodFET           YARD Stick One       GreatFET           YARD Stick One
+                 PIN                 PIN               PIN                 PIN
 
-                  1 <----- DD -----> 1
-                  2 <----- VCC ----> 2
-                  5 <----- RST ----> 5
-                  7 <----- DC -----> 7
-                  9 <----- GND ----> 9
+                  1 <----- DD -----> 1               J1.37 <----- DD -----> 1
+                  2 <----- VCC ----> 2                J1.2 <----- VCC ----> 2
+                  5 <----- RST ----> 5               J1.40 <----- RST ----> 5
+                  7 <----- DC -----> 7               J1.39 <----- DC -----> 7
+                  9 <----- GND ----> 9                J1.1 <----- GND ----> 9
 ```
 
 
