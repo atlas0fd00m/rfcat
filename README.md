@@ -68,6 +68,7 @@ First things first. Using rfcat requires that you either use the python client i
 sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
 sudo udevadm control --reload-rules
 ```
+Please make sure any user accounts you want to allow access to the RfCat dongle are members of the `dialout` group.
 
 This tool is created, maintained, and used primarily on linux.  make and sdcc must be installed for creating new firmware and some of the helper functions we provide through make.
 
