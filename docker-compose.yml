@@ -3,4 +3,7 @@ version: "3.3"
 services:
   rfcat_image:
     build: .
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
     privileged: true
+
