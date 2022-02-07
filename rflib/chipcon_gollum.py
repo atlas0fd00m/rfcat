@@ -651,8 +651,29 @@ class PandwaRF(RfCat):
 
         self._sendRfStopJamming()
 
-    def doBruteForceLegacy(self):
+    def _doBruteForceReceive(self, stopValue: int):
+        status = 0
+        while (not keystop() and (status <= stopValue)):
+            # check for SYS_CMD_RF_BRUTE_FORCE_STATUS_UPDATE
+            try:
+                (y, t) = self._recvRfBruteForceStatusUpdate()
+                status, state = struct.unpack("<IB", y)
+                if state == STATE_BRUTEFORCE_NOT_STARTED:
+                    print("Bruteforce not started yet...")
+                elif state == STATE_BRUTEFORCE_ONGOING:
+                    print(f"({t}) Brute force status: {status}/{stopValue}")
+                elif state == STATE_BRUTEFORCE_FINISHED:
+                    print("Bruteforce finished !")
+                    break
+                else:
+                    print("Unknown bruteforce status")
+
+            except ChipconUsbTimeoutException:
+                # print "Timeout Brute force status update" 
         pass
+            except KeyboardInterrupt:
+                print("Please press <enter> to stop")
+
     
 
 
@@ -704,6 +725,7 @@ class PandwaRFRogue(PandwaRF):
                      codeLength: int, 
                      repeat: int, 
                      delay: int, 
+                     symbolLength: int,
                      encSymbol0: int, 
                      encSymbol1: int, 
                      encSymbol2: int, 
@@ -720,30 +742,10 @@ class PandwaRFRogue(PandwaRF):
         print("(press Enter to stop)")
 
         self.txSetup(frequency, modulation, datarate)
-        self._sendRfBruteForceSetupLongSymbol(delay, 3, encSymbol0, encSymbol1, encSymbol2, encSymbol3)
+        self._sendRfBruteForceSetupLongSymbol(delay, symbolLength, encSymbol0, encSymbol1, encSymbol2, encSymbol3)
         self._sendRfBruteForceSetupFunction(functionSize, functionMask, functionValue)
         self._sendRfBruteForceStartSyncCodeTail(syncWordSize, tailWordSize, codeLength, startValue, stopValue, repeat, littleEndian, syncWord, tailWord)
 
-        status = 0
-        while (not keystop() and (status <= stopValue)):
-            # check for SYS_CMD_RF_BRUTE_FORCE_STATUS_UPDATE
-            try:
-                (y, t) = self._recvRfBruteForceStatusUpdate()
-                status, state = struct.unpack("<IB", y)
-                if state == STATE_BRUTEFORCE_NOT_STARTED:
-                    print("Bruteforce not started yet...")
-                elif state == STATE_BRUTEFORCE_ONGOING:
-                    print(f"({t}) Brute force status: {status}/{stopValue}")
-                elif state == STATE_BRUTEFORCE_FINISHED:
-                    print("Bruteforce finished !")
-                    break
-                else:
-                    print("Unknown bruteforce status")
-
-            except ChipconUsbTimeoutException:
-                # print "Timeout Brute force status update" 
-                pass
-            except KeyboardInterrupt:
-                print("Please press <enter> to stop")
+        self._doBruteForceReceive(stopValue)
 
         self._sendRfBruteForceStop()

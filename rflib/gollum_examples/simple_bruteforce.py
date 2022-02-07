@@ -14,6 +14,7 @@ if __name__ == "__main__":
     repeat = 6
     delayMs = 30
 
+    symbolLength = 3
     encSymbolZero = 0xFF0000
     encSymbolOne = 0xFF00FF
     encSymbolTwo = 0x000000
@@ -26,6 +27,6 @@ if __name__ == "__main__":
     functionMask = 0xFFFFFFFFFFFFFFFFFFFF0000
     functionValue= 0x000000000000000000000001
 
-    d.doBruteForce(FREQ, MOD, DATARATE, startValue, stopValue, codeLength, repeat, delayMs, encSymbolZero, encSymbolOne, encSymbolTwo, encSymbolThree, syncWordSize, syncWord, tailWordSize, tailWord, functionSize, functionMask, functionValue)
+    d.doBruteForce(FREQ, MOD, DATARATE, startValue, stopValue, codeLength, repeat, delayMs, symbolLength, encSymbolZero, encSymbolOne, encSymbolTwo, encSymbolThree, syncWordSize, syncWord, tailWordSize, tailWord, functionSize, functionMask, functionValue)
 
     d.setModeIDLE()
