@@ -1,7 +1,7 @@
 #!/usr/bin/env ipython
 import struct
 from typing import Optional
-from . import RfCat
+from . import RFCAT_START_SPECAN, RFCAT_STOP_SPECAN, RfCat
 
 from rflib.ccspecan import SPECAN_QUEUE
 
@@ -9,7 +9,7 @@ from .utils_gollum import Tools
 
 from .chipcon_usb import ChipconUsbTimeoutException, keystop
 from .chipcondefs import RFST_SIDLE
-from .const import MOD_ASK_OOK, SYNCM_CARRIER, USB_RX_WAIT
+from .const import MOD_ASK_OOK, SYNCM_CARRIER, USB_RX_WAIT, USB_TX_WAIT
 from .const_gollum import *
 
 # PandwaRF/PandwaRF Rogue specific methods
@@ -27,6 +27,15 @@ class PandwaRF(RfCat):
                 cmd = CMD_SPECAN_QUEUE
 
         r, t = super().recv(app, cmd, wait)
+        return r, t
+
+    def send(self, app, cmd, buf, wait=USB_TX_WAIT):
+        # Override send to replace some commands (e.g specan)
+        if app == APP_NIC:
+            if cmd in [RFCAT_START_SPECAN, RFCAT_STOP_SPECAN]:
+                app = APP_SPECAN
+
+        r, t = super().send(app, cmd, buf, wait)
         return r, t
 
     # RECV / SEND COMMANDS (Low Level)
@@ -209,7 +218,7 @@ class PandwaRF(RfCat):
         return self._sendAppRf(CMD_RF_SET_PKTCRC, _data)
 
     def _sendRfSetChanSpc(self, channelSpacing: int):
-        _data = struct.pack("B", channelSpacing)
+        _data = struct.pack("<I", channelSpacing)
         return self._sendAppRf(CMD_RF_SET_CHANSPC, _data)
 
     def _sendRfStartJamming(self,
@@ -326,6 +335,10 @@ class PandwaRF(RfCat):
         output.append(f"Amplification Mode:  {self.reprAmpMode()}")
 
         return '\n'.join(output)
+
+    def _stopSpecAn(self):
+        # Overload because it is wrongly implemented in rfcat
+        self._sendRfcatStopSpecan()
 
 
     # User functions
