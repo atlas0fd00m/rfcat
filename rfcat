@@ -6,6 +6,9 @@ import sys
 import logging
 import readline
 import rlcompleter
+
+from rflib.chipcon_gollum import PandwaRF, PandwaRFRogue
+from rflib.const_gollum import GOLLUM_VENDOR_ID
 readline.parse_and_bind("tab: complete")
 
 from rflib import *
@@ -30,6 +33,20 @@ you interact with the rfcat dongle:
 
 """
 
+def getDongleClass(idx: int):
+    dongle = getRfCatDevices()[idx]
+    if dongle.idVendor == GOLLUM_VENDOR_ID:
+        if dongle.idProduct == PANDWARF_ROGUE_PRODUCT_ID:
+            print("PandwaRF Rogue Detected")
+            return PandwaRFRogue
+        elif dongle.idProduct == PANDWARF_PRODUCT_ID:
+            print("PandwaRF (non Rogue) Detected")
+            return PandwaRF
+    
+    print("Dongle is not a PandwaRF")
+    return RfCat
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -46,23 +63,25 @@ if __name__ == "__main__":
 
     ifo = parser.parse_args()
 
+    DongleClass = getDongleClass(ifo.index)
+
     if ifo.bootloader:
         if not ifo.force:
             print("Protecting you from yourself.  If you want to trigger Bootloader mode (you will then *have* to flash a new RfCat image on it) use the --force argument as well")
             exit(-1)
 
         print("Entering RfCat Bootloader mode, ready for new image...")
-        RfCat(ifo.index, safemode=ifo.safemode).bootloader()
+        DongleClass(ifo.index, safemode=ifo.safemode).bootloader()
         exit(0)
 
     elif ifo.specan:
-        RfCat(ifo.index).specan(ifo.centfreq,ifo.inc,ifo.specchans)
+        DongleClass(ifo.index).specan(ifo.centfreq,ifo.inc,ifo.specchans)
 
     elif ifo.research:
-        interactive(ifo.index, DongleClass=RfCat, intro=intro, safemode=ifo.safemode)
+        interactive(ifo.index, DongleClass=DongleClass, intro=intro, safemode=ifo.safemode)
 
     else:
         # do the full-rfcat thing
-        d = RfCat(ifo.index, debug=False)
+        d = DongleClass(ifo.index, debug=False)
         d.rf_redirection((sys.stdin, sys.stdout))
 

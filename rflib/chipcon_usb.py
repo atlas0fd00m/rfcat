@@ -19,6 +19,8 @@ import select
 import threading
 from binascii import hexlify
 
+from rflib.const_gollum import PANDWARF_PRODUCT_ID, PANDWARF_ROGUE_PRODUCT_ID
+
 from . import bits
 from .bits import correctbytes, ord23
 from .const import *
@@ -41,7 +43,13 @@ def getRfCatDevices():
     for bus in usb.busses():
         for dev in bus.devices:
             # OpenMoko assigned or Legacy TI
-            if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or dev.idProduct == 0x6048 or dev.idProduct == 0x605b or dev.idProduct == 0xecc1)):
+            if (dev.idVendor == 0x0451 and dev.idProduct == 0x4715) or \
+                (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6047 or 
+                                             dev.idProduct == 0x6048 or 
+                                             dev.idProduct == 0x605b or
+                                             dev.idProduct == 0xecc1 or
+                                             dev.idProduct == PANDWARF_PRODUCT_ID or 
+                                             dev.idProduct == PANDWARF_ROGUE_PRODUCT_ID)):
                 rfcats.append(dev)
 
             elif (dev.idVendor == 0x1d50 and (dev.idProduct == 0x6049 or dev.idProduct == 0x604a or dev.idProduct == 0xecc0)):
