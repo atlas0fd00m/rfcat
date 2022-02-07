@@ -264,7 +264,7 @@ class PandwaRF(RfCat):
                                 syncWordSize: int,
                                 syncWord: int):
         _data = struct.pack("<BIIBBBBBBBB", codeLength, startValue, stopValue, frameRepeat, littleEndian, delay, encoderSymbol0, encoderSymbol1, encoderSymbol2, encoderSymbol3, syncWordSize)
-        _data += int.to_bytes(syncWord, syncWordSize, 'little')
+        _data += int.to_bytes(syncWord, syncWordSize, 'big')
         return self._sendAppRf(CMD_RF_BRUTE_FORCE_START, _data)
 
     def _sendRfBruteForceStop(self):
@@ -674,6 +674,34 @@ class PandwaRF(RfCat):
             except KeyboardInterrupt:
                 print("Please press <enter> to stop")
 
+
+    def doBruteForceLegacy(self, 
+                           frequency: int, 
+                           modulation: int, 
+                           datarate: int, 
+                           startValue: int,
+                           stopValue: int, 
+                           codeLength: int, 
+                           repeat: int, 
+                           delay: int, 
+                           encSymbol0: int, 
+                           encSymbol1: int, 
+                           encSymbol2: int, 
+                           encSymbol3: int, 
+                           syncWordSize: int, 
+                           syncWord: int,
+                           functionSize: int, 
+                           functionMask: int, 
+                           functionValue: int, 
+                           littleEndian=False):
+        print("Entering brute force mode...  status arriving will be displayed on the screen")
+        print("(press Enter to stop)")
+
+        self.txSetup(frequency, modulation, datarate)
+        self._sendRfBruteForceSetupFunction(functionSize, functionMask, functionValue)
+        self._sendRfBruteForceStart(codeLength, startValue, stopValue, repeat, littleEndian, delay, encSymbol0, encSymbol1, encSymbol2, encSymbol3, syncWordSize, syncWord)
+        self._doBruteForceReceive(stopValue)
+        self._sendRfBruteForceStop()
     
 
 
