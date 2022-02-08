@@ -1,23 +1,75 @@
+Welcome to the official rfcat project that works for `PandwaRF` and `PandwaRF Rogue`, modified to also work with legacy rfcat dongles such as `Yard Stick One`.  
+See the legacy readme [here](#legacy-readme).  
+
+## How to install RfCat python  
+
+There are multiple ways to install rfcat, including a docker way, but for now, if you are using docker, you won't be able to use the `rfcat -s` feature (the Spectrum Analyser) since it require a GUI (Graphical User Interface).  
+
+### On Linux
+
+- (Recommended) Install using docker and our custom image by simply running `./run_rfcat_docker.sh`
+- Install using the [legacy install](#installing-client)
+
+### On Windows
+
+On windows you can use rfcat with `WSL 2` and the `Ubuntu distribution for WSL 2`. You can :  
+- (Recommended) Install using `Docker Desktop` by simply running `run_rfcat_docker.bat`
+- Install using the [legacy install](#installing-client) of rfcat inside `WSL 2`.
+
+In both cases, after installation, you will need to follow this [guide](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/) to expose your PandwaRF / Yard Stick One USB Dongle to the `WSL 2 / Docker instance`. The guide is working on `Windows 10` even if it says you need `Windows 11`.  
+
+## How to use RfCat python without root permissions  
+
+(You don't need to do this if you are using the docker method)  
+
+You may have tried to run `rfcat -r` and saw a `Permission Denied` error, and then simply did `sudo rfcat -r` to make it work, but you can avoid the `sudo` by allowing user access to the RfCat USB Dongles by doing the following:  
+
+```bash
+sudo cp etc/udev/rules.d/20-rfcat.rules /etc/udev/rules.d
+sudo udevadm control --reload-rules
+# Then you may need to reboot to apply changes
+```
+
+## How to use RfCat python
+
+After having followed the above guide on how to install the rfcat python client, you can simply type `rfcat -r` to interact with the Dongle. You can also create scripts to use the Dongle, and some example script for the `PandwaRF` are provided in [rflib/gollum_examples](./rflib/gollum_examples).  
+You can also check the [legacy Using rfcat](#using-rfcat) for additional info.
+
+
+
+
+# Legacy Readme
+
 Welcome to the rfcat project
 
 ## Table of Contents
 
-* [Goals](#goals)
-* [Requirements](#requirements)
-  * [Other requirements](#other-requirements)
-  * [Build requirements](#build-requirements)
-* [Development](#development)
-  * ["Gotchas"](#gotchas)
-* [Installing on hardware](#installing-on-hardware)
-  * [Allowing non-root dongle access](#allowing-non-root-dongle-access)
-  * [Supported dongles](#supported-dongles)
-  * [Your build environment](#your-build-environment)
-* [Installing with bootloader](#installing-with-bootloader)
-  * [To install](#to-install)
-* [Installing client](#installing-client)
-* [Using RfCat](#using-rfcat)
-* [Cool Projects Using RfCat](#external-projects)
-* [Epilogue](#epilogue)
+- [Legacy Readme](#legacy-readme)
+  - [Table of Contents](#table-of-contents)
+  - [GOALS](#goals)
+  - [REQUIREMENTS](#requirements)
+    - [Other requirements](#other-requirements)
+    - [Build requirements](#build-requirements)
+  - [DEVELOPMENT](#development)
+    - [Gotchas](#gotchas)
+  - [INSTALLING ON HARDWARE](#installing-on-hardware)
+    - [allowing non-root dongle access](#allowing-non-root-dongle-access)
+    - [supported dongles](#supported-dongles)
+      - [GoodFET](#goodfet)
+      - [Chronos Dongle](#chronos-dongle)
+      - [EMK Dongle](#emk-dongle)
+      - [YARD Stick One](#yard-stick-one)
+  - [INSTALLING WITH BOOTLOADER](#installing-with-bootloader)
+    - [Steps required for all firmware installs and updates](#steps-required-for-all-firmware-installs-and-updates)
+    - [Steps for bootloader + firmware installs via hardware debugger](#steps-for-bootloader--firmware-installs-via-hardware-debugger)
+    - [Steps for firmware updates via USB port](#steps-for-firmware-updates-via-usb-port)
+  - [Installing client](#installing-client)
+    - [Dependencies](#dependencies)
+    - [Installation](#installation)
+      - [Installation with pip](#installation-with-pip)
+  - [Using rfcat](#using-rfcat)
+  - [External Projects](#external-projects)
+  - [Epilogue](#epilogue)
 
 ## GOALS
 
