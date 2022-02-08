@@ -670,7 +670,7 @@ class PandwaRF(RfCat):
 
             except ChipconUsbTimeoutException:
                 # print "Timeout Brute force status update" 
-        pass
+                pass
             except KeyboardInterrupt:
                 print("Please press <enter> to stop")
 
