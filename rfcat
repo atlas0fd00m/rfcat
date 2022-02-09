@@ -18,18 +18,24 @@ logger = logging.getLogger(__name__)
 
 
 intro = """'RfCat, the greatest thing since Frequency Hopping!'
-
+Modified version for PandwaRF !
 Research Mode: enjoy the raw power of rflib
 
 currently your environment has an object called "d" for dongle.  this is how 
 you interact with the rfcat dongle:
-    >>> d.ping()
-    >>> d.setFreq(433000000)
-    >>> d.setMdmModulation(MOD_ASK_OOK)
-    >>> d.makePktFLEN(250)
-    >>> d.RFxmit("HALLO")
-    >>> d.RFrecv()
-    >>> print(d.reprRadioConfig())
+
+d.ping()
+d.setModeIDLE()
+d.setFreq(433920000)
+d.setMdmModulation(MOD_ASK_OOK)
+d.setMdmDRate(10_000)
+d.makePktFLEN(250)
+d.setModeTX()
+d.RFxmit(b"HALLO")
+d.setModeRX()
+d.RFrecv()
+print(d.reprRadioConfig())
+d.setModeIDLE()
 
 """
 
