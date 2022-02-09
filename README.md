@@ -32,7 +32,7 @@ sudo udevadm control --reload-rules
 
 ## How to use RfCat python
 
-After having followed the above guide on how to install the rfcat python client, you can simply type `rfcat -r` to interact with the Dongle. You can also create scripts to use the Dongle, and some example script for the `PandwaRF` are provided in [rflib/gollum_examples](./rflib/gollum_examples).  
+After having followed the above guide on how to install the rfcat python client, you can simply type `rfcat -r` to interact with the Dongle. You can also create scripts to use the Dongle, and some example script for the `PandwaRF` are provided in the [examples](./examples/) folder.  
 You can also check the [legacy Using rfcat](#using-rfcat) for additional info.
 
 

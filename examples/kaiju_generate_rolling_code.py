@@ -15,7 +15,7 @@ if __name__ == "__main__":
             "brand": "MHouse",
             "model": "GTX",
             "serialNumberHex": "0x041170E",
-            "syncCounter": 1435,
+            "syncCounter": 1440,
             "button": 1,
             "seed": "",
             "numCodesRequested": 2
