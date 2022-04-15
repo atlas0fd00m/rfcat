@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 
@@ -24,7 +24,7 @@ you interact with the rfcat dongle:
     >>> d.setFreq(433000000)
     >>> d.setMdmModulation(MOD_ASK_OOK)
     >>> d.makePktFLEN(250)
-    >>> d.RFxmit("HALLO")
+    >>> d.RFxmit(b"HALLO")
     >>> d.RFrecv()
     >>> print(d.reprRadioConfig())
 

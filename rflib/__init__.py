@@ -1,4 +1,4 @@
-#!/usr/bin/env ipython -i --no-banner
+#!/usr/bin/env ipython3 -i --no-banner
 
 from __future__ import print_function
 from __future__ import absolute_import
@@ -94,7 +94,7 @@ class RfCat(FHSSNIC):
         '''
         stop sending rfdata and return radio to original config
         '''
-        self.send(APP_NIC, RFCAT_STOP_SPECAN, '')
+        self.send(APP_NIC, RFCAT_STOP_SPECAN, b'')
         self.radiocfg = self._specan_backup_radiocfg
         self.setRadioConfig()
 
