@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2012 atlas
 #
@@ -64,7 +64,7 @@ class SpecanThread(threading.Thread):
         self._high_frequency = high_frequency
         self._freq_step = freq_step
         self._new_frame_callback = new_frame_callback
-        self._stop = False
+        self._stopping = False
         self._stopped = False
 
     def run(self):
@@ -81,10 +81,10 @@ class SpecanThread(threading.Thread):
                 frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                 self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
-                if self._stop:
+                if self._stopping:
                     break
         else:
-            while not self._stop:
+            while not self._stopping:
                 try:
                     rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
                     rssi_values = [ (old_div((ord23(x)^0x80),2))-88 for x in rssi_values ]
@@ -96,7 +96,7 @@ class SpecanThread(threading.Thread):
             self._data._stopSpecAn()
             
     def stop(self):
-        self._stop = True
+        self._stopping = True
         self.join(3.0)
         self._stopped = True
 
