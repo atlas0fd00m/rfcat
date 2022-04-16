@@ -39,7 +39,7 @@ RfCat currently requires Python 2.7.  the only suspected incompatibilities with 
 ### Build requirements
 
 * Make
-* SDCC (no later than 3.5.0, newer versions do not work)
+* SDCC
 
 ## DEVELOPMENT
 
@@ -178,10 +178,10 @@ You will also need to install the build requirements of python-usb, libusb-1.0.0
 * python-usb
 * libusb-1.0.0
 * make
-* sdcc  (no later than version 3.5.0, newer versions will not work)
+* sdcc
 
 ```
-sudo apt install python-usb libusb-1.0.0 make sdcc=3.5.0
+sudo apt install python-usb libusb-1.0.0 make sdcc
 ```
 
 For sdcc and its dependency, sdcc-libraries, you may need to download it from a earlier release's repository if you are on a newer version of Debian or Ubuntu  such as:
