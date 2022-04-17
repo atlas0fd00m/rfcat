@@ -271,7 +271,7 @@ typedef struct {
     u8*  INbuf;
     u16  INbytesleft;
     u8*  OUTbuf;
-    u16  OUTlen;
+    volatile u16  OUTlen;
     u8   OUTapp;
     u8   OUTcmd;
     u16  OUTbytesleft;
