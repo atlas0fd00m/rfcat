@@ -1,10 +1,4 @@
-from __future__ import print_function
-from __future__ import division
-
-from builtins import hex
-from builtins import range
-from builtins import bytes
-from past.utils import old_div
+from binascii import hexlify
 import sys
 import struct
 
@@ -164,10 +158,14 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
         # find the preamble (if any)
         while True:         # keep searching through string until we don't find any more preamble bits to pick on
             sbyts = byts
-            pidx = byts.find(b"\xaa"*minpreamble)
-            # FIXME: what about alternating \x55\x55 and \xaa\xaa preambles (for diff signals?)
-            if pidx == -1:
-                pidx = byts.find(b"\x55"*minpreamble)
+            pidx_aa = byts.find(b"\xaa"*minpreamble)
+            pidx_55 = byts.find(b"\x55"*minpreamble)
+            if -1 in (pidx_aa, pidx_55):
+                pidx = max(pidx_aa, pidx_55)
+            else:
+                pidx = min(pidx_aa, pidx_55)
+
+            if pidx == pidx_55:
                 byts = shiftString(byts, 1)
 
             if pidx == -1:
@@ -175,18 +173,25 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
             
             # chop off the nonsense before the preamble
             sbyts = byts[pidx:]
-            print("sbyts: %s" % repr(sbyts))
+            #print("sbyts: %s" % repr(sbyts))
             
             # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
-            while (sbyts[0] == b'\xaa' and len(sbyts)>2):
+            #print("sbyts[0]: %x" % sbyts[0])
+            while (sbyts[0] == 0xaa and len(sbyts)>2):
+                #print("... trimming 1 byte")
                 sbyts = sbyts[1:]
+
+            # slow trimming
+            while (sbyts[0] & 0xc0 == 0xa0 and len(sbyts) > 2):
+                #print("... slow trimming")
+                byts = shiftString(byts, 2)
             
-            print("sbyts: %s" % repr(sbyts))
+            #print("sbyts(post front trim): %s" % repr(sbyts))
             # now we look at the next 16 bits to narrow the possibilities to 8
             # at this point we have no hints at bit-alignment aside from 0xaa vs 0x55
             dwbits, = struct.unpack(b">H", sbyts[:2])
-            print("sbyts: %s" % repr(sbyts))
-            print("dwbits: %s" % repr(dwbits))
+            #print("sbyts: %s" % repr(sbyts))
+            #print("dwbits: %x" % (dwbits))
             if len(sbyts)>=3:
                 bitcnt = 0
                 #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
@@ -196,12 +201,12 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
                 bits1 = bits1 | (ord(b'\xaa') << 24)
                 bits1 <<= 8
                 bits1 |= sbyts[2]
-                print("bits: %x" % (bits1))
+                #print("bits: %x" % (bits1))
 
                 bit = (5 * 8) - 2  # bytes times bits/byte: 5bytes * 8 bits -2 (for what we're checking)
                 while (bits1 & (3<<bit) == (2<<bit)) and bit > 16:
                     bit -= 2
-                print("bit = %d" % bit)
+                #print("bit = %d" % bit)
                 bits1 >>= (bit-16)
                 #while (bits1 & 0x30000 != 0x20000): # now we align the end of the 101010 pattern with the beginning of the dword
                 #    bits1 >>= 2
@@ -210,28 +215,39 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
                 bitcount = min( 2 * sensitivity, 17 ) 
                 for frontbits in range( bitcount ):            # with so many bit-inverted systems, let's not assume we know anything about the bit-arrangement.  \x55\x55 could be a perfectly reasonable preamble.
                     poss = (bits1 >> frontbits) & 0xffff
+                    #print("poss (%x >> %d): %x" % (bits1, frontbits, poss))
                     if not poss in possDwords:
                         possDwords.append(poss)
             byts = byts[pidx+1:]
         
         return possDwords
 
-def findSyncWordDoubled(byts):
-        possDwords = []
+def findSyncWordDoubled(byts, sensitivity=4, minpreamble=2): 
+    possDwords = []
+
+    while True:         # keep searching through string until we don't find any more preamble bits to pick on
         # find the preamble (if any)
         bitoff = 0
-        pidx = byts.find(b"\xaa\xaa")
-        if pidx == -1:
-            pidx = byts.find(b"\55\x55")
+
+        pidx_aa = byts.find(b"\xaa"*minpreamble)
+        pidx_55 = byts.find(b"\x55"*minpreamble)
+        if -1 in (pidx_aa, pidx_55):
+            pidx = max(pidx_aa, pidx_55)
+        else:
+            pidx = min(pidx_aa, pidx_55)
+
+        if pidx == pidx_55:
             bitoff = 1
-        if pidx == -1:
+
+        elif pidx == -1:
             return []
+
 
         # chop off the nonsense before the preamble
         byts = byts[pidx:]
 
         # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
-        while (byts[0] == (b'\xaa', b'\x55')[bitoff] and len(byts)>2):
+        while (byts[0] == (0xaa, 0x55)[bitoff] and len(byts)>2):
             byts = byts[1:]
 
         # now we look at the next 16 bits to narrow the possibilities to 8
@@ -242,8 +258,8 @@ def findSyncWordDoubled(byts):
             #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
             #  bits2 =                      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
             bits1, = struct.unpack(b">H", byts[:2])
-            bits1 = bits1 | (ord((b'\xaa',b'\x55')[bitoff]) << 16)
-            bits1 = bits1 | (ord((b'\xaa',b'\x55')[bitoff]) << 24)
+            bits1 = bits1 | (((0xaa, 0x55)[bitoff]) << 16)
+            bits1 = bits1 | (((0xaa, 0x55)[bitoff]) << 24)
             bits1 <<= 8
             bits1 |= byts[2]
             bits1 >>= bitoff
@@ -288,23 +304,18 @@ def findSyncWordDoubled(byts):
             possDwords.reverse()
         return possDwords
 
-#def test():
-
-def visBits(data):
-    pass
-
-
 
 def getBit(data, bit):
-    idx = old_div(bit, 8)
+    idx = bit // 8
     bidx = bit % 8
     char = data[idx]
     return (char>>(7-bidx)) & 1
 
 
 
-def detectRepeatPatterns(data, size=64, minEntropy=.07):
-    #FIXME: convert strings to bit arrays before comparing.
+def detectRepeatPatterns(data:bytes, size=64, minEntropy=.07):
+    #FIXME: convert bytes to bit arrays before comparing.
+    patterns = []
     c1 = 0
     c2 = 0
     d1 = 0
@@ -363,12 +374,15 @@ def detectRepeatPatterns(data, size=64, minEntropy=.07):
                 bitSection, ent = bitSectString(data, s1, s1+length)
                 if ent > minEntropy:
                     print("success:")
-                    print("  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), bitSection.encode("hex")))
+                    print("  * bit idx1: %4d (%4d bits) - '%s' %s" % (s1, length, bin(d1), hexlify(bitSection)))
                     print("  * bit idx2: %4d (%4d bits) - '%s'" % (s2, length, bin(d2)))
+                    patterns.append((s1, s2, length, d1))
             #else:
             #    print("  * idx1: %d - '%s'  * idx2: %d - '%s'" % (p1, d1, p2, d2))
             p2 += 1
         p1 += 1
+
+    return patterns
 
 
 def bitSectString(string, startbit, endbit):
@@ -383,7 +397,7 @@ def bitSectString(string, startbit, endbit):
     s = b''
     bit = startbit
 
-    Bidx = old_div(bit, 8)
+    Bidx = bit // 8
     bidx = (bit % 8)
 
     while bit < endbit:
@@ -411,7 +425,7 @@ def bitSectString(string, startbit, endbit):
 
         s += correctbytes(byte)
     
-    ent = old_div((min(entropy)+1.0), (max(entropy)+1))
+    ent = (min(entropy)+1.0) / (max(entropy)+1)
     #print("entropy: %f" % ent)
     return (s, ent)
 
@@ -514,13 +528,13 @@ def invertBits(data):
     #    output.append( struct.pack( "<I", struct.unpack( "<I", data[idx:idx+4] )[0] & 0xffff) )
 
     #method2
-    count = old_div(ldata, 4)
+    count = ldata // 4
     #print(ldata, count)
-    numlist = struct.unpack( "<%dI" % count, data[off:] )
-    modlist = [ struct.pack("<L", (x^0xffffffff) ) for x in numlist ]
+    numlist = struct.unpack(b"<%dI" % count, data[off:] )
+    modlist = [ struct.pack(b"<L", (x^0xffffffff) ) for x in numlist ]
     output.extend(modlist)
 
-    return ''.join(output)
+    return b''.join(output)
 
 
 def diff_manchester_decode(data, align=False):
@@ -684,7 +698,7 @@ def findManchester(data, minbytes=10):
             else:
                 # we're done, or not started
                 if lastCount >= minbits:
-                    lenbytes = (old_div(lastCount, 8))
+                    lenbytes = lastCount // 8
                     lenbits = lastCount % 8
                     startbyte = bidx - lenbytes
                     if lenbits > btidx:

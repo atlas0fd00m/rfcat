@@ -48,23 +48,69 @@ class BitsTest(unittest.TestCase):
                 b'sdfasdf\x00'
                 )
 
-        self.assertEqual(
+        self.assertEqual(   # this tests getNextByte_feedbackRegister7bitsLSB too
                 rfbits.whitenData(b'asdfasdfasdfasdf'),
                 b'\x9fn\x81\xf4e?9\nx\xda\xab\x0e4\x87\xc7'
                 )
 
+        byts = b'\x0a\xaa\xaa\xaa\x34\x35\x34\x36sdfasdfasdfasdfasdfasdfasdfasdfasdfasdf\xaa\xaa\xaa\xaa45\xc6\xdfasdfasdf'
+        self.assertEqual(
+                rfbits.findSyncWord(byts, sensitivity=4, minpreamble=2),
+                [0xd0d4,
+                 0x686a,
+                 0x3435,
+                 0x1a1a,
+                 0x8d0d,
+                 0x4686,
+                 0xa343,
+                 0x51a1,
+                 0xd0d7,
+                 0x686b]
+                )
+
+        self.assertEqual(
+            rfbits.findSyncWordDoubled(b'\x0a\xaa\xaa\xaa\x34\x35\x34\x35sdfasdfasdfasdfasdfasdfasdfasdfasdfasdf\xaa\xaa\xaa\xaa45\xc6\xdfasdfasdf'),
+            [0x34353435]
+            )
+
+        self.assertEqual(
+                rfbits.genBitArray(b'\x0a\xaa\xaa\xaa\x34\x35\x34\x35sdfasdfasdfasdfasdfasdfa', 3, 16),
+                ([0x0,
+                  0x1,
+                  0x0,
+                  0x1,
+                  0x0,
+                  0x1,
+                  0x0,
+                  0x1,
+                  0x0,
+                  0x1,
+                  0x0,
+                  0x1,
+                  0x0,
+                  0x0,
+                  0x0,
+                  0x0],
+                 1.0)
+                )
+
+        self.assertEqual(
+                rfbits.reprBitArray(rfbits.genBitArray(b'\x0a\xaa\xaa\xaa\x34\x35\x34\x35sdfasdfasdfasdfasdfasdfasdfasdfasdfasdf\xaa\xaa\xaa\xaa45\xc6\xdfasdfasdf', 45, 122)[0]),
+                b'/-\\  /-\\     /--\\   /\\          /---\\  /-\\  /-\\  /-----\\     /---\\  /---\\     /-\\       /---\\    /---\\     /---\\          /\\   /-----\\     /---\\  /---\\     /\\       /---\\     /---\\     /\\       \n   ||   |   |    | |  |        |     ||   ||   ||       |   |     ||     |   |   |     |     |  |     |   |     |        |  | |       |   |     ||     |   |  |     |     |   |     |   |  |      \n   \\/   \\---/    \\-/  \\--------/     \\/   \\/   \\/       \\---/     \\/     \\---/   \\-----/     \\--/     \\---/     \\--------/  \\-/       \\---/     \\/     \\---/  \\-----/     \\---/     \\---/  \\------'
+                )
+
+        self.assertEqual(
+                rfbits.invertBits(b'\x0a\xaa\xaa\xaa'),
+                b'\xf5UUU'
+                )
+
+        self.assertEqual(
+                rfbits.detectRepeatPatterns(b'asdfasdfasdfasdfasdfasdfasdfasdf'),
+                [(0x0, 0x80, 0x80, 0xc2e6c8ccc2e6c8cc)]
+                )
 
         '''
-        128:def getNextByte_feedbackRegister7bitsLSB():
-        158:def findSyncWord(byts, sensitivity=4, minpreamble=2):
-        218:def findSyncWordDoubled(byts):
-        292:def visBits(data):
-        297:def getBit(data, bit):
         305:def detectRepeatPatterns(data, size=64, minEntropy=.07):
-        373:def bitSectString(string, startbit, endbit):
-        419:def genBitArray(string, startbit, endbit):
-        470:def reprBitArray(bitAry, width=194):
-        498:def invertBits(data):
         525:def diff_manchester_decode(data, align=False):
         579:def biphase_mark_coding_encode(data):
         605:def manchester_decode(data, hilo=1):
