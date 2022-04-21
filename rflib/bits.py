@@ -8,8 +8,8 @@ from past.utils import old_div
 import sys
 import struct
 
-fmtsLSB = [None, "B", "<H", "<I", "<I", "<Q", "<Q", "<Q", "<Q"]
-fmtsMSB = [None, "B", ">H", ">I", ">I", ">Q", ">Q", ">Q", ">Q"]
+fmtsLSB = [None, b"B", b"<H", b"<I", b"<I", b"<Q", b"<Q", b"<Q", b"<Q"]
+fmtsMSB = [None, b"B", b">H", b">I", b">I", b">Q", b">Q", b">Q", b">Q"]
 sizes = [ 0, 1, 2, 4, 4, 8, 8, 8, 8]
 masks = [ (1<<(8*i))-1 for i in range(9) ]
 
@@ -41,7 +41,7 @@ def ord23(thing):
     return thing
 
 
-def strBitReverse(string):
+def strBitReverse(string:bytes):
     # FIXME: this is really dependent upon python's number system.  large strings will not convert well.  
     # FIXME: break up array of 8-bit numbers and bit-swap in the array
     num = 0
@@ -49,9 +49,9 @@ def strBitReverse(string):
     # convert to MSB number
     for x in range(len(string)):
         ch = string[x]
-        #num |= (ord(ch)<<(8*x))        # this is LSB
+        #num |= (ord(ch:ch+1)<<(8*x))        # this is LSB
         num <<= 8
-        num |= ord(ch)
+        num |= ch
 
     print(hex(num))
     rnum = bitReverse(num, bits)
@@ -63,8 +63,8 @@ def strBitReverse(string):
         out.append(correctbytes(rnum&0xff))
         rnum >>= 8
     out.reverse()
-    print(''.join(out).encode('hex'))
-    return ''.join(out)
+    print(b''.join(out))
+    return b''.join(out)
 
 def strXorMSB(string, xorval, size):
     '''
@@ -73,7 +73,7 @@ def strXorMSB(string, xorval, size):
     '''
     out = []
     strlen = len(string)
-    string += "\x00" * sizes[size]
+    string += b"\x00" * sizes[size]
 
     for idx in range(0, strlen, size):
         tempstr = string[idx:idx+sizes[size]]
@@ -82,7 +82,7 @@ def strXorMSB(string, xorval, size):
         temp &= masks[size]
         tempstr = struct.pack( fmtsMSB[size], temp )[-size:]
         out.append(tempstr)
-    return ''.join(out)
+    return b''.join(out)
 
         
         
@@ -96,14 +96,17 @@ def bitReverse(num, bitcnt):
     return newnum
 
 def shiftString(string, bits):
+    '''
+    In Python3, use bytes instead of a str
+    '''
     carry = 0
     news = []
     for x in range(len(string)-1):
-        newc = ((ord(string[x]) << bits) + (ord(string[x+1]) >> (8-bits))) & 0xff
-        news.append("%c"%newc)
-    newc = (ord(string[-1])<<bits) & 0xff
-    news.append("%c"%newc)
-    return "".join(news)
+        newc = ((string[x] << bits) + (string[x+1] >> (8-bits))) & 0xff
+        news.append(b"%c"%newc)
+    newc = (ord23(string[-1])<<bits) & 0xff
+    news.append(b"%c"%newc)
+    return b"".join(news)
 
 def getNextByte_feedbackRegister7bitsMSB():
     '''
@@ -148,9 +151,9 @@ def whitenData(data, seed=0xffff, getNextByte=getNextByte_feedbackRegister7bitsM
     carry = 0
     news = []
     for x in range(len(data)-1):
-        newc = ((ord(data[x]) ^ getNextByte() ) & 0xff)
-        news.append("%c"%newc)
-    return "".join(news)
+        newc = ((ord23(data[x]) ^ getNextByte() ) & 0xff)
+        news.append(b"%c" % newc)
+    return b"".join(news)
 
 def findSyncWord(byts, sensitivity=4, minpreamble=2): 
         '''
@@ -161,9 +164,10 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
         # find the preamble (if any)
         while True:         # keep searching through string until we don't find any more preamble bits to pick on
             sbyts = byts
-            pidx = byts.find("\xaa"*minpreamble)
+            pidx = byts.find(b"\xaa"*minpreamble)
+            # FIXME: what about alternating \x55\x55 and \xaa\xaa preambles (for diff signals?)
             if pidx == -1:
-                pidx = byts.find("\x55"*minpreamble)
+                pidx = byts.find(b"\x55"*minpreamble)
                 byts = shiftString(byts, 1)
 
             if pidx == -1:
@@ -171,33 +175,33 @@ def findSyncWord(byts, sensitivity=4, minpreamble=2):
             
             # chop off the nonsense before the preamble
             sbyts = byts[pidx:]
-            #print("sbyts: %s" % repr(sbyts))
+            print("sbyts: %s" % repr(sbyts))
             
             # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
-            while (sbyts[0] == '\xaa' and len(sbyts)>2):
+            while (sbyts[0] == b'\xaa' and len(sbyts)>2):
                 sbyts = sbyts[1:]
             
-            #print("sbyts: %s" % repr(sbyts))
+            print("sbyts: %s" % repr(sbyts))
             # now we look at the next 16 bits to narrow the possibilities to 8
             # at this point we have no hints at bit-alignment aside from 0xaa vs 0x55
-            dwbits, = struct.unpack(">H", sbyts[:2])
-            #print("sbyts: %s" % repr(sbyts))
-            #print("dwbits: %s" % repr(dwbits))
+            dwbits, = struct.unpack(b">H", sbyts[:2])
+            print("sbyts: %s" % repr(sbyts))
+            print("dwbits: %s" % repr(dwbits))
             if len(sbyts)>=3:
                 bitcnt = 0
                 #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
                 #  bits2 =                      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-                bits1, = struct.unpack(">H", sbyts[:2])
-                bits1 = bits1 | (ord('\xaa') << 16)
-                bits1 = bits1 | (ord('\xaa') << 24)
+                bits1, = struct.unpack(b">H", sbyts[:2])
+                bits1 = bits1 | (ord(b'\xaa') << 16)
+                bits1 = bits1 | (ord(b'\xaa') << 24)
                 bits1 <<= 8
-                bits1 |= (ord(sbyts[2]) )
-                #print("bits: %x" % (bits1))
+                bits1 |= sbyts[2]
+                print("bits: %x" % (bits1))
 
-                bit = (5 * 8) - 2  # bytes times bits/byte          #FIXME: MAGIC NUMBERS!?
-                while (bits1 & (3<<bit) == (2<<bit)):
+                bit = (5 * 8) - 2  # bytes times bits/byte: 5bytes * 8 bits -2 (for what we're checking)
+                while (bits1 & (3<<bit) == (2<<bit)) and bit > 16:
                     bit -= 2
-                #print("bit = %d" % bit)
+                print("bit = %d" % bit)
                 bits1 >>= (bit-16)
                 #while (bits1 & 0x30000 != 0x20000): # now we align the end of the 101010 pattern with the beginning of the dword
                 #    bits1 >>= 2
@@ -216,9 +220,9 @@ def findSyncWordDoubled(byts):
         possDwords = []
         # find the preamble (if any)
         bitoff = 0
-        pidx = byts.find("\xaa\xaa")
+        pidx = byts.find(b"\xaa\xaa")
         if pidx == -1:
-            pidx = byts.find("\55\x55")
+            pidx = byts.find(b"\55\x55")
             bitoff = 1
         if pidx == -1:
             return []
@@ -227,26 +231,26 @@ def findSyncWordDoubled(byts):
         byts = byts[pidx:]
 
         # find the definite end of the preamble (ie. it may be sooner, but we know this is the end)
-        while (byts[0] == ('\xaa', '\x55')[bitoff] and len(byts)>2):
+        while (byts[0] == (b'\xaa', b'\x55')[bitoff] and len(byts)>2):
             byts = byts[1:]
 
         # now we look at the next 16 bits to narrow the possibilities to 8
         # at this point we have no hints at bit-alignment
-        dwbits, = struct.unpack(">H", byts[:2])
+        dwbits, = struct.unpack(b">H", byts[:2])
         if len(byts)>=5:
             bitcnt = 0
             #  bits1 =      aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb
             #  bits2 =                      bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-            bits1, = struct.unpack(">H", byts[:2])
-            bits1 = bits1 | (ord(('\xaa','\x55')[bitoff]) << 16)
-            bits1 = bits1 | (ord(('\xaa','\x55')[bitoff]) << 24)
+            bits1, = struct.unpack(b">H", byts[:2])
+            bits1 = bits1 | (ord((b'\xaa',b'\x55')[bitoff]) << 16)
+            bits1 = bits1 | (ord((b'\xaa',b'\x55')[bitoff]) << 24)
             bits1 <<= 8
-            bits1 |= (ord(byts[2]) )
+            bits1 |= byts[2]
             bits1 >>= bitoff
 
-            bits2, = struct.unpack(">L", byts[:4])
+            bits2, = struct.unpack(b">L", byts[:4])
             bits2 <<= 8
-            bits2 |= (ord(byts[4]) )
+            bits2 |= byts[4]
             bits2 >>= bitoff
             
 
@@ -295,7 +299,7 @@ def getBit(data, bit):
     idx = old_div(bit, 8)
     bidx = bit % 8
     char = data[idx]
-    return (ord(char)>>(7-bidx)) & 1
+    return (char>>(7-bidx)) & 1
 
 
 
@@ -376,7 +380,7 @@ def bitSectString(string, startbit, endbit):
     zeros = 0
     entropy = [zeros, ones]
 
-    s = ''
+    s = b''
     bit = startbit
 
     Bidx = old_div(bit, 8)
@@ -384,9 +388,9 @@ def bitSectString(string, startbit, endbit):
 
     while bit < endbit:
 
-        byte1 = ord( string[Bidx] )
+        byte1 = string[Bidx]
         try:
-            byte2 = ord( string[Bidx+1] )
+            byte2 = string[Bidx+1]
         except IndexError:
             byte2 = 0
 
@@ -422,7 +426,7 @@ def genBitArray(string, startbit, endbit):
 
     s = []
     for byte in binStr:
-        byte = ord(byte)
+        byte = byte
         for bitx in range(7, -1, -1):
             bit = (byte>>bitx) & 1
             s.append(bit)
@@ -431,36 +435,36 @@ def genBitArray(string, startbit, endbit):
 
 
 chars_top = [
-        " ", #000
-        " ", #001
-        "^", #010
-        "/", #011
-        " ", #100
-        " ", #101
-        "\\",#110
-        "-", #111
+        b" ", #000
+        b" ", #001
+        b"^", #010
+        b"/", #011
+        b" ", #100
+        b" ", #101
+        b"\\",#110
+        b"-", #111
         ]
 
 chars_mid = [
-        " ", #000
-        "|", #001
-        "#", #010
-        " ", #011
-        "|", #100
-        "#", #101
-        " ", #110
-        " ", #110
+        b" ", #000
+        b"|", #001
+        b"#", #010
+        b" ", #011
+        b"|", #100
+        b"#", #101
+        b" ", #110
+        b" ", #110
         ]
 
 chars_bot = [
-        "-", #000
-        "/", #001
-        " ", #010
-        " ", #011
-        "\\",#100
-        "V", #101
-        " ", #110
-        " ", #110
+        b"-", #000
+        b"/", #001
+        b" ", #010
+        b" ", #011
+        b"\\",#100
+        b"V", #101
+        b" ", #110
+        b" ", #110
         ]
 
 
@@ -479,7 +483,7 @@ def reprBitArray(bitAry, width=194):
         bits = 0
         if bindex>0:
             bits += (expand[bindex-1]) << (2)
-        bits += (expand[bindex]) << (1)
+        bits += (expand[bindex]) << 1
         if bindex < width-1:
             bits += (expand[bindex+1])
 
@@ -487,10 +491,10 @@ def reprBitArray(bitAry, width=194):
         mid.append( chars_mid[ bits ] )
         bot.append( chars_bot[ bits ] )
 
-    tops = "".join(top)
-    mids = "".join(mid)
-    bots = "".join(bot)
-    return "\n".join([tops, mids, bots])
+    tops = b"".join(top)
+    mids = b"".join(mid)
+    bots = b"".join(bot)
+    return b"\n".join([tops, mids, bots])
 
 def invertBits(data):
     output = []
@@ -498,7 +502,7 @@ def invertBits(data):
     off = 0
 
     if ldata&1:
-        output.append( correctbytes( ord( data[0] ) ^ 0xff) )
+        output.append( correctbytes( ord( data[0:1] ) ^ 0xff) )
         off = 1
 
     if ldata&2:
@@ -536,7 +540,7 @@ def diff_manchester_decode(data, align=False):
     last = 0
     obyte = 0
     for bidx in range(len(data)):
-        byte = ord(data[bidx])
+        byte = ord(data[bidx:bidx+1])
         for y in range(6, -1, -2):
             if not syncd:
                 diff = last & 1
@@ -579,7 +583,7 @@ def biphase_mark_coding_encode(data):
     out = []
     last = 0
     for bidx in range(len(data)):
-        byte = ord(data[bidx])
+        byte = ord(data[bidx:bidx+1])
         obyte = 0
         for y in range(7, -1, -1):
             bit = (byte >> y) & 1
@@ -604,7 +608,7 @@ def manchester_decode(data, hilo=1):
     last = 0
     obyte = 0
     for bidx in range(len(data)):
-        byte = ord(data[bidx])
+        byte = ord(data[bidx:bidx+1])
         for y in range(7, -1, -1):
             bit = (byte >> y) & 1
 
@@ -639,7 +643,7 @@ def manchester_encode(data, hilo=1):
 
     out = []
     for bidx in range(len(data)):
-        byte = ord(data[bidx])
+        byte = ord(data[bidx:bidx+1])
         obyte = 0
         for bitx in range(7,-1,-1):
             bit = (byte>>bitx) & 1
@@ -670,7 +674,7 @@ def findManchester(data, minbytes=10):
     minbits = minbytes * 8
 
     for bidx in range(len(data)):
-        byt = ord(data[bidx])
+        byt = ord(data[bidx:bidx+1])
         for btidx in range(0, 8, 2):
             # compare every other bits
             bit = (byt>>(8-btidx)) & 1
