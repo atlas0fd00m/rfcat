@@ -20,10 +20,10 @@ def download_code(ihx_file, serial_port):
   for line in ihx_file.readlines():
     record_type = int(line[7:9], 16)
     if (record_type == 0x00):
-      print("Writing", line[:-1], end='')
+      print("Writing", line[:-1].decode(), end='')
       serial_port.write(line)
       rc = serial_port.read()
-      print(" RC = %r" % rc, end='')
+      print(" RC = " + rc.decode(), end='')
       if rc in bootloader_error_codes:
         print("(%s)" % bootloader_error_codes[rc])
       else:
@@ -32,7 +32,7 @@ def download_code(ihx_file, serial_port):
         print("Error downloading code!")
         return False
     else:
-      print("Skipping non data record: '%s'" % line[:-1])
+      print("Skipping non data record: '{}'".format(line[:-1].decode()))
   return True
 
 def verify_code(ihx_file, serial_port):
@@ -51,7 +51,7 @@ def verify_code(ihx_file, serial_port):
           read_data = read_data.strip()
           if not read_data:
             continue
-          if not read_data == ":00000001FF":
+          if not read_data == b":00000001FF":
             can_read_any = True
           else:
             break
@@ -68,7 +68,7 @@ def verify_code(ihx_file, serial_port):
       verify_data= b''
       for read_data in serial_port:
         read_data= read_data.strip()
-        if (not data or read_data == ":00000001FF"):
+        if (not data or read_data == b":00000001FF"):
             break
         # strip header and checksum
         verify_data += read_data[9:-2]
@@ -79,7 +79,7 @@ def verify_code(ihx_file, serial_port):
         exit(1)
       sys.stdout.flush()
     else:
-      print("Skipping non data record: '%s'" % line[:-1])
+      print("\nSkipping non data record: '{}'".format(line[:-1].decode()))
   return True
 
 def run_user_code(serial_port):
@@ -90,7 +90,7 @@ def run_user_code(serial_port):
 def reset_bootloader(serial_port):
   serial_port.write(b":00000022DE\n")
   rc = serial_port.read()
-  print("RC = %r" % rc, end='')
+  print("RC = " + rc.decode(), end='')
   if rc in bootloader_error_codes:
     print("(%s)" % bootloader_error_codes[rc])
   else:
@@ -103,7 +103,7 @@ def reset_bootloader(serial_port):
 def erase_all_user(serial_port):
   serial_port.write(b":00000023DD\n")
   rc = serial_port.read()
-  print("RC = %r" % rc, end='')
+  print("RC = " + rc.decode(), end='')
   if rc in bootloader_error_codes:
     print("(%s)" % bootloader_error_codes[rc])
   else:
@@ -117,7 +117,7 @@ def erase_user_page(serial_port, page):
   chksum = (0xDB + 0x100 - page) & 0xFF
   serial_port.write(b":01000024%02X%02X\n" % (page, chksum))
   rc = serial_port.read()
-  print("RC = %r" % rc, end='')
+  print("RC = " + rc.decode(), end='')
   if rc in bootloader_error_codes:
     print("(%s)" % bootloader_error_codes[rc])
   else:
@@ -140,11 +140,11 @@ def do_flash_read(serial_port, start_addr, length):
 def flash_read(ihx_file, serial_port, start_addr, length):
   do_flash_read(serial_port, start_addr, length)
   for line in serial_port:
-    if not line == "\n":
+    if not line == b"\n":
       if(ihx_file):
         ihx_file.write(line)
       else:
-        print(line,)
+        print(line.decode(), end='')
       if (line == b":00000001FF\n"):
         break
 
