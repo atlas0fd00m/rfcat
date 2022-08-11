@@ -11,14 +11,15 @@ if len(sys.argv) > 1:
     ser = int(sys.argv[1])
 else:
     try:
-        ser = int(file(".serial", 'rb').read(), 16) + 1
-    except IOError:
+        serbytes = open(".serial", 'rb').read()
+        ser = int(serbytes, 16) + 1
+    except (IOError, ValueError):
         ser = 0
 
 print(("[--- new serial number: %.4x ---]" % ser), file=sys.stderr)
 
 if WRITEBACK:
-    file(".serial", 'wb').write("%.13x" % ser)
+    open(".serial", 'wb').write(b"%.13x" % ser)
 
 sertxt = ''
 sertmp = "%.13x" % ser

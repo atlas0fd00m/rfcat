@@ -507,13 +507,13 @@ class IntelHex(object):
         # timeit shows that using hexstr.translate(table)
         # is faster than hexstr.upper():
         # 0.452ms vs. 0.652ms (translate vs. upper)
-        table = ''.join(correctbytes(i).upper() for  i in range(256))
+        table = b''.join(correctbytes(i).upper() for  i in range(256))
 
         # start address record if any
         if self.start_addr and write_start_addr:
             keys = list(self.start_addr.keys())
             keys.sort()
-            bin = array('B', '\0'*9)
+            bin = array('B', b'\0'*9)
             if keys == ['CS','IP']:
                 # Start Segment Address Record
                 bin[0] = 4      # reclen
@@ -527,7 +527,7 @@ class IntelHex(object):
                 bin[6] = (ip >> 8) & 0x0FF
                 bin[7] = ip & 0x0FF
                 bin[8] = (-sum(bin)) & 0x0FF    # chksum
-                fwrite(':' + hexlify(bin.tostring()).translate(table) + '\n')
+                fwrite(b':' + hexlify(bin.tostring()).translate(table) + b'\n')
             elif keys == ['EIP']:
                 # Start Linear Address Record
                 bin[0] = 4      # reclen
@@ -540,7 +540,7 @@ class IntelHex(object):
                 bin[6] = (eip >> 8) & 0x0FF
                 bin[7] = eip & 0x0FF
                 bin[8] = (-sum(bin)) & 0x0FF    # chksum
-                fwrite(':' + hexlify(bin.tostring()).translate(table) + '\n')
+                fwrite(b':' + hexlify(bin.tostring()).translate(table) + b'\n')
             else:
                 if fclose:
                     fclose()
@@ -565,7 +565,7 @@ class IntelHex(object):
 
             while cur_addr <= maxaddr:
                 if need_offset_record:
-                    bin = array('B', '\0'*7)
+                    bin = array('B', b'\0'*7)
                     bin[0] = 2      # reclen
                     bin[1] = 0      # offset msb
                     bin[2] = 0      # offset lsb
@@ -575,7 +575,7 @@ class IntelHex(object):
                     bin[4] = bytes[0]   # msb of high_ofs
                     bin[5] = bytes[1]   # lsb of high_ofs
                     bin[6] = (-sum(bin)) & 0x0FF    # chksum
-                    fwrite(':' + hexlify(bin.tostring()).translate(table) + '\n')
+                    fwrite(b':' + hexlify(bin.tostring()).translate(table) + b'\n')
 
                 while True:
                     # produce one record
@@ -597,7 +597,7 @@ class IntelHex(object):
                     else:
                         chain_len = 1               # real chain_len
 
-                    bin = array('B', '\0'*(5+chain_len))
+                    bin = array('B', b'\0'*(5+chain_len))
                     bytes = divmod(low_addr, 256)
                     bin[1] = bytes[0]   # msb of low_addr
                     bin[2] = bytes[1]   # lsb of low_addr
@@ -611,7 +611,7 @@ class IntelHex(object):
                         bin = bin[:5+i]
                     bin[0] = chain_len
                     bin[4+chain_len] = (-sum(bin)) & 0x0FF    # chksum
-                    fwrite(':' + hexlify(bin.tostring()).translate(table) + '\n')
+                    fwrite(':' + hexlify(bin.tostring()).translate(table).decode('latin1') + '\n')
 
                     # adjust cur_addr/cur_ix
                     cur_ix += chain_len
@@ -647,7 +647,7 @@ class IntelHex(object):
         """Get string of bytes from given address. If any entries are blank
         from addr through addr+length, a NotEnoughDataError exception will
         be raised. Padding is not used."""
-        a = array('B', '\0'*length)
+        a = array('B', b'\0'*length)
         try:
             for i in range(length):
                 a[i] = self._buf[addr+i]
@@ -659,7 +659,7 @@ class IntelHex(object):
         """Put string of bytes at given address. Will overwrite any previous
         entries.
         """
-        a = array('B', s)
+        a = array('B', bytes(s, 'latin1'))
         for i in range(len(s)):
             self._buf[addr+i] = a[i]
 
@@ -943,7 +943,7 @@ class Record(object):
         # calculate checksum
         s = (-sum(bytes)) & 0x0FF
         bin = array('B', bytes + [s])
-        return ':' + hexlify(bin.tostring()).upper()
+        return b':' + hexlify(bin.tostring()).upper()
     _from_bytes = staticmethod(_from_bytes)
 
     def data(offset, bytes):
