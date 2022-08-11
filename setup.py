@@ -45,6 +45,11 @@ setuptools.setup  (name  = 'rfcat',
         ext_modules      = mods,
         scripts          = scripts,
         install_requires = requirements,
+        extras_require={
+            'specan': [
+                'PySide2==5.12.0',
+            ]
+        },
         classifiers      = [
                             # How mature is this project? Common values are
                             #   3 - Alpha
