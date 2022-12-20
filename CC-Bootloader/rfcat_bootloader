@@ -61,7 +61,7 @@ def verify_code(ihx_file, serial_port):
       if can_read_any:
         block_length= length
       else:
-        block_length= ((length / 16) + 1) * 16
+        block_length= ((length // 16) + 1) * 16
       print("\r                                               ", end='')
       print("\rVerifying %04d bytes at address: %04X" % (length, start_addr), end='')
       do_flash_read(serial_port, start_addr, block_length)
