@@ -220,9 +220,13 @@ def interact(lcls, gbls):
     shellexception = None
 
     try:
-        from IPython.terminal.interactiveshell import TerminalInteractiveShell
-        ipsh = TerminalInteractiveShell()
-        ipsh.user_global_ns.update(gbls)
+        import IPython
+        if IPython.core.getipython.get_ipython() is None:
+            ipsh = IPython.terminal.embed.InteractiveShellEmbed.instance()
+        else:
+            ipsh = IPython.terminal.embed.InteractiveShellEmbed()
+       
+        ipsh.user_global_ns.update(gbls)    
         ipsh.user_global_ns.update(lcls)
         ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
         ipsh.mainloop()
@@ -240,8 +244,11 @@ def interact(lcls, gbls):
 
     if shellexception:
         try:
-            from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
-            ipsh = TerminalInteractiveShell()
+            import IPython
+            if IPython.core.getipython.get_ipython() is None:
+                ipsh = IPython.terminal.embed.InteractiveShellEmbed.instance()
+            else:
+                ipsh = IPython.terminal.embed.InteractiveShellEmbed()
             ipsh.user_global_ns.update(gbls)
             ipsh.user_global_ns.update(lcls)
             ipsh.autocall = 2       # don't require parenthesis around *everything*.  be smart!
