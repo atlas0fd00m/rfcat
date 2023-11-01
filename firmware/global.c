@@ -211,7 +211,7 @@ void io_init(void)
 }
 
 
-void t1IntHandler(void) __interrupt T1_VECTOR  // interrupt handler should trigger on T1 overflow
+void t1IntHandler(void) __interrupt (T1_VECTOR)  // interrupt handler should trigger on T1 overflow
 {   
     clock ++;
 }

@@ -1355,7 +1355,7 @@ void usbProcessEvents(void)
 /*************************************************************************************************
  * Interrupt Service Routines                                                                    *
  ************************************************************************************************/
-void usbIntHandler(void) __interrupt P2INT_VECTOR
+void usbIntHandler(void) __interrupt (P2INT_VECTOR)
 {
 
     while (!IS_XOSC_STABLE());
@@ -1385,7 +1385,7 @@ void usbIntHandler(void) __interrupt P2INT_VECTOR
 
 }
 
-void p0IntHandler(void) __interrupt P0INT_VECTOR  // P0_7's interrupt is used as the USB RESUME interrupt
+void p0IntHandler(void) __interrupt (P0INT_VECTOR)  // P0_7's interrupt is used as the USB RESUME interrupt
 {
     while (!IS_XOSC_STABLE());
     EA=0;

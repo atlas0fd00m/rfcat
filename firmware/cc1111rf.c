@@ -515,14 +515,14 @@ void RepeaterStop()
 
 /* End Repeater mode... */
 
-//void dmaIntHandler(void) __interrupt DMA_VECTOR // Interrupt handler for DMA */
+//void dmaIntHandler(void) __interrupt (DMA_VECTOR) // Interrupt handler for DMA */
 
 
 
 // DEBUGGING...
 #include "FHSS.h"
 
-void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler should transmit or receive the next byte
+void rfTxRxIntHandler(void) __interrupt (RFTXRX_VECTOR)  // interrupt handler should transmit or receive the next byte
 {
     lastCode[0] = LC_RFTXRX_VECTOR;
         
@@ -616,7 +616,7 @@ void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR  // interrupt handler shou
     }
 }
 
-void rfIntHandler(void) __interrupt RF_VECTOR  // interrupt handler should trigger on rf events
+void rfIntHandler(void) __interrupt (RF_VECTOR)  // interrupt handler should trigger on rf events
 {
     u8 encoffset= 0;
     // which events trigger this interrupt is determined by RFIM (set in init_RF())

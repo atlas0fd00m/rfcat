@@ -60,8 +60,8 @@ __xdata u16 g_NIC_ID;
 __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 
 ////////// internal functions /////////
-void t2IntHandler(void) __interrupt T2_VECTOR;
-void t3IntHandler(void) __interrupt T3_VECTOR;
+void t2IntHandler(void) __interrupt (T2_VECTOR);
+void t3IntHandler(void) __interrupt (T3_VECTOR);
 int appHandleEP5();
 
 /**************************** PHY LAYER *****************************/
@@ -387,7 +387,7 @@ __xdata u8 MAC_getNextChannel()
 
 
 /************************** Timer Interrupt Vectors **************************/
-void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigger on T2 overflow
+void t2IntHandler(void) __interrupt (T2_VECTOR)  // interrupt handler should trigger on T2 overflow
 {
     __xdata u8 packet[28];
 
@@ -513,7 +513,7 @@ void t2IntHandler(void) __interrupt T2_VECTOR  // interrupt handler should trigg
     }
 }
 
-void t3IntHandler(void) __interrupt T3_VECTOR
+void t3IntHandler(void) __interrupt (T3_VECTOR)
 {
     // transmit one message from queue... possibly more, if time allows
     // must check the time left when tx completes
