@@ -1,5 +1,4 @@
-Welcome to the official rfcat project that works for `PandwaRF` and `PandwaRF Rogue`, modified to also work with legacy rfcat dongles such as `Yard Stick One`.  
-See the legacy readme [here](#legacy-readme).  
+Welcome to the official RfCat project!  Enabling powerful RF tools such as `PandwaRF` / `PandwaRF Rogue`, `Yard Stick One`, and original Chronos and TI EMK dongles (and more)
 
 ## How to install RfCat python  
 
