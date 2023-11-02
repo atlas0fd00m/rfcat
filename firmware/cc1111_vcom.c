@@ -291,7 +291,7 @@ static void vcom_ep0()
 
 // This interrupt is shared with port 2,
 // so when we hook that up, fix this
-void usbIntHandler(void) __interrupt P2INT_VECTOR
+void usbIntHandler(void) __interrupt (P2INT_VECTOR)
 {
   USBIF = 0;
   usb_iif |= USBIIF;

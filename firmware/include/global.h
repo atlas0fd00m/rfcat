@@ -146,8 +146,8 @@ extern __xdata u8 ledMode;
 #else
     #define SLEEPTIMER  1100
     #define PLATFORM_CLOCK_FREQ 24
-void usbIntHandler(void) __interrupt P2INT_VECTOR;
-void p0IntHandler(void) __interrupt P0INT_VECTOR;
+void usbIntHandler(void) __interrupt (P2INT_VECTOR);
+void p0IntHandler(void) __interrupt (P0INT_VECTOR);
 
     #if defined DONSDONGLES
         // CC1111 USB Dongle with breakout debugging pins (EMK?) - 24mhz
@@ -198,7 +198,7 @@ void p0IntHandler(void) __interrupt P0INT_VECTOR;
 /* function declarations */
 void sleepMillis(int ms);
 void sleepMicros(int us);
-void t1IntHandler(void) __interrupt T1_VECTOR;  // interrupt handler should trigger on T1 overflow
+void t1IntHandler(void) __interrupt (T1_VECTOR);  // interrupt handler should trigger on T1 overflow
 void clock_init(void);
 void io_init(void);
 //void blink(u16 on_cycles, u16 off_cycles);

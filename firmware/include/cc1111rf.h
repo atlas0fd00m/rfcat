@@ -84,8 +84,8 @@ extern __xdata u16 txTotal; // debugger
 
 extern volatile u8 rfif;
 
-void rfTxRxIntHandler(void) __interrupt RFTXRX_VECTOR; // interrupt handler should transmit or receive the next byte
-void rfIntHandler(void) __interrupt RF_VECTOR; // interrupt handler should trigger on rf events
+void rfTxRxIntHandler(void) __interrupt (RFTXRX_VECTOR); // interrupt handler should transmit or receive the next byte
+void rfIntHandler(void) __interrupt (RF_VECTOR); // interrupt handler should trigger on rf events
 
 // set semi-permanent states
 void RxMode(void);          // set defaults to return to RX and calls RFRX
