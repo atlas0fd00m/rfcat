@@ -51,7 +51,6 @@ def getDongleClass(idx: int):
             print("PandwaRF (non Rogue) Detected")
             return PandwaRF
     
-    print("Dongle is not a PandwaRF")
     return RfCat
 
 
