@@ -216,7 +216,7 @@ int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr)      // assumed EP5 for
 
 
 //! waitForUSBsetup() is a helper function to allow the usb stuff to settle before real app processing happens.
-void waitForUSBsetup() 
+void waitForUSBsetup(void) 
 {
     while ((usb_data.usbstatus == USB_STATE_UNCONFIGURED ))
     {
@@ -391,7 +391,7 @@ int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length)
     return 0;
 }
 
-void usb_arm_ep0IN(){
+void usb_arm_ep0IN(void){
     /***********************
      * should queue up and send one packet this run.... and recalculate bytesleft so we hit the next packet next run.
      */
@@ -428,12 +428,12 @@ void usb_arm_ep0IN(){
 }
 
 
-u8 setup_recv_ep0(){
+u8 setup_recv_ep0(void){
     ep0.epstatus = EP_STATE_RX;
     return 0;
 }
 
-u16 usb_recv_ep0OUT(){
+u16 usb_recv_ep0OUT(void){
     /********************************************************************************************
      * handle receipt of one packet and set flags
      * if another packet has yet to be handled by the application (ie. received through this 
@@ -508,7 +508,7 @@ void registerCb_ep5(int (*callback2)(void))
 /*************************************************************************************************
  * administrative USB handler functions                                                          *
  *************************************************************************************************/
-void usbGetConfiguration()
+void usbGetConfiguration(void)
 {
     setup_send_ep0(&usb_data.config, 1);
 }
@@ -678,7 +678,7 @@ void handleCS0(void)
             {   
                 //  if there's any length requirement, enter TX mode
                 if (req.wLength)
-                    ep0.epstatus == EP_STATE_TX;
+                    ep0.epstatus = EP_STATE_TX;
 
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
@@ -762,7 +762,7 @@ void handleCS0(void)
             } else {                                            // should be *receiving* data, if any
                 //  if there's any length requirement, enter RX mode
                 if (req.wLength)
-                    ep0.epstatus == EP_STATE_RX;
+                    ep0.epstatus = EP_STATE_RX;
 
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {

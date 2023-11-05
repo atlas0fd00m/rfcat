@@ -20,7 +20,15 @@ libsimme =
 libsidongle  = $(libsimme) immeusb.rel immeusbdebug.rel chipcon_dma.rel
 
 
-all: 	RfCatChronos RfCatChronosCCBootloader RfCatDons RfCatDonsCCBootloader RfCatYS1 RfCatYS1CCBootloader RfCatSRF RfCatSRFCCBootloader
+all: 	
+	make clean RfCatChronos 
+	make clean RfCatChronosCCBootloader 
+	make clean RfCatDons 
+	make clean RfCatDonsCCBootloader 
+	make clean RfCatYS1 
+	make clean RfCatYS1CCBootloader 
+	make clean RfCatSRF 
+	make clean RfCatSRFCCBootloader
 	make clean immeSniff
 
 donfw: 	RfCatDons

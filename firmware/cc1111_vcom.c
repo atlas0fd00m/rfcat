@@ -29,7 +29,7 @@ static __xdata u8  usb_running;
 __xdata __at (0xde20) volatile u8 USBFIFO[12];
 
 
-static void vcom_set_interrupts()
+static void vcom_set_interrupts(void)
 {
   // IN interrupts on the control an IN endpoints
   USBIIE = (1 << USB_CONTROL_EP) | (1 << USB_IN_EP);
@@ -106,7 +106,7 @@ static void vcom_get_descriptor(u16 value)
 }
 
 // Read data from the ep0 OUT fifo
-static void vcom_ep0_fill()
+static void vcom_ep0_fill(void)
 {
   __xdata u8 len;
 
@@ -144,7 +144,7 @@ static void vcom_set_configuration()
   USBCSOH = USBCSOH_OUT_DBL_BUF;
 }
 
-static void vcom_ep0_setup()
+static void vcom_ep0_setup(void)
 {
   // Pull the setup packet out of the fifo
   usb_ep0_out_data = (__xdata u8 *) &usb_setup;
@@ -245,7 +245,7 @@ static void vcom_ep0_setup()
 
 // End point 0 receives all of the control messages.
 // This function must be called periodically to process ep0 messages.
-static void vcom_ep0()
+static void vcom_ep0(void)
 {
   __xdata u8 cs0;
 
@@ -311,7 +311,7 @@ void p0IntHandler(void) interrupt P0INT_VECTOR
 }
 
 // Wait for a free IN buffer
-static void vcom_in_wait()
+static void vcom_in_wait(void)
 {
   while (1) {
     USBINDEX = USB_IN_EP;
@@ -322,7 +322,7 @@ static void vcom_in_wait()
 }
 
 // Send the current IN packet
-static void vcom_in_send()
+static void vcom_in_send(void)
 {
   USBINDEX = USB_IN_EP;
   USBCSIL |= USBCSIL_INPKT_RDY;
@@ -330,7 +330,7 @@ static void vcom_in_send()
   usb_in_bytes = 0;
 }
 
-void vcom_flush()
+void vcom_flush(void)
 {
   if (!usb_running)
     return;
@@ -356,7 +356,7 @@ void vcom_putchar(char c) __reentrant
       vcom_in_send();
 }
 
-char vcom_pollchar()
+char vcom_pollchar(void)
 {
   char c;
   if (usb_out_bytes == 0) {
@@ -379,7 +379,7 @@ char vcom_pollchar()
   return c;
 }
 
-char vcom_getchar()
+char vcom_getchar(void)
 {
   char c;
   while ((c = vcom_pollchar()) == USB_READ_AGAIN)
@@ -389,7 +389,7 @@ char vcom_getchar()
   return c;
 }
 
-void vcom_enable()
+void vcom_enable(void)
 {
   // Turn on the USB controller
   SLEEP |= SLEEP_USB_EN;
@@ -407,7 +407,7 @@ void vcom_enable()
   USBIF = 0;
 }
 
-void vcom_disable()
+void vcom_disable(void)
 {
   // Disable USB interrupts
   USBIIE = 0;
@@ -424,7 +424,7 @@ void vcom_disable()
   SLEEP &= ~SLEEP_USB_EN;
 }
 
-void initUSB()
+void initUSB(void)
 {
   // Init ep0
     usb_ep0_state = USB_EP0_IDLE;
@@ -432,7 +432,7 @@ void initUSB()
     vcom_enable();
 }
 
-void usbProcessEvents()
+void usbProcessEvents(void)
 {    
     return; /* dummy function */
 }
@@ -452,13 +452,13 @@ void vcom_putstr(char* buff) {
   vcom_flush();
 }
 
-void usb_up() {
+void usb_up(void) {
   // Bring up the USB link
     P1DIR |= 0x02;
     P1_1 = 1;
 }
 
-void vcom_down() {
+void vcom_down(void) {
   // Bring down the USB link
   P1_1 = 0;
   P1DIR &= ~0x02;

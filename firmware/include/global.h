@@ -202,6 +202,6 @@ void t1IntHandler(void) __interrupt (T1_VECTOR);  // interrupt handler should tr
 void clock_init(void);
 void io_init(void);
 //void blink(u16 on_cycles, u16 off_cycles);
-void blink_binary_baby_lsb(u16 num, char bits);
+void blink_binary_baby_lsb(u16 num, signed char bits);
 int strncmp(const char * __xdata s1, const char * __xdata s2, u16 n);
 #endif

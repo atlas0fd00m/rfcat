@@ -34,7 +34,7 @@ void reset (void){
     ((void (__code *) (void)) 0x0000) ();
 }
 
-void setIOPorts() {
+void setIOPorts(void) {
   //No need to set PERCFG or P2DIR as default values on reset are fine
   P0SEL |= (BIT5 | BIT3 ); // set SCK and MOSI as peripheral outputs
   P0DIR |= BIT4 | BIT2; // set SSN and A0 as outputs
@@ -43,7 +43,7 @@ void setIOPorts() {
   //LED_GREEN = LOW; // Turn the Green LED on (LEDs driven by reverse logic: 0 is ON)
 }
 
-void configureSPI() {
+void configureSPI(void) {
   U0CSR = 0;  //Set SPI Master operation
   U0BAUD =  SPI_BAUD_M; // set Mantissa
   U0GCR = U0GCR_ORDER | SPI_BAUD_E; // set clock on 1st edge, -ve clock polarity, MSB first, and exponent
@@ -84,7 +84,7 @@ void LCDReset(void) {
   SSN = HIGH;
 }
 
-void LCDPowerSave() { // not tested yet; taken from spi trace
+void LCDPowerSave(void) { // not tested yet; taken from spi trace
   txCtl(0xac); // static indicator off cmd
   txCtl(0xae); // LCD off
   txCtl(0xa5); // Display all Points on cmd = Power Save when following LCD off
@@ -112,7 +112,7 @@ void eraserow(u8 row){
   };
 }
 
-void erasescreen(){
+void erasescreen(void){
   u8 row;
   for(row=0;row<9;row++)
     eraserow(row);
@@ -214,7 +214,7 @@ void setModulation(u8 mod_format){
     MDMCFG2 = (MDMCFG2 & 0x8f) | (mod_format<<4);
 }
 
-char* getModulationStr(){
+char* getModulationStr(void){
     return modstrings[current_modulation];
     //return modstrings[(((MDMCFG2>>4)&7)+1)>>1];
 }
@@ -289,14 +289,14 @@ u32 getBaud(void)
     return drate;
 }
 
-void incModulation(){
+void incModulation(void){
     current_modulation ++;
     if (current_modulation > 3)
         current_modulation = 0;
     setModulation(modulations[current_modulation]);
 }
 
-void decModulation(){
+void decModulation(void){
     if (current_modulation == 0)
         current_modulation = 3;
     else
@@ -481,7 +481,7 @@ void immeLCDShowPacket(void)
                  * set sync word
                  *
                  */
-void poll_keyboard() {
+void poll_keyboard(void) {
     u16 tmp;
 
     switch (imme_state)
@@ -607,8 +607,8 @@ void poll_keyboard() {
         RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
-        if (SYNC0&0xf == 9)
-            SYNC0 = (SYNC0&0xf0);
+        if ((SYNC0 & 0xf) == 9)
+            SYNC0 = (SYNC0 & 0xf0);
         else
             SYNC0 ++;
 
@@ -625,8 +625,8 @@ void poll_keyboard() {
         RFOFF;
         MDMCFG2 &= 0xf8;
         MDMCFG2 |= 0x05;
-        if (SYNC0&0xf == 0)
-            SYNC0 = (SYNC0&0xf0) + 9;
+        if ((SYNC0 & 0xf) == 0)
+            SYNC0 = (SYNC0 & 0xf0) + 9;
         else
             SYNC0 --;
 

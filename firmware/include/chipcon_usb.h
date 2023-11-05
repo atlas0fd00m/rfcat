@@ -377,13 +377,13 @@ void clock_init(void);
 int txdata(u8 app, u8 cmd, u16 len, __xdata u8* dataptr);
 int setup_send_ep0(u8* __xdata  payload, u16 length);
 int setup_sendx_ep0(__xdata u8* __xdata  payload, u16 length);
-u16 usb_recv_ep0OUT();
+u16 usb_recv_ep0OUT(void);
 
 u16 usb_recv_epOUT(u8 epnum, USB_EP_IO_BUF* __xdata  epiobuf);
 void initUSB(void);
 void usb_up(void);
 void usb_down(void);
-void waitForUSBsetup();
+void waitForUSBsetup(void);
 // export as this *must* be in main loop.
 void usbProcessEvents(void);
 

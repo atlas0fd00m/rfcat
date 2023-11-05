@@ -62,7 +62,7 @@ __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 ////////// internal functions /////////
 void t2IntHandler(void) __interrupt (T2_VECTOR);
 void t3IntHandler(void) __interrupt (T3_VECTOR);
-int appHandleEP5();
+int appHandleEP5(void);
 
 /**************************** PHY LAYER *****************************/
 
@@ -80,7 +80,7 @@ void PHY_set_channel(__xdata u16 chan)
 
 
 /**************************** MAC LAYER *****************************/
-void MAC_initChannels()
+void MAC_initChannels(void)
 {
     // rudimentary channel setup.  this is for default hopping and testing.
     int loop;
@@ -327,7 +327,7 @@ void MAC_sync(__xdata u16 CellID)
     // at MAX_SYNC_TIMEOUT,start activesync, where i become the cell master/time master, and periodically transmit beacons.
 }
 
-void MAC_stop_sync()
+void MAC_stop_sync(void)
 {
     // this only stops the hunt.  hopping is not re-enabled.  if you want that, use a different mode
     macdata.mac_state = MAC_STATE_NONHOPPING;
@@ -335,7 +335,7 @@ void MAC_stop_sync()
 
 }
 
-void MAC_become_master()
+void MAC_become_master(void)
 {
     // this will force our nic to become the master
     macdata.mac_state = MAC_STATE_SYNC_MASTER;
@@ -343,7 +343,7 @@ void MAC_become_master()
 
 }
 
-void MAC_do_Master_scanny_thingy()
+void MAC_do_Master_scanny_thingy(void)
 {
     macdata.mac_state = MAC_STATE_SYNCINGMASTER;
     macdata.synched_chans = 0;
@@ -373,7 +373,7 @@ void MAC_rx_handle(__xdata u8 len, __xdata u8* __xdata message)
 }
 
 
-__xdata u8 MAC_getNextChannel()
+__xdata u8 MAC_getNextChannel(void)
 {
     macdata.curChanIdx++;
     if (macdata.curChanIdx >= MAX_CHANNELS)
@@ -426,7 +426,7 @@ void t2IntHandler(void) __interrupt (T2_VECTOR)  // interrupt handler should tri
             RFTX;        // for debugging purposes, we'll just transmit carrier at each hop
             //LED = !LED;
             while(MARCSTATE != MARC_STATE_TX);
-            return();
+            return;
     
 #endif
             break;
@@ -789,7 +789,7 @@ void appMainLoop(void)
  *      xmits as soon as any previously transmitted data is out of the buffer (ie. it blocks 
  *      while (ep5.flags & EP_INBUF_WRITTEN) and then transmits.  this flag is then set, and 
  *      cleared by an interrupt when the data has been received on the host side.                */
-int appHandleEP5()
+int appHandleEP5(void)
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
     __xdata u16 len, repeat, offset;

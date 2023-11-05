@@ -32,7 +32,7 @@
 
 void sleepMillis(int ms);
 
-void xtalClock();
+void xtalClock(void);
 
 // IO Port Definitions:
 #define A0 P0_2
@@ -44,9 +44,9 @@ void xtalClock();
 // MOSI P0_3
 // SCK P0_5
 
-void setIOPorts();
+void setIOPorts(void);
 
-void configureSPI();
+void configureSPI(void);
 
 void tx(unsigned char ch);
 
@@ -56,7 +56,7 @@ void txCtl(unsigned char ch);
 
 void LCDReset(void);
 
-void LCDPowerSave();
+void LCDPowerSave(void);
 
 void setCursor(unsigned char row, unsigned char col);
 
@@ -64,6 +64,6 @@ void setDisplayStart(unsigned char start);
 
 void setNormalReverse(unsigned char normal);
 
-void clear();
+void clear(void);
 
 void putchar(char c);
