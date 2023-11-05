@@ -60,8 +60,8 @@ __xdata u16 g_NIC_ID;
 __xdata u8 g_txMsgQueue[MAX_TX_MSGS][MAX_TX_MSGLEN+1];
 
 ////////// internal functions /////////
-void t2IntHandler(void) __interrupt (T2_VECTOR);
-void t3IntHandler(void) __interrupt (T3_VECTOR);
+void t2IntHandler(void) __interrupt ((T2_VECTOR));
+void t3IntHandler(void) __interrupt ((T3_VECTOR));
 int appHandleEP5(void);
 
 /**************************** PHY LAYER *****************************/
