@@ -256,9 +256,10 @@ def interact(lcls, gbls, intro=""):
 
                     print(intro)
                 except ImportError as e:
+                    shellexception = e
                     print(e)
                     shell = code.InteractiveConsole(gbls)
-                    shelltype = STYPE_IPYTHON
+                    shelltype = STYPE_CODE_INTERACT
                     print(intro)
 
     if shelltype == STYPE_IPYTHON811P:
