@@ -763,7 +763,7 @@ class NICxx11(USBDongle):
         if chanbw_e is None:
             raise Exception("ChanBW does not translate into acceptable parameters.  Should you be changing this?")
 
-        bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
+        bw = 1000000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
 
         radiocfg.mdmcfg4 &= ~(MDMCFG4_CHANBW_E | MDMCFG4_CHANBW_M)
