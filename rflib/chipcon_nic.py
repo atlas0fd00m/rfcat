@@ -965,9 +965,9 @@ class NICxx11(USBDongle):
         if baud <= 2400:
             deviatn = 5100
         elif baud <= 38400:
-            deviatn = 20000 * (old_div((baud-2400),36000))
+            deviatn = 20000 * (((baud-2400) / 36000))
         else:
-            deviatn = 129000 * (old_div((baud-38400),211600))
+            deviatn = 129000 * (((baud-38400) / 211600))
         self.setMdmDeviatn(deviatn)
 
     def calculatePktChanBW(self, mhz=24, radiocfg=None):
