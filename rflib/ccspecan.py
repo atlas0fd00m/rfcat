@@ -418,9 +418,12 @@ class Window(QtWidgets.QWidget):
         # anything else is alphanumeric
         try:
             key= correctbytes(event.key()).upper()
-            # in Python 3 keys ar bytes, fix it
-            if type(key)== bytes:
-                key = key.decode('ascii')
+
+            # in Python 3 keys are bytes not string, fix it
+            if sys.version_info < (3,):
+                key= correctbytes(event.key()).upper()
+            else:
+                key= correctbytes(event.key()).decode('ascii').upper()
             event.accept()
         except:
             print('Unknown key pressed: 0x%x' % event.key())
