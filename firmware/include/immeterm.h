@@ -18,7 +18,7 @@
 
 //times.c
 void sleepMillis(int ms);
-void xtalClock();
+void xtalClock(void);
 
 //io.c
 // IO Port Definitions:
@@ -37,13 +37,13 @@ void setNormalReverse(unsigned char normal);
 void setDisplayStart(unsigned char start);
 
 //! Initialize the IO ports.
-void setIOPorts();
+void setIOPorts(void);
 
 // Set a clock rate of approx. 2.5 Mbps for 26 MHz Xtal clock
 #define SPI_BAUD_M  170
 #define SPI_BAUD_E  16
 
-void configureSPI();
+void configureSPI(void);
 void tx(unsigned char ch);
 void txData(unsigned char ch);
 void txCtl(unsigned char ch);
@@ -52,7 +52,7 @@ void txCtl(unsigned char ch);
 void LCDReset(void);
 
 //! Power save, not yet tested.
-void LCDPowerSave();
+void LCDPowerSave(void);
 
 //! Set the cursor position.
 void setCursor(unsigned char row, unsigned char col) ;

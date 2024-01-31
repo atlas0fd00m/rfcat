@@ -26,18 +26,18 @@
 
 // External interface
 
-void initUSB();
-void usbProcessEvents();
-void vcom_disable();
-void vcom_enable();
-char vcom_getchar();
+void initUSB(void);
+void usbProcessEvents(void);
+void vcom_disable(void);
+void vcom_enable(void);
+char vcom_getchar(void);
 void vcom_putchar(char c);
-void vcom_flush();
+void vcom_flush(void);
 
 void vcom_putstr(char* __xdata  buff);
 void vcom(char* __xdata  buff);
-//void vcom_up();
-//void vcom_down();
+//void vcom_up(void);
+//void vcom_down(void);
 void usb_up(void);
 void usb_down(void);
 

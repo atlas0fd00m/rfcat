@@ -25,7 +25,7 @@ void sleepMicros(int us)
     while (--us > 0) ;
 }
 
-void blink_binary_baby_lsb(u16 num, char bits)
+void blink_binary_baby_lsb(u16 num, signed char bits)
 {
     LED = 1;
     sleepMillis(1000);

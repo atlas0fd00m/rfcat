@@ -61,11 +61,11 @@ void begin_hopping(__xdata u8 T2_offset);
 void stop_hopping(void);
 
 void PHY_set_channel(__xdata u16 chan);
-void MAC_initChannels();
+void MAC_initChannels(void);
 void MAC_sync(__xdata u16 netID);
 void MAC_set_chanidx(__xdata u16 chanidx);
 u8 MAC_tx(__xdata u8* __xdata  message, __xdata u8 len);
 void MAC_rx_handle(__xdata u8 len, __xdata u8* __xdata  message);
-u8 MAC_getNextChannel();
+u8 MAC_getNextChannel(void);
 
 #endif

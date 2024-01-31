@@ -127,7 +127,7 @@ void IdleMode(void)
 /*************************************************************************************************
  * RF init stuff                                                                                 *
  ************************************************************************************************/
-void init_RF()
+void init_RF(void)
 {
     // MAC variables
     rf_tLastRecv = 0;
@@ -185,7 +185,7 @@ void init_RF()
 }
 
 //************************** never used.. *****************************
-int waitRSSI()
+int waitRSSI(void)
 {
     u16 u16WaitTime = 0;
     while(u16WaitTime < RSSI_TIMEOUT_US)
@@ -503,12 +503,12 @@ void startRX(void)
     Channel 0 will hold the RX, with one extra configuration than normally it should generate an interrupt when DMA is done.
     Channel 3 will hold the TX data, the TX data will be set to the buffer the RX puts his data in, the channel is activated by the DMA done interrupt of the receiver.
    */
-void RepeaterStart()
+void RepeaterStart(void)
 {
     bRepeatMode = 1;
 }
 
-void RepeaterStop()
+void RepeaterStop(void)
 {
     bRepeatMode = 0;
 }

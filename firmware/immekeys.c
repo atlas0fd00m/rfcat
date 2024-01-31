@@ -48,7 +48,7 @@ const u8 keychars[]={
 
 #define KEY(row,col) keychars[row*10+col]
 
-u8 realkeyscan(){
+u8 realkeyscan(void){
   u8 row, col;
   
   //All input
@@ -59,10 +59,7 @@ u8 realkeyscan(){
   
   for(row=0;row<8;row++){
     col=row;//nothing
-    switch(row){
-    case 0://ground
-    default:
-      break;
+    switch((int)row){
     case 1: //P0_1
       P0DIR|=BIT1;
       P0&=~BIT1;
@@ -110,7 +107,7 @@ u8 realkeyscan(){
 }
 
 //! Returns the debounced character press.
-u8 keyscan(){
+u8 keyscan(void){
   u8 key=realkeyscan();
   //debounce
   while(key!=realkeyscan())
@@ -126,7 +123,7 @@ u8 keyscan(){
 }
 
 /* non-blocking check for a keypress */
-u8 getkey() {
+u8 getkey(void) {
 	u8 key = keyscan();
 
 	/* keep track of key currently pressed to avoid rapid repeating */

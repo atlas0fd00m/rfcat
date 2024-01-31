@@ -118,7 +118,7 @@ void appMainLoop(void)
  *      xmits as soon as any previously transmitted data is out of the buffer (ie. it blocks 
  *      while (ep5.flags & EP_INBUF_WRITTEN) and then transmits.  this flag is then set, and 
  *      cleared by an interrupt when the data has been received on the host side.                */
-int appHandleEP5()
+int appHandleEP5(void)
 {   // not used by VCOM
 #ifndef VIRTUAL_COM
     __xdata u8 *ptr = &ep5.OUTbuf[0];

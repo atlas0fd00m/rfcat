@@ -32,7 +32,7 @@
 #include "imme5x7.h"
 
 
-void setIOPorts() {
+void setIOPorts(void) {
 	//No need to set PERCFG or P2DIR as default values on reset are fine
 	P0SEL |= (BIT5 | BIT3 ); // set SCK and MOSI as peripheral outputs
 	P0DIR |= BIT4 | BIT2; // set SSN and A0 as outputs
@@ -41,7 +41,7 @@ void setIOPorts() {
 	//LED_GREEN = LOW; // Turn the Green LED on (LEDs driven by reverse logic: 0 is ON)
 }
 
-void configureSPI() {
+void configureSPI(void) {
 	U0CSR = 0;  //Set SPI Master operation
 	U0BAUD =  SPI_BAUD_M; // set Mantissa
 	U0GCR = U0GCR_ORDER | SPI_BAUD_E; // set clock on 1st edge, -ve clock polarity, MSB first, and exponent
@@ -81,7 +81,7 @@ void LCDReset(void) {
 	SSN = HIGH;
 }
 
-void LCDPowerSave() { // not tested yet; taken from spi trace
+void LCDPowerSave(void) { // not tested yet; taken from spi trace
 	txCtl(0xac); // static indicator off cmd
 	txCtl(0xae); // LCD off
 	txCtl(0xa5); // Display all Points on cmd = Power Save when following LCD off
@@ -102,7 +102,7 @@ void setNormalReverse(unsigned char normal) {  // 0 = Normal, 1 = Reverse
 }
 
 /* clear all LCD pixels */
-void clear() {
+void clear(void) {
 	u8 row;
 	u8 col;
 
