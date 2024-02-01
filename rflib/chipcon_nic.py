@@ -763,7 +763,7 @@ class NICxx11(USBDongle):
         if chanbw_e is None:
             raise Exception("ChanBW does not translate into acceptable parameters.  Should you be changing this?")
 
-        bw = 1000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
+        bw = 1000000.0*mhz / (8.0*(4+chanbw_m) * pow(2,chanbw_e))
         #print "chanbw_e: %x   chanbw_m: %x   chanbw: %f kHz" % (e, m, bw)
 
         radiocfg.mdmcfg4 &= ~(MDMCFG4_CHANBW_E | MDMCFG4_CHANBW_M)
@@ -965,9 +965,9 @@ class NICxx11(USBDongle):
         if baud <= 2400:
             deviatn = 5100
         elif baud <= 38400:
-            deviatn = 20000 * (old_div((baud-2400),36000))
+            deviatn = 20000 * (((baud-2400) / 36000))
         else:
-            deviatn = 129000 * (old_div((baud-38400),211600))
+            deviatn = 129000 * (((baud-38400) / 211600))
         self.setMdmDeviatn(deviatn)
 
     def calculatePktChanBW(self, mhz=24, radiocfg=None):
@@ -986,7 +986,7 @@ class NICxx11(USBDongle):
         #minbw = (2 * freq_uncertainty) + self.getMdmDRate() # uncertainty for both sender/receiver
         minbw = (self.getMdmDRate() + freq_uncertainty)
 
-        possibles = [ 53e3,63e3,75e3,93e3,107e3,125e3,150e3,188e3,214e3,250e3,300e3,375e3,428e3,500e3,600e3,750e3, ]
+        possibles = [54e3,63e3,75e3,93e3,107e3,125e3,150e3,188e3,214e3,250e3,300e3,375e3,428e3,500e3,600e3,750e3, ]
         for bw in possibles:
             #if (.8 * bw)  > minbw:      # can't occupy more the 80% of BW
             if (bw)  > minbw:
