@@ -986,7 +986,7 @@ class NICxx11(USBDongle):
         #minbw = (2 * freq_uncertainty) + self.getMdmDRate() # uncertainty for both sender/receiver
         minbw = (self.getMdmDRate() + freq_uncertainty)
 
-        possibles = [63e3,75e3,93e3,107e3,125e3,150e3,188e3,214e3,250e3,300e3,375e3,428e3,500e3,600e3,750e3, ]
+        possibles = [54e3,63e3,75e3,93e3,107e3,125e3,150e3,188e3,214e3,250e3,300e3,375e3,428e3,500e3,600e3,750e3, ]
         for bw in possibles:
             #if (.8 * bw)  > minbw:      # can't occupy more the 80% of BW
             if (bw)  > minbw:
