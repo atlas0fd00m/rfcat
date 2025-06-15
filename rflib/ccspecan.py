@@ -40,8 +40,8 @@ if sys.version_info < (3,):
 else:
     import pickle as pickle
 
-from PySide2 import QtCore, QtGui, QtWidgets
-from PySide2.QtCore import Qt, QPointF, QLineF
+from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6.QtCore import Qt, QPointF, QLineF
 
 def ensureQapp():
     global _qt_app
@@ -379,7 +379,7 @@ class Window(QtWidgets.QWidget):
             self.render_area._mouse_x2 = self.render_area._x_to_hz(float(event.x()))
             self.render_area._mouse_y2 = self.render_area._y_to_dbm(float(event.y()))
             self.render_area._hide_markers = False
-        if event.button() == Qt.MidButton:
+        if event.button() == Qt.MiddleButton:
             self.render_area._mouse_x = None
             self.render_area._mouse_y = None
             self.render_area._mouse_x2 = None
