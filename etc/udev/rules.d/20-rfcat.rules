@@ -12,3 +12,8 @@ SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}==
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="604a", MODE:="0660", SYMLINK+="RFCAT_BL_D", ENV{ID_MM_DEVICE_IGNORE}="1", GROUP="dialout"
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="605c", MODE:="0660", SYMLINK+="RFCAT_BL_YS1", ENV{ID_MM_DEVICE_IGNORE}="1", GROUP="dialout"
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="ecc0", MODE:="0660", SYMLINK+="RFCAT_BL_SRF", ENV{ID_MM_DEVICE_IGNORE}="1", GROUP="dialout"
+
+# PandwaRF devices
+
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="60fe", MODE:="0660", SYMLINK+="RFCAT%n", GROUP="dialout"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1d50", ATTRS{idProduct}=="60ff", MODE:="0660", SYMLINK+="RFCAT%n", GROUP="dialout"
