@@ -14,7 +14,7 @@ DATA_START_IDX = 4      # without the app/cmd/len bytes, the data starts at byte
 
 def splitargs(cmdline):
     cmdline = cmdline.replace('\\\\"', '"').replace('\\"', '')
-    patt = re.compile('\".+?\"|\S+')
+    patt = re.compile(r'\".+?\"|\S+')
     for item in cmdline.split('\n'):
         return [s.strip('"') for s in patt.findall(item)]
 
