@@ -334,8 +334,8 @@ Ensure your system has `uv`.
 * setup a virtual env for this project: `uv venv`
 * activate the virtual environment: `source .venv/bin/activate`
 * install development dependencies: `uv pip install -r ./requirements.txt`
-* build and install binaried to `/path/to/rfcat/.venv/bin/`: `python setup.py install`
-* to see changes in your code (in a new shell): `source /path/to/rfcat/.venv/bin/activate`, `python setup.py install`, `/path/to/rfcat/.venv/bin/rfcat -r`
+* [OPTIONAL] build and install binaries to `/path/to/rfcat/.venv/bin/`: `python setup.py install`
+* to see changes in your code (in a new shell): `source /path/to/rfcat/.venv/bin/activate`, `/path/to/rfcat/.venv/rfcat -r`
 
 ## Using rfcat
 
