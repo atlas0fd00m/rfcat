@@ -297,6 +297,17 @@ make installRfCatYS1CCBootloader
 
 The new version will be installed, and bootloader exited.
 
+### Troubleshooting
+#### Yard Stick One
+* __Green LED flashes/blinks and turns off after some time:__ or __Dongle not found after flashing new firmware:__
+    You probably built a firmware using copy of `sdcc`, which resulted in an image that was not compatible with hardware. Safest bet is to use latest published images of `RfCatYS1CCBootloader-201231.hex` from upstream.
+    * download the firmware: `wget -O /tmp/RfCatYS1CCBootloader-201231.hex https://github.com/atlas0fd00m/rfcat/releases/download/v2.0.1/RfCatYS1CCBootloader-201231.hex`
+    * put in bootloader mode: short pins 7 and 9, and reinsert in to USB port.
+    * `rfcat_bootloader /dev/RFCAT_BL_YS1 erase_all`
+    * `rfcat_bootloader /dev/RFCAT_BL_YS1 download /tmp/RfCatYS1CCBootloader-201231.hex`
+    * `rfcat_bootloader /dev/RFCAT_BL_YS1 verify /tmp/RfCatYS1CCBootloader-201231.hex`
+    * `rfcat_bootloader /dev/RFCAT_BL_YS1 run`
+
 ## Installing client
 
 ### Dependencies
