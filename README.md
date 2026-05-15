@@ -328,6 +328,15 @@ Install rfcat onto your system.  on most linux systems, this will place `rfcat` 
 * cd into the rfcat directory (created by unpacking the tarball or by git clone)
 * `pip install -e .`  (installs in editable mode and runs from the unpacked or checked out location)
 
+## Developing client
+Ensure your system has `uv`.
+* `cd /path/to/rfcat`
+* setup a virtual env for this project: `uv venv`
+* activate the virtual environment: `source .venv/bin/activate`
+* install development dependencies: `uv pip install -r ./requirements.txt`
+* build and install binaried to `/path/to/rfcat/.venv/bin/`: `python setup.py install`
+* to see changes in your code (in a new shell): `source /path/to/rfcat/.venv/bin/activate`, `python setup.py install`, `/path/to/rfcat/.venv/bin/rfcat -r`
+
 ## Using rfcat
 
 If you have configured your system to allow non-root use:
