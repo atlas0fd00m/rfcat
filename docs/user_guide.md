@@ -80,7 +80,7 @@ Parameters:
 - `-c`, `--inc`: Channel spacing in Hz (default: 250e3).
 - `-n`, `--specchans`: Number of channels (default: 104).
 
-A PySide6 window opens, showing a scrolling graph of signal strength across the specified band. The dongle is put into a special mode where it transmits continuously; the RSSI of each channel is measured and sent to the host.
+A PySide6 window opens, showing a scrolling graph of signal strength across the specified band. The dongle is put into a special mode where it transmits continuously; the RSSI (Received Signal Strength Indicator) of each channel is measured and sent to the host.
 
 **Controls**:
 - **Mouse**:
@@ -151,7 +151,7 @@ Or capture raw data to a file:
 rfcat > capture.raw
 ```
 
-Note: The packet boundaries are determined by the current radio configuration (FLEN or VLEN). Ensure you configure the radio appropriately for the protocol you want to talk to. In research mode, you can configure first and then exit to raw mode by pressing Ctrl-D and running `rfcat` again? Actually you'd need to set before launching rfcat? The raw mode does not allow interactive configuration.
+Note: The packet boundaries are determined by the current radio configuration (FLEN or VLEN). Ensure you configure the radio appropriately for the protocol you want to talk to. In research mode, you can configure first and then exit to raw mode by pressing Ctrl-D and running `rfcat` again. The raw mode does not allow interactive configuration.
 
 If you need to configure before piping, use research mode to set parameters and then call `rf_redirection` manually:
 
@@ -167,7 +167,7 @@ Now `rflib` script can be modified to do that, or you can create a custom script
 
 ### Frequency Hopping
 
-To use FHSS, you can either use the high-level `FHSSNIC` methods or set up the dongle manually.
+To use FHSS (Frequency-hopping spread spectrum: is a method of transmitting radio signals by rapidly changing the carrier frequency among many frequencies occupying a large spectral band.), you can either use the high-level `FHSSNIC` methods or set up the dongle manually.
 
 Example hopping script:
 

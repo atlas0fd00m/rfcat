@@ -505,7 +505,7 @@ class Window(QtWidgets.QWidget):
         return QtCore.QSize(480, 160)
 
     def _open_data(self, data):
-        if type(data) == str:
+        if isinstance(data, str):
             if data == "-":
                 data = rflib.RfCat()
                 data._debug = 1
