@@ -1,15 +1,12 @@
 #!/usr/bin/env ipython3
 
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
 
 from builtins import bytes
 from builtins import str
 from builtins import hex
 from builtins import range
 from builtins import object
-from past.utils import old_div
+
 import os
 import sys
 import usb
@@ -20,7 +17,7 @@ import threading
 from binascii import hexlify
 
 from . import bits
-from .bits import correctbytes, ord23
+from .bits import ord23
 from .const import *
 
 if os.name == 'nt':
@@ -567,7 +564,7 @@ class USBDongle(object):
 
                         self.rsema.release()
 
-                self.recv_event.wait(old_div((wait - (time.time() - startTime)*1000),1000)) # wait on recv event, with timeout of remaining time
+                self.recv_event.wait(((wait - (time.time() - startTime)*1000) / 1000)) # wait on recv event, with timeout of remaining time
                 self.recv_event.clear() # clear event, if it's set
 
             except KeyboardInterrupt:
@@ -876,7 +873,7 @@ def unittest(self, mhz=24):
     print(repr(self.peek(0xf000, 400)))
 
     print("\nTesting USB poke/peek")
-    data = b"".join([correctbytes(c) for c in range(120)])
+    data = b"".join([bytes([c]) for c in range(120)])
     where = 0xf300
     self.poke(where, data)
     ndata = self.peek(where, len(data))

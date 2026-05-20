@@ -36,14 +36,13 @@
 @author     Alexander Belchenko (bialix AT ukr net)
 @version    1.1
 '''
-from __future__ import division, print_function
 
 from builtins import bytes
 from builtins import str
 from builtins import range
-from past.builtins import basestring
+
 from builtins import object
-from past.utils import old_div
+
 __docformat__ = "javadoc"
 
 from array import array
@@ -51,7 +50,7 @@ from binascii import hexlify, unhexlify
 from bisect import bisect_right
 import os
 import sys
-from .bits import correctbytes
+
 
 
 # the Python 2 integer types int and long have been unified in Python 3
@@ -82,7 +81,7 @@ class IntelHex(object):
         self._offset = 0
 
         if source is not None:
-            if isinstance(source, basestring) or getattr(source, "read", None):
+            if isinstance(source, str) or getattr(source, "read", None):
                 # load hex file
                 self.loadhex(source)
             elif isinstance(source, dict):
@@ -507,7 +506,7 @@ class IntelHex(object):
         # timeit shows that using hexstr.translate(table)
         # is faster than hexstr.upper():
         # 0.452ms vs. 0.652ms (translate vs. upper)
-        table = b''.join(correctbytes(i).upper() for  i in range(256))
+        table = b''.join(bytes([i]).upper() for  i in range(256))
 
         # start address record if any
         if self.start_addr and write_start_addr:
@@ -570,7 +569,7 @@ class IntelHex(object):
                     bin[1] = 0      # offset msb
                     bin[2] = 0      # offset lsb
                     bin[3] = 4      # rectyp
-                    high_ofs = int(old_div(cur_addr,65536))
+                    high_ofs = int((cur_addr / 65536))
                     bytes = divmod(high_ofs, 256)
                     bin[4] = bytes[0]   # msb of high_ofs
                     bin[5] = bytes[1]   # lsb of high_ofs
@@ -620,7 +619,7 @@ class IntelHex(object):
                     else:
                         cur_addr = maxaddr + 1
                         break
-                    high_addr = int(old_div(cur_addr,65536))
+                    high_addr = int((cur_addr / 65536))
                     if high_addr > high_ofs:
                         break
 
@@ -711,8 +710,8 @@ class IntelHex(object):
             addresses.sort()
             minaddr = addresses[0]
             maxaddr = addresses[-1]
-            startaddr = int(old_div(minaddr,16))*16
-            endaddr = int(old_div(maxaddr,16)+1)*16
+            startaddr = int((minaddr / 16))*16
+            endaddr = int((maxaddr / 16)+1)*16
             maxdigits = max(len(str(endaddr)), 4)
             templa = '%%0%dX' % maxdigits
             range16 = list(range(16))
@@ -725,7 +724,7 @@ class IntelHex(object):
                     if x is not None:
                         tofile.write(' %02X' % x)
                         if 32 <= x < 128:
-                            s.append(correctbytes(x))
+                            s.append(chr(x))
                         else:
                             s.append('.')
                     else:
@@ -848,18 +847,18 @@ class IntelHex16bit(IntelHex):
         if aa == []:
             return 0
         else:
-            return old_div(min(aa),2)
+            return min(aa) // 2
 
     def maxaddr(self):
         '''Get maximal address of HEX content in 16-bit mode.
 
-        @return         maximal address used in this object 
+        @return         maximal address used in this object
         '''
         aa = list(self._buf.keys())
         if aa == []:
             return 0
         else:
-            return old_div(max(aa),2)
+            return max(aa) // 2
 
 #/class IntelHex16bit
 
@@ -1027,7 +1026,7 @@ def _get_file_and_addr_range(s, _support_drive_letter=None):
         _support_drive_letter = (os.name == 'nt')
     drive = ''
     if _support_drive_letter:
-        if s[1:2] == ':' and s[0].upper() in ''.join([correctbytes(i) for i in range(ord('A'), ord('Z')+1)]):
+        if s[1:2] == ':' and s[0].upper() in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             drive = s[:2]
             s = s[2:]
     parts = s.split(':')

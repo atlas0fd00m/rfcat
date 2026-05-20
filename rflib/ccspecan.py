@@ -19,21 +19,18 @@
 # the Free Software Foundation, Inc., 51 Franklin Street,
 # Boston, MA 02110-1301, USA.
 
-from __future__ import print_function
-from __future__ import division
 
-from future import standard_library
-standard_library.install_aliases()
+
 from builtins import bytes
 from builtins import range
-from past.utils import old_div
+
 import sys
 import time
 import numpy
 import threading
 import rflib
 from rflib.bits import ord23
-from .bits import correctbytes
+
 # import cPickle in Python 2 instead of pickle in Python 3
 if sys.version_info < (3,):
     import cPickle as pickle
@@ -71,11 +68,11 @@ class SpecanThread(threading.Thread):
         # this is where we pull in the data from the device
         #frame_source = self._device.specan(self._low_frequency, self._high_frequency)
 
-        num_chans = int(old_div((self._high_frequency - self._low_frequency), self._freq_step))
+        num_chans = int(((self._high_frequency - self._low_frequency) / self._freq_step))
         
         if type(self._data) == list:
             for rssi_values, timestamp in self._data:
-                rssi_values = [ (old_div((ord23(x)^0x80),2))-88 for x in rssi_values[4:] ]
+                rssi_values = [ (((ord23(x)^0x80) / 2))-88 for x in rssi_values[4:] ]
                 # since we are not accessing the dongle, we need some sort of delay
                 time.sleep(self._delay)
                 frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
@@ -87,7 +84,7 @@ class SpecanThread(threading.Thread):
             while not self._stopping:
                 try:
                     rssi_values, timestamp = self._data.recv(APP_SPECAN, SPECAN_QUEUE, 10000)
-                    rssi_values = [ (old_div((ord23(x)^0x80),2))-88 for x in rssi_values ]
+                    rssi_values = [ (((ord23(x)^0x80) / 2))-88 for x in rssi_values ]
                     frequency_axis = numpy.linspace(self._low_frequency, self._high_frequency, num=len(rssi_values), endpoint=True)
 
                     self._new_frame_callback(numpy.copy(frequency_axis), numpy.copy(rssi_values))
@@ -151,7 +148,7 @@ class RenderArea(QtWidgets.QWidget):
         self._persisted_frames_next_index = 0
     
     def minimumSizeHint(self):
-        x_points = round(old_div((self._high_frequency - self._low_frequency), self._frequency_step))
+        x_points = round(((self._high_frequency - self._low_frequency) / self._frequency_step))
         y_points = round(self._high_dbm - self._low_dbm)
         return QtCore.QSize(x_points * 4, y_points * 1)
     
@@ -212,32 +209,32 @@ class RenderArea(QtWidgets.QWidget):
                     pen.setBrush(Qt.red)
                     pen.setStyle(Qt.DotLine)
                     painter.setPen(pen)
-                    painter.drawText(QPointF(x_axis[max_max] + 4, 30), '%.06f' % (old_div(self._x_to_hz(x_axis[max_max]), 1e6)))
+                    painter.drawText(QPointF(x_axis[max_max] + 4, 30), '%.06f' % ((self._x_to_hz(x_axis[max_max]) / 1e6)))
                     painter.drawText(QPointF(30, y_max[max_max] - 4), '%d' % (self._y_to_dbm(y_max[max_max])))
                     painter.drawLine(QPointF(x_axis[max_max], 0), QPointF(x_axis[max_max], self.height()))
                     painter.drawLine(QPointF(0, y_max[max_max]), QPointF(self.width(), y_max[max_max]))
                     if self._mouse_x:
-                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 58), '(%.06f)' % ((old_div(self._x_to_hz(x_axis[max_max]), 1e6)) - (old_div(self._mouse_x, 1e6))))
+                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 58), '(%.06f)' % (((self._x_to_hz(x_axis[max_max]) / 1e6)) - ((self._mouse_x / 1e6))))
                         pen.setBrush(Qt.yellow)
                         painter.setPen(pen)
-                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 44), '%.06f' % (old_div(self._mouse_x, 1e6)))
+                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 44), '%.06f' % ((self._mouse_x / 1e6)))
                         painter.drawText(QPointF(54, self._dbm_to_y(self._mouse_y) - 4), '%d' % (self._mouse_y))
                         painter.drawLine(QPointF(self._hz_to_x(self._mouse_x), 0), QPointF(self._hz_to_x(self._mouse_x), self.height()))
                         painter.drawLine(QPointF(0, self._dbm_to_y(self._mouse_y)), QPointF(self.width(), self._dbm_to_y(self._mouse_y)))
                         if self._mouse_x2:
-                            painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 118), '(%.06f)' % ((old_div(self._mouse_x, 1e6)) - (old_div(self._mouse_x2, 1e6))))
+                            painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 118), '(%.06f)' % (((self._mouse_x / 1e6)) - ((self._mouse_x2 / 1e6))))
                     if self._mouse_x2:
                         pen.setBrush(Qt.red)
                         painter.setPen(pen)
-                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 102), '(%.06f)' % ((old_div(self._x_to_hz(x_axis[max_max]), 1e6)) - (old_div(self._mouse_x2, 1e6))))
+                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 102), '(%.06f)' % (((self._x_to_hz(x_axis[max_max]) / 1e6)) - ((self._mouse_x2 / 1e6))))
                         pen.setBrush(Qt.magenta)
                         painter.setPen(pen)
-                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 88), '%.06f' % (old_div(self._mouse_x2, 1e6)))
+                        painter.drawText(QPointF(self._hz_to_x(self._mouse_x2) + 4, 88), '%.06f' % ((self._mouse_x2 / 1e6)))
                         painter.drawText(QPointF(78, self._dbm_to_y(self._mouse_y2) - 4), '%d' % (self._mouse_y2))
                         painter.drawLine(QPointF(self._hz_to_x(self._mouse_x2), 0), QPointF(self._hz_to_x(self._mouse_x2), self.height()))
                         painter.drawLine(QPointF(0, self._dbm_to_y(self._mouse_y2)), QPointF(self.width(), self._dbm_to_y(self._mouse_y2)))
                         if self._mouse_x:
-                            painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 74), '(%.06f)' % ((old_div(self._mouse_x2, 1e6)) - (old_div(self._mouse_x, 1e6))))
+                            painter.drawText(QPointF(self._hz_to_x(self._mouse_x) + 4, 74), '(%.06f)' % (((self._mouse_x2 / 1e6)) - ((self._mouse_x / 1e6))))
         finally:
             painter.end()
             
@@ -274,7 +271,7 @@ class RenderArea(QtWidgets.QWidget):
                 for dbm, point in dbm_labels:
                     painter.drawText(point, '%+.0f' % dbm)
                 for frequency, point in frequency_labels:
-                    painter.drawText(point, '%.02f' % (old_div(frequency, 1e6)))
+                    painter.drawText(point, '%.02f' % ((frequency / 1e6)))
                     
             finally:
                 painter.end()
@@ -305,25 +302,25 @@ class RenderArea(QtWidgets.QWidget):
     def _hz_to_x(self, frequency_hz):
         delta = frequency_hz - self._low_frequency
         range = self._high_frequency - self._low_frequency
-        normalized = old_div(delta, range)
+        normalized = (delta / range)
         #print "freq: %s \nlow: %s \nhigh: %s \ndelta: %s \nrange: %s \nnormalized: %s" % (frequency_hz, self._low_frequency, self._high_frequency, delta, range, normalized)
         return normalized * self.width()
 
     def _x_to_hz(self, x):
         range = self._high_frequency - self._low_frequency
-        tmp = old_div(x, self.width())
+        tmp = (x / self.width())
         delta = tmp * range
         return delta + self._low_frequency
                              
     def _dbm_to_y(self, dbm):
         delta = self._high_dbm - dbm
         range = self._high_dbm - self._low_dbm
-        normalized = old_div(delta, range)
+        normalized = (delta / range)
         return normalized * self.height()
 
     def _y_to_dbm(self, y):
         range = self._high_dbm - self._low_dbm
-        tmp = old_div(y, self.height())
+        tmp = (y / self.height())
         delta = tmp * range
         return self._high_dbm - delta
 
@@ -357,7 +354,7 @@ class Window(QtWidgets.QWidget):
                 data._debug = 1
                 freq = int(self._low_freq)
                 spc = int(self._spacing)
-                numChans = int(old_div((self._high_freq-self._low_freq), self._spacing))
+                numChans = int(((self._high_freq-self._low_freq) / self._spacing))
                 data._doSpecAn(freq, spc, numChans)
             else:
                 data = pickle.load(open(data,'rb'))
@@ -417,13 +414,7 @@ class Window(QtWidgets.QWidget):
 
         # anything else is alphanumeric
         try:
-            key= correctbytes(event.key()).upper()
-
-            # in Python 3 keys are bytes not string, fix it
-            if sys.version_info < (3,):
-                key= correctbytes(event.key()).upper()
-            else:
-                key= correctbytes(event.key()).decode('ascii').upper()
+            key = bytes([event.key()]).decode('ascii').upper()
             event.accept()
         except:
             print('Unknown key pressed: 0x%x' % event.key())

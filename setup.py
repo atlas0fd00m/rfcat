@@ -72,5 +72,5 @@ setuptools.setup  (name  = 'rfcat',
                             'Programming Language :: Python :: 3.8',
                             #'Operating System :: OS Indepentent',
                            ],
-        python_requires  = '>=2.7'
+        python_requires  = '>=3.8'
         )
