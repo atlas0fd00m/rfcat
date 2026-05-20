@@ -8,13 +8,7 @@ sizes = [ 0, 1, 2, 4, 4, 8, 8, 8, 8]
 masks = [ (1<<(8*i))-1 for i in range(9) ]
 
 PYVER = int(sys.version[0])
-def correctbytes(val):
-    global PYVER
 
-    if PYVER == 2:
-        return chr(val)
-
-    return bytes([val])
 
 def wtfo(string):
     outstr = []
@@ -54,7 +48,7 @@ def strBitReverse(string:bytes):
     # convert back from MSB number to string
     out = []
     for x in range(len(string)):
-        out.append(correctbytes(rnum&0xff))
+        out.append(bytes([rnum&0xff]))
         rnum >>= 8
     out.reverse()
     print(b''.join(out))
@@ -423,7 +417,7 @@ def bitSectString(string, startbit, endbit):
             mask = ~ ( (1<<diff) - 1 )
             byte &= mask
 
-        s += correctbytes(byte)
+        s += bytes([byte])
     
     ent = (min(entropy)+1.0) / (max(entropy)+1)
     #print("entropy: %f" % ent)
@@ -516,7 +510,7 @@ def invertBits(data):
     off = 0
 
     if ldata&1:
-        output.append( correctbytes( ord( data[0:1] ) ^ 0xff) )
+        output.append( bytes([ ord( data[0:1] ) ^ 0xff]) )
         off = 1
 
     if ldata&2:
@@ -581,13 +575,13 @@ def diff_manchester_decode(data, align=False):
 
             last = (bit0 << 1) | bit1
         if (bidx & 1): 
-            out.append(correctbytes(obyte))
+            out.append(bytes([obyte]))
             obyte = 0
 
     if not (bidx & 1):
         obyte << 4 # pad 0's on end
-        out.append(correctbytes(obyte))
-    return ''.join(out)
+        out.append(bytes([obyte]))
+    return b''.join(out)
 
 
 
@@ -608,14 +602,14 @@ def biphase_mark_coding_encode(data):
             last = bit
         if bidx & 1:
             print("%d - write" % bidx)
-            out.append(correctbytes(obyte))
+            out.append(bytes([obyte]))
         else:
             print("%d - skip" % bidx)
     if not (bidx & 1):
         print("%d - write" % bidx)
-        out.append(correctbytes(obyte))
+        out.append(bytes([obyte]))
 
-    return ''.join(out)
+    return b''.join(out)
 
 def manchester_decode(data, hilo=1):
     out = []
@@ -637,13 +631,13 @@ def manchester_decode(data, hilo=1):
 
             last = bit
         if (bidx & 1): 
-            out.append(correctbytes(obyte))
+            out.append(bytes([obyte]))
             obyte = 0
 
     if not (bidx & 1):
         obyte << 4 # pad 0's on end
-        out.append(correctbytes(obyte))
-    return ''.join(out)
+        out.append(bytes([obyte]))
+    return b''.join(out)
 
 def manchester_encode(data, hilo=1):
     '''
@@ -665,7 +659,7 @@ def manchester_encode(data, hilo=1):
             obyte |= bits[bit]
 
         out.append(struct.pack(">H", obyte))
-    return ''.join(out)
+    return b''.join(out)
 
 def findManchesterData(data, hilo=1):
     poss = []

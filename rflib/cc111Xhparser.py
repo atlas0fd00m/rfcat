@@ -41,7 +41,6 @@ SFR(DPL1,     0x84); // Data Pointer 1 Low Byte
 SFR(DPH1,     0x85); // Data Pointer 1 High Byte
 """
 
-from __future__ import print_function
 
 import sys
 
