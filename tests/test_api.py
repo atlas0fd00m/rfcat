@@ -171,11 +171,27 @@ class TestApis(unittest.TestCase):
 
         self.d.setFHSSstate(state=FHSS_STATE_SYNCHED)
         self.assertEqual(self.d.getFHSSstate(), ('FHSS_STATE_SYNCHED', 3))
-        '''
-        self.d.setRFbits(addr, bitnum, bitsz, val, suppress=False)
+        
+        # Test EnDeCoder
         self.d.setEnDeCoder(endec=None)
-        self.d.getValueFromReprString(stringarray, line_text)
-        '''
+        
+        # Test repr functions
+        repr_str = self.d.reprRadioConfig()
+        self.assertIsInstance(repr_str, str)
+        self.assertGreater(len(repr_str), 0)
+        
+        # Test reprHardwareConfig and reprSoftwareConfig
+        hw_cfg = self.d.reprHardwareConfig()
+        sw_cfg = self.d.reprSoftwareConfig()
+        self.assertIsInstance(hw_cfg, str)
+        self.assertIsInstance(sw_cfg, str)
+        
+        # Test reprClientState
+        client_state = self.d.reprClientState()
+        self.assertIsInstance(client_state, str)
+        
+        self.d.setRFbits(addr=0x10, bitnum=3, bitsz=2, val=1)
+        self.d.setRFbits(addr=0x10, bitnum=3, bitsz=2, val=1, suppress=True)
 
 
     def test_bits(self):
@@ -192,6 +208,21 @@ class TestApis(unittest.TestCase):
 
         ih = rfhex.IntelHex()
         ih.loadhex(temphexfn)
+
+
+    def test_rfxmit_long(self):
+        # Regression: in py3, old_div(a, b) was naively rewritten as (a / b).
+        # RFxmitLong's range bound, struct.pack 'B' arg, and slice index all
+        # require int — float would TypeError. Cover the path with a mocked
+        # send so we do not depend on the (broken) fakedongle NIC_LONG_XMIT.
+        from unittest.mock import patch
+        from rflib.const import RF_MAX_TX_BLOCK
+        # Long path triggers when len(data) > RF_MAX_TX_BLOCK
+        data = b'A' * (RF_MAX_TX_BLOCK + 100)
+        with patch.object(self.d, 'send', return_value=(b'\x00', 0.0)):
+            # No TypeError raised == regression covered.
+            result = self.d.RFxmitLong(data, doencoding=False)
+        self.assertEqual(result, 0)
 
 
 

@@ -1,7 +1,5 @@
 #!/usr/bin/env ipython3 -i --no-banner
 
-from __future__ import print_function
-from __future__ import absolute_import
 
 from builtins import str
 from builtins import range
