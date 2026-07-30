@@ -192,7 +192,7 @@ class VStructBuilder:
 
                 elif fflags & VSFF_ARRAY:
                     if ftypename != None:
-                        '[ %s() for i in xrange( %d / len(%s())) ]' % (ftypename, fsize, ftypename)
+                        fconst = '[ %s() for i in range( %d // len(%s())) ]' % (ftypename, fsize, ftypename)
                     else:
                         fconst = 'v_bytes(size=%d) # FIXME Unknown Array Type' % fsize
 
@@ -228,7 +228,8 @@ if __name__ == '__main__':
     import PE
     import vtrace.platforms.win32 as vt_win32
 
-    p = PE.PE(file(sys.argv[1], 'rb'))
+    with open(sys.argv[1], 'rb') as f:
+        p = PE.PE(f)
     baseaddr = p.IMAGE_NT_HEADERS.OptionalHeader.ImageBase
     osmajor = p.IMAGE_NT_HEADERS.OptionalHeader.MajorOperatingSystemVersion
     osminor = p.IMAGE_NT_HEADERS.OptionalHeader.MinorOperatingSystemVersion

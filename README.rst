@@ -38,7 +38,7 @@ reverse-engineering of hardware, and to satiate my rf lust.
 REQUIREMENTS
 ------------
 
-RfCat currently requires Python 2.7. the only suspected
+RfCat currently requires Python 3.8+. the only suspected
 incompatibilities with Python 3.x are minimal, mostly print(“stuff”)
 versus print “stuff” and other str/bytes issues.
 

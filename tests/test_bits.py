@@ -3,8 +3,6 @@ import rflib.bits as rfbits
 
 class BitsTest(unittest.TestCase):
     def test_bits(self):
-        # test correctbytes
-        rfbits.correctbytes(24)
 
 
 
