@@ -47,7 +47,7 @@ setuptools.setup  (name  = 'rfcat',
         install_requires = requirements,
         extras_require={
             'specan': [
-                'PySide2==5.12.0',
+                'PySide6==6.9.1',
             ]
         },
         classifiers      = [
