@@ -8,8 +8,12 @@ import os as _os
 _fake_rcat_mode = (_os.environ.get('FAKE_RFCAT', '0').strip().lower() not in ('0', '', 'false', 'no'))
 
 if _fake_rcat_mode:
-    # Import FakeRfCat instead of real RfCat  
-    from .fakedongle_nic import FakeRfCat, generate_fake_specan_data as _gen_fake_specan
+    # Always import base class first to avoid circular imports  
+    from .chipcon_nic import *  # Defines RfCat, etc.
+
+    # Now FakeRfCat can reference rflib.RfCat in its definition
+    from .fakedongle_nic import FakeRfCat as RfCat
+    from .fakedongle_nic import generate_fake_specan_data as _gen_fake_specan
 else:
     from .chipcon_nic import *
 
@@ -253,13 +257,13 @@ def interactive(idx=0, DongleClass=None, intro='', safemode=False):
     
     # Auto-detect FAKE_RFCAT mode and use FakeRfCat if enabled
     if _fake_rcat_mode:
-        from .fakedongle_nic import FakeRfCat as _FakeCat
-        DongleClass = _FakeCat
+        # RfCat is already overridden in module scope to be FakeRfCat
+        from rflib import RfCat as _FakeCatRef
+        DongleClass = _FakeCatRef
         
         # Print status message  
         print("\n[FAKE_RFCAT MODE ENABLED] Using FakeRfCat instead of hardware")
-        
-    if DongleClass is None:
+    elif DongleClass is None:
         from .chipcon_nic import RfCat as _DefaultCat
         DongleClass = _DefaultCat
     
