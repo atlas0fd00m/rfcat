@@ -64,8 +64,9 @@ class RfCat(FHSSNIC):
         centfreq is the center frequency
         '''
         # FAKE_RFCAT: Start auto-generator thread if not running
+        global _fake_specan_thread, _fake_specan_running
+        
         if _fake_rcat_mode and hasattr(self, '_do') and not _fake_specan_running:
-            global _fake_specan_thread, _fake_specan_running
             import threading
         
             def _specan_autogenerator(dongle):
