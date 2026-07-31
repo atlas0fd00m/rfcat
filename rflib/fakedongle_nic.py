@@ -597,10 +597,10 @@ class fakeDongle:
     def get_rf_MAC_timer(self):
         return int((self.clock() * 20) % self.macdata.MAC_threshold)
 
-class FakeRfCat(rflib.RfCat):
+class FakeRfCat(rflib.FHSSNIC):  # Inherit from base class, not RfCat itself
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
         # instantiate ourself as an official RfCat dongle
-        rflib.RfCat.__init__(self, idx, debug, copyDongle, RfMode)
+        super().__init__(idx, debug, copyDongle, RfMode)
 
     def _internal_select_dongle(self, console=False):
         self._d = fakeDon()

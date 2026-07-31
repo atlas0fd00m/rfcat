@@ -8,10 +8,11 @@ import os as _os
 _fake_rcat_mode = (_os.environ.get('FAKE_RFCAT', '0').strip().lower() not in ('0', '', 'false', 'no'))
 
 if _fake_rcat_mode:
-    # Always import base class first to avoid circular imports  
-    from .chipcon_nic import *  # Defines RfCat, etc.
-
-    # Now FakeRfCat can reference rflib.RfCat in its definition
+    # Always import everything from chipcon_nic first, including RfCat  
+    from .chipcon_nic import *  # This defines RfCat, FHSSNIC, etc. no circular refs
+    
+    # Now safely import FakeRfCat which references chipcon_nic.FHSSNIC as its base
+    # and re-export it as RfCat so code using rflib.RfCat gets FakeRfCat
     from .fakedongle_nic import FakeRfCat as RfCat
     from .fakedongle_nic import generate_fake_specan_data as _gen_fake_specan
 else:
