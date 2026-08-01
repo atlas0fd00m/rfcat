@@ -599,14 +599,18 @@ class fakeDongle:
 
 class FakeRfCat(rflib.FHSSNIC):  # Inherit from base class, not RfCat itself
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
-        # instantiate ourself as an official RfCat dongle
+        # Instantiate ourself as an official RfCat dongle using FakeDongle
+        # Override _internal_select_dongle BEFORE super().__init__() tries to find real USB hardware
+        self._d = fakeDon()
+        self._do = fakeDongle()
+        
+        # Now call parent init with our fake dongle already selected
         super().__init__(idx, debug, copyDongle, RfMode)
 
     def _internal_select_dongle(self, console=False):
-        self._d = fakeDon()
-        self._do = fakeDongle()
-        self.console = console
-
+        # Should not be called anymore (already done in __init__), but keep for compatibility
+        pass
+    
     def getPartNum(self):
         return FAKE_PARTNUM
 
