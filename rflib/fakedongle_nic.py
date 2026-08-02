@@ -7,6 +7,8 @@ import logging
 import unittest
 import threading
 import traceback
+import math
+import random
 
 from rflib.const import *
 from rflib.bits import ord23
@@ -15,6 +17,58 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s:%(levelname)s:%(name
 logger = logging.getLogger(__name__)
 
 EP0BUFSIZE = 512
+
+# For Spectrum Analyzer testing with FakeDongle
+def generate_fake_specan_data(num_channels=83, noise_floor=-80, signal_dbm=-50, seed=None):
+    """Generate realistic fake RSSI values for spectrum analyzer testing.
+    
+    Args:
+        num_channels: Number of frequency channels (default 83 for 2.4GHz band)
+        noise_floor: Base noise floor in dBm (typical: -90 to -70, default: -80)
+        signal_dbm: Peak signal strength in dBm (typical: -60 to -40, default: -50)
+        seed: Optional random seed for deterministic test data
+        
+    Returns:
+        tuple: (rssi_bytes, dbm_values) where rssi_bytes is formatted for ccspecan.py
+        
+    Conversion formula used by ccspecan: dbm = (((byte ^ 0x80) / 2) - 88)
+    Valid dBm range: [-88, +40] due to unsigned byte constraints.
+    """
+    if seed is not None:
+        random.seed(seed)
+    
+    rssi_values = []
+    dbm_values = []
+    
+    num_signals = random.randint(2, min(4, max(1, (num_channels // 20))))
+    signal_range_start = 15
+    signal_range_end = max(signal_range_start + 1, num_channels - 15)
+    
+    if signal_range_start < signal_range_end and num_signals > 0:
+        signal_centers = sorted(random.sample(range(signal_range_start, signal_range_end), min(num_signals, (signal_range_end - signal_range_start))))
+        bandwidths = {c: random.randint(3, 7) for c in signal_centers}
+    else:
+        signal_centers = []
+        bandwidths = {}
+    
+    for i in range(num_channels):
+        dbm = noise_floor + random.uniform(-3, 5)
+        
+        for center, bw in bandwidths.items():
+            dist = abs(i - center)
+            if dist <= bw:
+                gaussian = math.exp(-0.5 * (dist / (bw/2)) ** 2) if dist > 0 else 1.0
+                signal_val = signal_dbm + (noise_floor - signal_dbm) * (1 - gaussian)
+                dbm = max(dbm, signal_val)
+        
+        dbm = max(-88, min(+35, dbm))
+        dbm_values.append(dbm)
+        
+        temp = int((dbm + 88) * 2)
+        byte_val = (temp & 0xFF) ^ 0x80
+        rssi_values.append(byte_val)
+    
+    return bytes(rssi_values), dbm_values
 
 
 class fakeMemory:
@@ -135,6 +189,7 @@ class fakeDongle:
     def __init__(self):
         self._recvbuf = b''
         self.bulk5 = queue.Queue()
+        self._specan_queue = queue.Queue()  # For spectrum analyzer testing
         self.bulk0 = [0 for x in range(EP0BUFSIZE)]
         self.memory = fakeMemory()
 
@@ -178,6 +233,19 @@ class fakeDongle:
         if type(data) == int and data < 0x100:
             data = b'%c' % data
         self.bulk5.put(struct.pack('<BBH', app, cmd, len(data)) + data)
+
+    def queue_specan_frame(self, rssi_bytes, timestamp=None):
+        """Queue a specan frame for retrieval by recv(APP_SPECAN, SPECAN_QUEUE, timeout).
+        
+        Used for testing spectrum analyzer features without physical hardware.
+        
+        Args:
+            rssi_bytes: RSSI data bytes (already XOR'd with 0x80 format)
+            timestamp: Optional Unix timestamp (defaults to current time)
+        """
+        if timestamp is None:
+            timestamp = time.time()
+        self._specan_queue.put((rssi_bytes, timestamp))
 
     def bulkWrite(self, chan, buf, timeout=1):
         try:
@@ -467,9 +535,28 @@ class fakeDongle:
 
         This has *nothing* to do with "reading" from the memory.  bulkRead() gives the dongle
         the "talking stick"
+        
+        Special handling for APP_SPECAN: if specan frames are queued, they will be returned
+        in the format expected by ccspecan.py (rssi_bytes, timestamp) tuple encoded via txdata.
         '''
         starttime = time.time()
 
+        # First check for specan data if APP_SPECAN channel is requested
+        if chan == 5:  # EP5 bulk endpoint  
+            while self._specan_queue.qsize() > 0:
+                try:
+                    rssi_bytes, timestamp = self._specan_queue.get_nowait()
+                    # Format as ccspecan expects: struct.pack("<fH", time, len(data)) + data
+                    from rflib.const import APP_SPECAN, SPECAN_QUEUE
+                    header = struct.pack("<fH", float(timestamp), len(rssi_bytes))
+                    # Use txdata to properly format the response
+                    self.txdata(APP_SPECAN, 1, rssi_bytes)  # CMD=1 for data  
+                    out = self.bulk5.get_nowait()
+                    logger.debug('<= fakeDoer.bulkRead(5, %r) == <SPECAN_FRAME>', length)
+                    return b"@" + out
+                except queue.Empty:
+                    break
+        
         while time.time() - starttime < timeout:
             try:
                 out = self.bulk5.get_nowait()
@@ -478,8 +565,8 @@ class fakeDongle:
             except queue.Empty:
                 time.sleep(.05)
 
-            logger.debug('<= fakeDoer.bulkRead(5, %r) == <EmptyQueue>', length)
-            raise usb.USBError('Operation timed out (FakeDongle)')
+        logger.debug('<= fakeDoer.bulkRead(5, %r) == <EmptyQueue>', length)
+        raise usb.USBError('Operation timed out (FakeDongle)')
 
     def log(self, msg, *args):
         if len(args):
@@ -510,16 +597,75 @@ class fakeDongle:
     def get_rf_MAC_timer(self):
         return int((self.clock() * 20) % self.macdata.MAC_threshold)
 
-class FakeRfCat(rflib.RfCat):
-    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX):
-        # instantiate ourself as an official RfCat dongle
-        rflib.RfCat.__init__(self, idx, debug, copyDongle, RfMode)
-
-    def _internal_select_dongle(self, console=False):
-        self._d = fakeDon()
+class FakeRfCat(rflib.FHSSNIC):  # Inherits methods but initializes fake dongle in __init__
+    """Fake RfCat that uses FakeDongle instead of USB hardware.
+    
+    All methods inherited from RfCat/FHSSNIC work normally - only init differs.
+    """
+    
+    def resetup(self, *args, **kwargs):
+        """Override to do nothing - fake dongle already initialized."""
+        pass
+        
+    def _internal_select_dongle(self, console=False):  
+        """Override to do nothing - fake dongle already initialized."""
+        if hasattr(self, '_debug') and self._debug:
+            print("[FakeRfCat] Using pre-initialized FakeDongle (no USB)")
+    
+    def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX, safemode=False):
+        # CRITICAL: Create fake dongles FIRST, before any parent code runs
+        self._d = fakeDon()  
         self._do = fakeDongle()
-        self.console = console
-
+        
+        # Override methods EARLY - even though they're defined as class methods above,
+        # we ensure the instance has them before anything else can trigger USB probing
+        self.resetup = FakeRfCat.resetup.__get__(self)
+        self._internal_select_dongle = FakeRfCat._internal_select_dongle.__get__(self)
+        
+        # Import what we need from parents without calling super().__init__()
+        try:
+            import threading  
+            os = __import__('os')
+            from .const import RadioConfig, FAKE_PARTNUM
+            
+            # Initialize all state that parent's __init__ would set up
+            self._safemode = safemode
+            self.chipnum = FAKE_PARTNUM  
+            self.chipstr = "FakeDongen"
+            self.rsema = None
+            self.xsema = threading.Semaphore(0) if os.name != 'nt' else threading.Event()
+            self._bootloader = False
+            self._init_on_reconnect = not safemode
+            self.idx = idx
+            self.devnum = 0
+            self._debug = debug  
+            self._quiet = True  # Be quiet during fake init
+            self._threadGo = threading.Event()
+            
+            # Call cleanup to set up queues, etc - but this might trigger resetup! 
+            # So we need our override to be in place BEFORE calling this
+            # Actually, let's manually initialize instead of calling cleanup()
+            self.recv_queue = b''
+            self.recv_mbox  = {}
+            self.recv_event = threading.Event()
+            self.xmit_event = threading.Event()
+            self.reset_event = threading.Event()
+            self.xmit_queue = []
+            self.xmit_event.clear()
+            self.reset_event.clear()
+            self.trash = []   
+            self._usberrorcnt = 0
+            
+            # Additional initialization
+            self.radiocfg = RadioConfig()
+            self._rfmode = RfMode
+            self._radio_configured = False  
+        except Exception as e:
+            # Clean partial initialization on failure  
+            if hasattr(self, '_do'):
+                print(f"[FakeRfCat] Init error (have _d but no _do): {e}")
+            raise
+    
     def getPartNum(self):
         return FAKE_PARTNUM
 
