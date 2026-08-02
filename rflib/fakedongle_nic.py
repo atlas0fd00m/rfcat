@@ -602,12 +602,27 @@ class FakeRfCat(rflib.FHSSNIC):  # Inherits methods but initializes fake dongle 
     
     All methods inherited from RfCat/FHSSNIC work normally - only init differs.
     """
+    
+    def resetup(self, *args, **kwargs):
+        """Override to do nothing - fake dongle already initialized."""
+        pass
+        
+    def _internal_select_dongle(self, console=False):  
+        """Override to do nothing - fake dongle already initialized."""
+        if hasattr(self, '_debug') and self._debug:
+            print("[FakeRfCat] Using pre-initialized FakeDongle (no USB)")
+    
     def __init__(self, idx=0, debug=False, copyDongle=None, RfMode=RFST_SRX, safemode=False):
-        # Set up fake dongles FIRST  
-        self._d = fakeDon()
+        # CRITICAL: Create fake dongles FIRST, before any parent code runs
+        self._d = fakeDon()  
         self._do = fakeDongle()
         
-        # Import what we need from parents without calling __init__
+        # Override methods EARLY - even though they're defined as class methods above,
+        # we ensure the instance has them before anything else can trigger USB probing
+        self.resetup = FakeRfCat.resetup.__get__(self)
+        self._internal_select_dongle = FakeRfCat._internal_select_dongle.__get__(self)
+        
+        # Import what we need from parents without calling super().__init__()
         try:
             import threading  
             os = __import__('os')
@@ -616,7 +631,7 @@ class FakeRfCat(rflib.FHSSNIC):  # Inherits methods but initializes fake dongle 
             # Initialize all state that parent's __init__ would set up
             self._safemode = safemode
             self.chipnum = FAKE_PARTNUM  
-            self.chipstr = "FakeDongle"
+            self.chipstr = "FakeDongen"
             self.rsema = None
             self.xsema = threading.Semaphore(0) if os.name != 'nt' else threading.Event()
             self._bootloader = False
@@ -624,14 +639,24 @@ class FakeRfCat(rflib.FHSSNIC):  # Inherits methods but initializes fake dongle 
             self.idx = idx
             self.devnum = 0
             self._debug = debug  
-            self._quiet = False
+            self._quiet = True  # Be quiet during fake init
             self._threadGo = threading.Event()
             
-            self.cleanup()  # Sets recv_queue, recv_mbox, etc.
+            # Call cleanup to set up queues, etc - but this might trigger resetup! 
+            # So we need our override to be in place BEFORE calling this
+            # Actually, let's manually initialize instead of calling cleanup()
+            self.recv_queue = b''
+            self.recv_mbox  = {}
+            self.recv_event = threading.Event()
+            self.xmit_event = threading.Event()
             self.reset_event = threading.Event()
-            self.trash = []   # Added missing attr from parent __init__
+            self.xmit_queue = []
+            self.xmit_event.clear()
+            self.reset_event.clear()
+            self.trash = []   
             self._usberrorcnt = 0
             
+            # Additional initialization
             self.radiocfg = RadioConfig()
             self._rfmode = RfMode
             self._radio_configured = False  
@@ -641,15 +666,6 @@ class FakeRfCat(rflib.FHSSNIC):  # Inherits methods but initializes fake dongle 
                 print(f"[FakeRfCat] Init error (have _d but no _do): {e}")
             raise
     
-    def resetup(self, *args, **kwargs):
-        """Override to do nothing - fake dongle already initialized."""
-        pass
-        
-    def _internal_select_dongle(self, console=False):  
-        """Override to do nothing - fake dongle already initialized."""
-        if hasattr(self, '_debug') and self._debug:
-            print("[FakeRfCat] Using pre-initialized FakeDongle")
-        
     def getPartNum(self):
         return FAKE_PARTNUM
 
