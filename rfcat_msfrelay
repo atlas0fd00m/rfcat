@@ -295,7 +295,7 @@ class MSFHandler(BaseHTTPRequestHandler):
         elif self.path=="/rftransceiver/supported_idx":
             self.send(self.supported_idx())
         elif self.path.startswith("/rftransceiver/"):
-            re_idx = re.compile("/rftransceiver/(\d+)/")
+            re_idx = re.compile(r"/rftransceiver/(\d+)/")
             m = re_idx.match(self.path)
             if m:
                 idx = m.group(1)
