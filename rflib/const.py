@@ -159,6 +159,7 @@ RF_MAX_RX_BLOCK                 = 512 # must match BUFFER_SIZE definition in fir
 
 APP_NIC =                       0x42
 APP_SPECAN =                    0x43
+SPECAN_QUEUE =                  1        # ccspecan uses cmd=1 for specan data frames
 
 NIC_RECV =                      0x1
 NIC_XMIT =                      0x2
