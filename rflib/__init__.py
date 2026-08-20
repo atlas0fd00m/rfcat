@@ -3,13 +3,24 @@
 
 from builtins import str
 from builtins import range
+import os as _os
+_fake_rcat_mode = (_os.environ.get('FAKE_RFCAT', '0').strip().lower() not in ('0', '', 'false', 'no'))
+
+# Import the real hardware classes (chipcon_nic defines RfCat, FHSSNIC, NICxx11).
+# FakeRfCat references rflib.RfCat as its base, so we import it lazily at the end
+# of this module to avoid a circular import (fakedongle_nic needs rflib.RfCat).
 from .chipcon_nic import *
+
 import rflib.bits as rfbits
 
 RFCAT_START_SPECAN  = 0x40
 RFCAT_STOP_SPECAN   = 0x41
 
 MAX_FREQ = 936e6
+
+# FAKE_RFCAT: Background thread for auto-generating specan data
+_fake_specan_thread = None
+_fake_specan_running = False
 
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
@@ -50,6 +61,38 @@ class RfCat(FHSSNIC):
 
         centfreq is the center frequency
         '''
+        # FAKE_RFCAT: Start auto-generator thread if not running
+        global _fake_specan_thread, _fake_specan_running
+        
+        if _fake_rcat_mode and hasattr(self, '_do') and not _fake_specan_running:
+            import threading
+        
+            def _specan_autogenerator(dongle):
+                import time
+                import random
+                from .fakedongle_nic import generate_fake_specan_data as _gf
+                while _fake_specan_running:
+                    try:
+                        # Generate varying fake data  
+                        noise_floor = -75 + random.uniform(-3, 3)
+                        signal_strength = -50 + random.uniform(-5, 5)
+                        
+                        rssi_bytes, _ = _gf(
+                            num_channels=count, 
+                            noise_floor=noise_floor,
+                            signal_dbm=signal_strength,
+                            seed=int(time.time() * 1000) % (2**32)
+                        )
+                        dongle.queue_specan_frame(rssi_bytes)
+                    except:
+                        pass
+                    time.sleep(0.1)  # ~10 frames per second
+        
+            _fake_specan_running = True
+            print("\n[FAKE_RFCAT] Spectrum Analyzer auto-generator started (noise floor ~-75dBm, peaks ~-50dBm)\n")
+            _fake_specan_thread = threading.Thread(target=_specan_autogenerator, args=(self._do,), daemon=True) 
+            _fake_specan_thread.start()
+        
         freq, delta = self._doSpecAn(centfreq, inc, count)
 
         import rflib.ccspecan as rfspecan
@@ -74,8 +117,7 @@ class RfCat(FHSSNIC):
         halfspec = spectrum / 2.0
         basefreq = centfreq - halfspec
         if (count * inc) + basefreq > MAX_FREQ:
-            raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" %
-                    (basefreq, count, inc))
+            raise Exception("Sorry, %1.3f + (%1.3f * %1.3f) is higher than %1.3f" % (basefreq, count, inc, MAX_FREQ))
         self.getRadioConfig()
         self._specan_backup_radiocfg = self.radiocfg
 
@@ -191,18 +233,34 @@ class InverseCat(RfCat):
         return RfCat.RFxmit(self, rfbits.invertBits(data) )
 
 def cleanupInteractiveAtExit():
+    global _fake_specan_running
     try:
         if d.getDebugCodes():
            d.setModeIDLE()
-        pass
+        
+        # Stop FakeRfCat specan auto-generator if running
+        if _fake_rcat_mode and _fake_specan_running:
+            _fake_specan_running = False
+            print("[FAKE_RFCAT] Stopping spectrum analyzer generator...")
     except:
         pass
 
-def interactive(idx=0, DongleClass=RfCat, intro='', safemode=False):
+def interactive(idx=0, DongleClass=None, intro='', safemode=False):
     global d
-    import rflib.chipcon_nic as rfnic
     import atexit
-
+    
+    # Auto-detect FAKE_RFCAT mode and use FakeRfCat if enabled
+    if _fake_rcat_mode:
+        # RfCat is already overridden in module scope to be FakeRfCat
+        from rflib import RfCat as _FakeCatRef
+        DongleClass = _FakeCatRef
+        
+        # Print status message  
+        print("\n[FAKE_RFCAT MODE ENABLED] Using FakeRfCat instead of hardware")
+    elif DongleClass is None:
+        from .chipcon_nic import RfCat as _DefaultCat
+        DongleClass = _DefaultCat
+    
     d = DongleClass(idx=idx, debug=safemode, safemode=safemode)
     if not safemode:
         d.setModeRX()       # this puts the dongle into receive mode
@@ -274,9 +332,21 @@ def interact(lcls, gbls, intro=""):
         print("SORRY, NO INTERACTIVE OPTIONS AVAILABLE!!  wtfo?")
 
 
+# FAKE_RFCAT override: swap RfCat for FakeRfCat AFTER the real RfCat class is
+# fully defined (so FakeRfCat can inherit from it without a circular import).
+if _fake_rcat_mode:
+    from .fakedongle_nic import FakeRfCat
+    from .fakedongle_nic import generate_fake_specan_data as _gen_fake_specan
+    # rebind the module-level name so downstream code (rfcat, ccspecan, scripts)
+    # that does `from rflib import RfCat` gets the fake implementation.
+    RfCat = FakeRfCat
+
+
 if __name__ == "__main__":
     idx = 0
     if len(sys.argv) > 1:
         idx = int(sys.argv.pop())
 
     interactive(idx)
+
+
