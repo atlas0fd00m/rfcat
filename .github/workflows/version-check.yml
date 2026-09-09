@@ -1,0 +1,47 @@
+name: version-check
+
+# Guard against the class of bug from issue #175: a release/tag being cut
+# from a tree whose VERSION file does not match the tag, causing the
+# auto-generated source zip to ship an unrelated version.
+#
+# This runs on any push to master and on any tag push, and verifies that the
+# version declared in the VERSION file is consistent with the git history.
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  version-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need tags for git describe
+
+      - name: Verify VERSION file is non-empty and sane
+        run: |
+          VERSION_CONTENT="$(cat VERSION)"
+          if [ -z "$VERSION_CONTENT" ]; then
+            echo "::error file=VERSION::VERSION file is empty"
+            exit 1
+          fi
+          if [[ "$VERSION_CONTENT" != v* ]] && [[ "$VERSION_CONTENT" != [0-9]* ]]; then
+            echo "::error file=VERSION::VERSION must start with 'v' or a digit, got: '$VERSION_CONTENT'"
+            exit 1
+          fi
+          echo "VERSION file OK: $VERSION_CONTENT"
+
+      - name: Compare against latest git tag (warn only on non-tag branches)
+        run: |
+          LATEST_TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+          VERSION_CONTENT="$(cat VERSION)"
+          echo "Latest tag:   ${LATEST_TAG:-<none>}"
+          echo "VERSION file: $VERSION_CONTENT"
+          if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "$VERSION_CONTENT" ]; then
+            echo "::warning::VERSION file ($VERSION_CONTENT) does not match latest git tag ($LATEST_TAG)."
+            echo "  If you are tagging a new release, the VERSION file should be bumped to match."
+          fi

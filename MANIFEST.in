@@ -1,6 +1,8 @@
 include LICENSE
 include LICENSE.CC-Bootloader
 
+include VERSION
+
 include README.rst
 include README.nonroot
 include README.msfrelay
