@@ -676,9 +676,11 @@ void handleCS0(void)
             // Device Requests
             if (req.bmRequestType & USB_BM_REQTYPE_DIRMASK)                       // should be *sending* data, if any
             {   
-                //  if there's any length requirement, enter TX mode
-                if (req.wLength)
-                    ep0.epstatus = EP_STATE_TX;
+                // NOTE: do NOT set ep0.epstatus = EP_STATE_TX here.  the request handlers
+                // below enter TX mode themselves via setup_send_ep0()/setup_sendx_ep0(),
+                // which refuse to arm (return -1 + blink) unless ep0 is still IDLE.
+                // pre-setting TX here makes every GET_DESCRIPTOR fail, so the dongle
+                // never enumerates.  (see #169; regression from 75d366a)
 
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
@@ -760,9 +762,11 @@ void handleCS0(void)
                         debugEP0Req((u8*)&req);
                 }
             } else {                                            // should be *receiving* data, if any
-                //  if there's any length requirement, enter RX mode
-                if (req.wLength)
-                    ep0.epstatus = EP_STATE_RX;
+                // NOTE: do NOT force ep0.epstatus = EP_STATE_RX here.  restores the
+                // pre-75d366a behavior (the original line was a no-op '==').  nothing in
+                // this tree calls setup_recv_ep0(), and forcing RX makes handleCS0()
+                // drop straight into usb_recv_ep0OUT() in this same pass.  OUT data-stage
+                // support should be added deliberately, not as a side effect.  (see #169)
 
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
