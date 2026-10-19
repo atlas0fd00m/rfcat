@@ -284,7 +284,7 @@ class NICxx11(USBDongle):
 
         agcctrl1 = radiocfg.agcctrl1 & 0xc0
         agcctrl1 |= (absthresh & 0xf)
-        agcctrl1 |= ((relthresh << 4) & 0x3)
+        agcctrl1 |= ((relthresh & 0x3) << 4)
 
         self.setRFRegister(MCSM1, mcsm1)
         self.setRFRegister(AGCCTRL1, agcctrl1)
