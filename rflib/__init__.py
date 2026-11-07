@@ -18,10 +18,6 @@ RFCAT_STOP_SPECAN   = 0x41
 
 MAX_FREQ = 936e6
 
-# FAKE_RFCAT: Background thread for auto-generating specan data
-_fake_specan_thread = None
-_fake_specan_running = False
-
 class RfCat(FHSSNIC):
     def RFdump(self, msg="Receiving", maxnum=100, timeoutms=1000):
         try:
@@ -61,38 +57,12 @@ class RfCat(FHSSNIC):
 
         centfreq is the center frequency
         '''
-        # FAKE_RFCAT: Start auto-generator thread if not running
-        global _fake_specan_thread, _fake_specan_running
-        
-        if _fake_rcat_mode and hasattr(self, '_do') and not _fake_specan_running:
-            import threading
-        
-            def _specan_autogenerator(dongle):
-                import time
-                import random
-                from .fakedongle_nic import generate_fake_specan_data as _gf
-                while _fake_specan_running:
-                    try:
-                        # Generate varying fake data  
-                        noise_floor = -75 + random.uniform(-3, 3)
-                        signal_strength = -50 + random.uniform(-5, 5)
-                        
-                        rssi_bytes, _ = _gf(
-                            num_channels=count, 
-                            noise_floor=noise_floor,
-                            signal_dbm=signal_strength,
-                            seed=int(time.time() * 1000) % (2**32)
-                        )
-                        dongle.queue_specan_frame(rssi_bytes)
-                    except:
-                        pass
-                    time.sleep(0.1)  # ~10 frames per second
-        
-            _fake_specan_running = True
-            print("\n[FAKE_RFCAT] Spectrum Analyzer auto-generator started (noise floor ~-75dBm, peaks ~-50dBm)\n")
-            _fake_specan_thread = threading.Thread(target=_specan_autogenerator, args=(self._do,), daemon=True) 
-            _fake_specan_thread.start()
-        
+        # FAKE_RFCAT: start the fake specan auto-generator so the GUI can render
+        # without physical hardware.  The generator lives in fakedongle_nic.py.
+        if _fake_rcat_mode and hasattr(self, '_do'):
+            from .fakedongle_nic import start_fake_specan_generator
+            start_fake_specan_generator(self._do, num_channels=count)
+
         freq, delta = self._doSpecAn(centfreq, inc, count)
 
         import rflib.ccspecan as rfspecan
@@ -233,15 +203,15 @@ class InverseCat(RfCat):
         return RfCat.RFxmit(self, rfbits.invertBits(data) )
 
 def cleanupInteractiveAtExit():
-    global _fake_specan_running
     try:
         if d.getDebugCodes():
            d.setModeIDLE()
-        
-        # Stop FakeRfCat specan auto-generator if running
-        if _fake_rcat_mode and _fake_specan_running:
-            _fake_specan_running = False
-            print("[FAKE_RFCAT] Stopping spectrum analyzer generator...")
+
+        # Stop the fake specan auto-generator if it was running (FAKE_RFCAT mode).
+        # The generator lifecycle lives in fakedongle_nic.py.
+        if _fake_rcat_mode:
+            from .fakedongle_nic import stop_fake_specan_generator
+            stop_fake_specan_generator()
     except:
         pass
 
@@ -336,7 +306,6 @@ def interact(lcls, gbls, intro=""):
 # fully defined (so FakeRfCat can inherit from it without a circular import).
 if _fake_rcat_mode:
     from .fakedongle_nic import FakeRfCat
-    from .fakedongle_nic import generate_fake_specan_data as _gen_fake_specan
     # rebind the module-level name so downstream code (rfcat, ccspecan, scripts)
     # that does `from rflib import RfCat` gets the fake implementation.
     RfCat = FakeRfCat

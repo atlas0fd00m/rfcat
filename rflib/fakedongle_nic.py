@@ -1,5 +1,6 @@
 import rflib
 
+import sys
 import usb
 import time
 import queue
@@ -70,6 +71,88 @@ def generate_fake_specan_data(num_channels=83, noise_floor=-80, signal_dbm=-50, 
         rssi_values.append(byte_val)
     
     return bytes(rssi_values), dbm_values
+
+
+# ---------------------------------------------------------------------------
+# FAKE_RFCAT spectrum-analyzer auto-generator orchestration.
+#
+# Lives here (rather than in rflib/__init__.py) so the fake-only machinery is
+# co-located with the rest of the FakeDongle implementation, keeping the core
+# rflib module free of FAKE_RFCAT-conditional code.  rflib/__init__.py calls
+# start_fake_specan_generator() from its specan() method and
+# stop_fake_specan_generator() at interpreter-exit cleanup.
+# ---------------------------------------------------------------------------
+
+# background thread that continuously queues fake specan frames; None until a
+# generator is started.
+_specan_generator_thread = None
+_specan_generator_running = False
+
+
+def _specan_autogenerator(dongle, num_channels):
+    """Worker: repeatedly generate + queue a fake specan frame until stopped."""
+    while _specan_generator_running:
+        try:
+            noise_floor = -75 + random.uniform(-3, 3)
+            signal_strength = -50 + random.uniform(-5, 5)
+
+            rssi_bytes, _ = generate_fake_specan_data(
+                num_channels=num_channels,
+                noise_floor=noise_floor,
+                signal_dbm=signal_strength,
+                seed=int(time.time() * 1000) % (2**32)
+            )
+            dongle.queue_specan_frame(rssi_bytes)
+        except Exception:
+            # keep the generator alive even if a single frame fails
+            logger.debug("specan autogenerator frame error", exc_info=True)
+        time.sleep(0.1)  # ~10 frames per second
+
+
+def start_fake_specan_generator(dongle, num_channels=83):
+    """Start the background fake-specan frame generator (idempotent).
+
+    Only meaningful in FAKE_RFCAT mode: it continuously queues realistic fake
+    RSSI frames onto the given fake dongle so ccspecan's SpecanThread can render
+    a live spectrum without physical hardware.
+
+    Args:
+        dongle: the FakeDongle instance (has queue_specan_frame()).
+        num_channels: number of channels per frame (default 83).
+
+    Returns:
+        bool: True if a generator was (re)started; False if one was already running.
+    """
+    global _specan_generator_thread, _specan_generator_running
+    if _specan_generator_running:
+        return False
+    _specan_generator_running = True
+    _specan_generator_thread = threading.Thread(
+        target=_specan_autogenerator,
+        args=(dongle, int(num_channels)),
+        daemon=True,
+        name='fake-specan-generator',
+    )
+    _specan_generator_thread.start()
+    print("\n[FAKE_RFCAT] Spectrum Analyzer auto-generator started "
+          "(noise floor ~-75dBm, peaks ~-50dBm)\n")
+    return True
+
+
+def stop_fake_specan_generator():
+    """Stop the background fake-specan generator if it is running.
+
+    Returns:
+        bool: True if a running generator was stopped; False if none was running.
+    """
+    global _specan_generator_thread, _specan_generator_running
+    if not _specan_generator_running:
+        return False
+    # signal the (daemon) thread to exit; it wakes on the next sleep.
+    _specan_generator_running = False
+    _specan_generator_thread = None
+    print("[FAKE_RFCAT] Stopping spectrum analyzer generator...")
+    return True
 
 
 class fakeMemory:
