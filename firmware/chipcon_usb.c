@@ -675,11 +675,9 @@ void handleCS0(void)
             // noticed and allowed to send shit down the usb interface!
             // Device Requests
             if (req.bmRequestType & USB_BM_REQTYPE_DIRMASK)                       // should be *sending* data, if any
-            {   
-                //  if there's any length requirement, enter TX mode
-                if (req.wLength)
-                    ep0.epstatus = EP_STATE_TX;
-
+            {
+                // ep0.epstatus must stay IDLE here: setup_send_ep0() and
+                // setup_sendx_ep0() enter TX mode, and refuse to send otherwise.
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
                     case USB_BM_REQTYPE_TYPE_STD:               //  STANDARD type
@@ -760,10 +758,7 @@ void handleCS0(void)
                         debugEP0Req((u8*)&req);
                 }
             } else {                                            // should be *receiving* data, if any
-                //  if there's any length requirement, enter RX mode
-                if (req.wLength)
-                    ep0.epstatus = EP_STATE_RX;
-
+                // ep0.epstatus stays IDLE here too; a handler that reads an OUT data stage must call setup_recv_ep0().
                 switch(req.bmRequestType & USB_BM_REQTYPE_TYPEMASK)
                 {
                     case USB_BM_REQTYPE_TYPE_STD:               // STANDARD type
