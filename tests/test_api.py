@@ -74,6 +74,14 @@ class TestApis(unittest.TestCase):
         self.d.getMARCSTATE()
 
         self.d.setEnableCCA()
+
+        # AGCCTRL1: CARRIER_SENSE_REL_THR is bits [5:4], ABS_THR is [3:0]
+        for relthresh in range(4):
+            self.d.setEnableCCA(mode=3, absthresh=5, relthresh=relthresh, magn=3)
+            agcctrl1 = ord(self.d.peek(AGCCTRL1))
+            self.assertEqual((agcctrl1 & AGCCTRL1_CARRIER_SENSE_REL_THR) >> 4, relthresh)
+            self.assertEqual(agcctrl1 & AGCCTRL1_CARRIER_SENSE_ABS_THR, 5)
+            self.assertEqual(ord(self.d.peek(MCSM1)) >> 4 & 3, 3)
         
         self.d.setFreq(878e6)
         freq, freqnum = self.d.getFreq()
