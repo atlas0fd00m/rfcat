@@ -229,6 +229,10 @@ u8 transmit(__xdata u8* __xdata buf, __xdata u16 len, __xdata u16 repeat, __xdat
 
     // Set up repeat / large blocks
     rfTxInfMode = 0;
+    // buf points directly at this packet.  rfTxCurBufIdx is only advanced by
+    // the transmit_long() multi-buffer path and is otherwise never reset, so a
+    // stale value would make the ISR read from buf + (idx * len) instead.
+    rfTxCurBufIdx = 0;
     rfTxRepeatCounter = repeat;
     rfTxRepeatOffset = offset;
     rfTxBufferEnd = len;
