@@ -2,3 +2,5 @@ pyusb
 ipython
 pyserial
 numpy
+requests
+pyside2
